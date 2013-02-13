@@ -1,0 +1,73 @@
+#
+# Copyright (c) 2013 Vojtech Horky
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# - The name of the author may not be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+ptname=libgmp
+ptsources="ftp://ftp.gmplib.org/pub/gmp-5.1.0/gmp-5.1.0.tar.bz2 gmp-h.patch"
+
+build() {
+	tar xjf gmp-5.1.0.tar.bz2 || return 1
+	patch -p0 <gmp-h.patch || return 1
+	cd gmp-5.1.0 || return 1
+	hsct_run_echo ./configure \
+		--disable-shared \
+		--host="$HSCT_GNU_TARGET" \
+		CC="$HSCT_CC" \
+		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC -D_STDIO_H -DHAVE_STRCHR -Wl,--undefined=longjmp" \
+		LD="$HSCT_LD" \
+		|| return 1
+	
+	hsct_info "Building the library..."
+	make || return 1
+	hsct_info "Building the tests..."
+	make check || return 0
+}
+
+package() {
+	cd gmp-5.1.0 || return 1
+	make install DESTDIR=$PWD/PKG || return 1
+	
+	# Copy the headers and static library
+	cp PKG/usr/local/include/gmp.h "$HSCT_INCLUDE_DIR/" || return 1
+	cp PKG/usr/local/lib/libgmp.a "$HSCT_LIB_DIR/" || return 1
+	
+	# Copy the tests
+	(
+		mkdir -p "$HSCT_MISC_DIR/libgmp/"
+		cd tests || return 1
+		echo "echo Running libgmp tests..." >"$HSCT_MISC_DIR/libgmp/run_tests.bdsh"
+		find . -executable -type f | while read testname; do
+			cp "$testname" "$HSCT_MISC_DIR/libgmp/$testname" || exit 1
+			echo "$testname" | sed 's#./##' >>"$HSCT_MISC_DIR/libgmp/run_tests.bdsh"
+		done || exit 1
+	) || return 1
+}
+
+dist() {
+	hsct_info "Not implemented!"
+}
+

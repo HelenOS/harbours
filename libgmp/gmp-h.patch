@@ -1,0 +1,9 @@
+--- gmp-5.1.0/gmp-h.in  2012-12-18 20:05:09.000000000 +0100
++++ gmp-5.1.0/gmp-h.in  2013-01-18 18:27:45.965852213 +0100
+@@ -24,6 +24,8 @@
+ #if defined (__cplusplus)
+ #include <iosfwd>   /* for std::istream, std::ostream, std::string */
+ #include <cstdio>
++#else
++#include <stdio.h>
+ #endif
