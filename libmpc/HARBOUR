@@ -1,0 +1,95 @@
+#
+# Copyright (c) 2013 Vojtech Horky
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# - The name of the author may not be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+shipname=libmpc
+shipname_=mpc
+shipversion=1.0.1
+shipsources="http://www.multiprecision.org/${shipname_}/download/${shipname_}-${shipversion}.tar.gz"
+
+build() {
+	tar xzf ${shipname_}-${shipversion}.tar.gz || return 1
+	cd ${shipname_}-${shipversion} || return 1
+	
+	# We shall define this macro somewhere, this is not the first
+	# harbour we are defining this macro in
+	extra_cflags="-DCHAR_BIT=8"
+	
+	# Use the not-that-precise constants from float.h
+	extra_cflags="$extra_cflags -DFLOAT_H_YES_I_REALLY_WANT_LIMITS"
+	
+	# Where libgmp and libmpfr is supposed to be residing
+	extra_cflags="$extra_cflags -I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"
+	
+	run ./configure \
+		--disable-shared \
+		--host="$HSCT_GNU_TARGET" \
+		CC="$HSCT_CC" \
+		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC $extra_cflags" \
+		LD="$HSCT_LD" \
+		|| return 1
+	
+	msg "Building the library..."
+	run make || return 1
+	
+	msg "Building the tests..."
+	run make check || return 0
+}
+
+package() {
+	cd ${shipname_}-${shipversion} || return 1
+	
+	msg "Pretending standard Unix installation..."
+	run make install DESTDIR=$PWD/PKG || return 1
+	
+	# Copy the headers and static library
+	msg "Copying relevant files to the coast..."
+	cp PKG/usr/local/include/mpc.h "$HSCT_INCLUDE_DIR/" || return 1
+	cp PKG/usr/local/lib/libmpc.a "$HSCT_LIB_DIR/" || return 1
+	
+	msg "Copying tests..."
+	# Copy the tests
+	(
+		mkdir -p "$HSCT_MISC_DIR/${shipname}/"
+		cd tests || return 1
+		
+		# Why this has executable bit set is a mystery
+		chmod -x mul.dat || true
+		
+		cp *.dat* "$HSCT_MISC_DIR/${shipname}/"
+		echo "echo Running ${shipname} tests..." >"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh"
+		find . -executable -type f | while read testname; do
+			cp "$testname" "$HSCT_MISC_DIR/${shipname}/$testname" || exit 1
+			echo "$testname" | sed 's#./##' >>"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh"
+		done || exit 1
+	) || return 1
+}
+
+dist() {
+	msg "Not implemented!"
+}
+
