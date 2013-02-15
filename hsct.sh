@@ -73,15 +73,15 @@ hsct_get_config() {
 hsct_fetch() {
 	mkdir -p "$HSCT_SOURCES_DIR"
 	hsct_info "Fetching sources..."
-	for url in $ptsources; do
-		filename=`basename "$url"`
-		if [ "$filename" = "$url" ]; then
+	for _url in $ptsources; do
+		_filename=`basename "$_url"`
+		if [ "$_filename" = "$_url" ]; then
 			continue
 		fi
-		if ! [ -r "$HSCT_SOURCES_DIR/$filename" ]; then
-			hsct_info2 "Fetching $filename..."
-			wget "$url" -O "$HSCT_SOURCES_DIR/$filename" || \
-				hsct_fatal "Failed to fetch $url."
+		if ! [ -r "$HSCT_SOURCES_DIR/$_filename" ]; then
+			hsct_info2 "Fetching $_filename..."
+			wget "$_url" -O "$HSCT_SOURCES_DIR/$_filename" || \
+				hsct_fatal "Failed to fetch $_url."
 		fi
 		# TODO - check MD5
 	done
@@ -129,73 +129,73 @@ hsct_prepare_env_build() {
 	export HSCT_NM=`echo "$AR" | sed 's/-ar$/-nm/'`
 
 	# Get the flags
-	CFLAGS=`hsct_get_var_from_uspace CFLAGS`
-	LDFLAGS=`hsct_get_var_from_uspace LFLAGS`
-	LINKER_SCRIPT=`hsct_get_var_from_uspace LINKER_SCRIPT`
+	_CFLAGS=`hsct_get_var_from_uspace CFLAGS`
+	_LDFLAGS=`hsct_get_var_from_uspace LFLAGS`
+	_LINKER_SCRIPT=`hsct_get_var_from_uspace LINKER_SCRIPT`
 	
 	# Get rid of the disabled CFLAGS
-	CFLAGS_OLD="$CFLAGS"
-	CFLAGS=""
-	for flag in $CFLAGS_OLD; do
-		disabled=false
-		for disabled_flag in $HSCT_DISABLED_CFLAGS; do
-			if [ "$disabled_flag" = "$flag" ]; then
-				disabled=true
+	_CFLAGS_OLD="$_CFLAGS"
+	_CFLAGS=""
+	for _flag in $_CFLAGS_OLD; do
+		_disabled=false
+		for _disabled_flag in $HSCT_DISABLED_CFLAGS; do
+			if [ "$_disabled_flag" = "$_flag" ]; then
+				_disabled=true
 				break
 			fi
 		done
-		if ! $disabled; then
-			CFLAGS="$CFLAGS $flag"
+		if ! $_disabled; then
+			_CFLAGS="$_CFLAGS $_flag"
 		fi
 	done
 	
 	
 	
-	POSIX_LIB="$HSCT_HELENOS_ROOT/uspace/lib/posix"
+	_POSIX_LIB="$HSCT_HELENOS_ROOT/uspace/lib/posix"
 	# Include paths
-	POSIX_INCLUDES="-I$POSIX_LIB/include/posix -I$POSIX_LIB/include"
+	_POSIX_INCLUDES="-I$_POSIX_LIB/include/posix -I$_POSIX_LIB/include"
 	# Paths to libraries
-	POSIX_LIBS_LFLAGS="-L$POSIX_LIB -L$HSCT_HELENOS_ROOT/uspace/lib/c -L$HSCT_HELENOS_ROOT/uspace/lib/softint -L$HSCT_HELENOS_ROOT/uspace/lib/softfloat"
+	_POSIX_LIBS_LFLAGS="-L$_POSIX_LIB -L$HSCT_HELENOS_ROOT/uspace/lib/c -L$HSCT_HELENOS_ROOT/uspace/lib/softint -L$HSCT_HELENOS_ROOT/uspace/lib/softfloat"
 	# Actually used libraries
 	# The --whole-archive is used to allow correct linking of static libraries
 	# (otherwise, the ordering is crucial and we usally cannot change that in the
 	# application Makefiles).
-	POSIX_LINK_LFLAGS="--whole-archive --start-group -lposix -lsoftint --end-group --no-whole-archive -lc"
-	POSIX_BASE_LFLAGS="-n -T $LINKER_SCRIPT"
+	_POSIX_LINK_LFLAGS="--whole-archive --start-group -lposix -lsoftint --end-group --no-whole-archive -lc"
+	_POSIX_BASE_LFLAGS="-n -T $_LINKER_SCRIPT"
 
 
 	# Update LDFLAGS
-	LDFLAGS="$LDFLAGS $POSIX_LIBS_LFLAGS $POSIX_LINK_LFLAGS $POSIX_BASE_LFLAGS"
+	_LDFLAGS="$_LDFLAGS $_POSIX_LIBS_LFLAGS $_POSIX_LINK_LFLAGS $_POSIX_BASE_LFLAGS"
 
 	# The LDFLAGS might be used through CC, thus prefixing with -Wl is required
-	LDFLAGS_FOR_CC=""
-	for flag in $LDFLAGS; do
-		LDFLAGS_FOR_CC="$LDFLAGS_FOR_CC -Wl,$flag"
+	_LDFLAGS_FOR_CC=""
+	for _flag in $_LDFLAGS; do
+		_LDFLAGS_FOR_CC="$_LDFLAGS_FOR_CC -Wl,$_flag"
 	done
 	
 	# Update the CFLAGS
-	export HSCT_CFLAGS="$POSIX_INCLUDES $CFLAGS $EXTRA_CFLAGS"
-	export HSCT_LDFLAGS_FOR_CC="$LDFLAGS_FOR_CC"
-	export HSCT_LDFLAGS="$LDFLAGS"
+	export HSCT_CFLAGS="$_POSIX_INCLUDES $_CFLAGS"
+	export HSCT_LDFLAGS_FOR_CC="$_LDFLAGS_FOR_CC"
+	export HSCT_LDFLAGS="$_LDFLAGS"
 	
 	# Target architecture
-	UARCH=`hsct_get_var_from_uspace UARCH`
-	TARGET=""
-	case $UARCH in
+	_UARCH=`hsct_get_var_from_uspace UARCH`
+	_TARGET=""
+	case $_UARCH in
 		ia32)
-			TARGET="i686-pc-linux-gnu"
+			_TARGET="i686-pc-linux-gnu"
 			;;
 		amd64)
-			TARGET="amd64-linux-gnu"
+			_TARGET="amd64-linux-gnu"
 			;;
 		mips32)
-			TARGET="mipsel-linux-gnu"
+			_TARGET="mipsel-linux-gnu"
 			;;
 		*)
-			hsct_fatal "Unsupported architecture $UARCH."
+			hsct_fatal "Unsupported architecture $_UARCH."
 			;;
 	esac
-	export HSCT_GNU_TARGET="$TARGET"
+	export HSCT_GNU_TARGET="$_TARGET"
 }
 
 hsct_prepare_env_package() {
@@ -218,14 +218,14 @@ hsct_build() {
 	
 	hsct_fetch
 	
-	for url in $ptsources; do
-		filename=`basename "$url"`
-		if [ "$filename" = "$url" ]; then
-			origin="$HSCT_HOME/$PORT_NAME/$filename" 
+	for _url in $ptsources; do
+		_filename=`basename "$_url"`
+		if [ "$_filename" = "$_url" ]; then
+			_origin="$HSCT_HOME/$PORT_NAME/$_filename" 
 		else
-			origin="$HSCT_SOURCES_DIR/$filename"
+			_origin="$HSCT_SOURCES_DIR/$_filename"
 		fi
-		ln -sf "$origin" "$HSCT_BUILD_DIR/$PORT_NAME/$filename"
+		ln -sf "$_origin" "$HSCT_BUILD_DIR/$PORT_NAME/$_filename"
 	done
 	
 	hsct_prepare_env_build
