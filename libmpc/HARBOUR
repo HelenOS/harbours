@@ -32,8 +32,8 @@ shipversion=1.0.1
 shipsources="http://www.multiprecision.org/${shipname_}/download/${shipname_}-${shipversion}.tar.gz"
 
 build() {
-	tar xzf ${shipname_}-${shipversion}.tar.gz || return 1
-	cd ${shipname_}-${shipversion} || return 1
+	tar xzf ${shipname_}-${shipversion}.tar.gz
+	cd ${shipname_}-${shipversion}
 	
 	# We shall define this macro somewhere, this is not the first
 	# harbour we are defining this macro in
@@ -54,28 +54,28 @@ build() {
 		|| return 1
 	
 	msg "Building the library..."
-	run make || return 1
+	run make
 	
 	msg "Building the tests..."
-	run make check || return 0
+	run make check || true
 }
 
 package() {
-	cd ${shipname_}-${shipversion} || return 1
+	cd ${shipname_}-${shipversion}
 	
 	msg "Pretending standard Unix installation..."
-	run make install DESTDIR=$PWD/PKG || return 1
+	run make install DESTDIR=$PWD/PKG
 	
 	# Copy the headers and static library
 	msg "Copying relevant files to the coast..."
-	cp PKG/usr/local/include/mpc.h "$HSCT_INCLUDE_DIR/" || return 1
-	cp PKG/usr/local/lib/libmpc.a "$HSCT_LIB_DIR/" || return 1
+	cp PKG/usr/local/include/mpc.h "$HSCT_INCLUDE_DIR/"
+	cp PKG/usr/local/lib/libmpc.a "$HSCT_LIB_DIR/"
 	
 	msg "Copying tests..."
 	# Copy the tests
 	(
 		mkdir -p "$HSCT_MISC_DIR/${shipname}/"
-		cd tests || return 1
+		cd tests
 		
 		# Why this has executable bit set is a mystery
 		chmod -x mul.dat || true
@@ -86,7 +86,7 @@ package() {
 			cp "$testname" "$HSCT_MISC_DIR/${shipname}/$testname" || exit 1
 			echo "$testname" | sed 's#./##' >>"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh"
 		done || exit 1
-	) || return 1
+	)
 }
 
 dist() {

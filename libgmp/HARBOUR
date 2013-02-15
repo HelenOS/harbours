@@ -30,9 +30,9 @@ shipname=libgmp
 shipsources="ftp://ftp.gmplib.org/pub/gmp-5.1.0/gmp-5.1.0.tar.bz2 gmp-h.patch"
 
 build() {
-	tar xjf gmp-5.1.0.tar.bz2 || return 1
-	patch -p0 <gmp-h.patch || return 1
-	cd gmp-5.1.0 || return 1
+	tar xjf gmp-5.1.0.tar.bz2
+	patch -p0 <gmp-h.patch
+	cd gmp-5.1.0
 	run ./configure \
 		--disable-shared \
 		--host="$HSCT_GNU_TARGET" \
@@ -42,29 +42,29 @@ build() {
 		|| return 1
 	
 	msg "Building the library..."
-	run make || return 1
+	run make
 	msg "Building the tests..."
-	run make check || return 0
+	run make check || true
 }
 
 package() {
-	cd gmp-5.1.0 || return 1
-	run make install DESTDIR=$PWD/PKG || return 1
+	cd gmp-5.1.0
+	run make install DESTDIR=$PWD/PKG
 	
 	# Copy the headers and static library
-	cp PKG/usr/local/include/gmp.h "$HSCT_INCLUDE_DIR/" || return 1
-	cp PKG/usr/local/lib/libgmp.a "$HSCT_LIB_DIR/" || return 1
+	cp PKG/usr/local/include/gmp.h "$HSCT_INCLUDE_DIR/"
+	cp PKG/usr/local/lib/libgmp.a "$HSCT_LIB_DIR/"
 	
 	# Copy the tests
 	(
 		mkdir -p "$HSCT_MISC_DIR/libgmp/"
-		cd tests || return 1
+		cd tests
 		echo "echo Running libgmp tests..." >"$HSCT_MISC_DIR/libgmp/run_tests.bdsh"
 		find . -executable -type f | while read testname; do
 			cp "$testname" "$HSCT_MISC_DIR/libgmp/$testname" || exit 1
 			echo "$testname" | sed 's#./##' >>"$HSCT_MISC_DIR/libgmp/run_tests.bdsh"
 		done || exit 1
-	) || return 1
+	)
 }
 
 dist() {
