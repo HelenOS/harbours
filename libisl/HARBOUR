@@ -1,0 +1,64 @@
+#
+# Copyright (c) 2013 Vojtech Horky
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# - The name of the author may not be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+shipname=libisl
+shipname_=isl
+shipversion=0.11.1
+shipsources="http://www.kotnet.org/~skimo/${shipname_}/${shipname_}-${shipversion}.tar.bz2 hacks_to_compile_libisl.patch"
+
+build() {
+	msg "This does not work!"
+	return 1
+	
+	cd ${shipname_}-${shipversion}
+		
+	extra_cflags="-I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"
+	
+	# This will somehow compile it but the HelenOS source tree
+	# must be patched with the hacks_to_compile_libisl.patch file.
+	run ./configure \
+		--disable-shared \
+		--host="$HSCT_GNU_TARGET" \
+		CC="$HSCT_CC" \
+		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC $extra_cflags" \
+		LD="$HSCT_LD" \
+		STRIP="$HSCT_STRIP" \
+		AR="$HSCT_AR" \
+		OBJDUMP="$HSCT_OBJDUMP" \
+		NM="$HSCT_NM" \
+		RANLIB="$HSCT_RANLIB"
+}
+
+package() {
+	msg "Not implemented!"
+}
+
+dist() {
+	msg "Not implemented!"
+}
+
