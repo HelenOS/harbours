@@ -35,6 +35,7 @@ HSCT_INCLUDE_DIR=`pwd`/include
 HSCT_LIB_DIR=`pwd`/libs
 HSCT_MISC_DIR=`pwd`/misc
 HSCT_DISABLED_CFLAGS="-Werror -Werror-implicit-function-declaration"
+HSCT_SHOW_EXPORTS=false
 
 hsct_usage() {
 	echo "$1 action [package]"
@@ -123,18 +124,27 @@ hsct_get_var_from_uspace() {
 	fi
 }
 
+hsct_harbour_export() {
+	export "$1"
+	_varname=`echo "$1" | sed 's/=.*//'`
+	if $HSCT_SHOW_EXPORTS; then
+		eval echo "$_varname=\$$_varname" | sed -e 's#"#\\"#g' -e 's#\\#\\\\#g' \
+				-e 's#=\(.*\)#="\1"#' >&2
+	fi
+}
+
 hsct_prepare_env_build() {
 	hsct_info "Obtaining CC, CFLAGS etc."
-	export HSCT_CC=`hsct_get_var_from_uspace CC`
-	export HSCT_AS=`hsct_get_var_from_uspace AS`
-	export HSCT_LD=`hsct_get_var_from_uspace LD`
-	export HSCT_AR=`hsct_get_var_from_uspace AR`
-	export HSCT_STRIP=`hsct_get_var_from_uspace STRIP`
-	export HSCT_OBJCOPY=`hsct_get_var_from_uspace OBJCOPY`
-	export HSCT_OBJDUMP=`hsct_get_var_from_uspace OBJDUMP`
+	hsct_harbour_export HSCT_CC=`hsct_get_var_from_uspace CC`
+	hsct_harbour_export HSCT_AS=`hsct_get_var_from_uspace AS`
+	hsct_harbour_export HSCT_LD=`hsct_get_var_from_uspace LD`
+	hsct_harbour_export HSCT_AR=`hsct_get_var_from_uspace AR`
+	hsct_harbour_export HSCT_STRIP=`hsct_get_var_from_uspace STRIP`
+	hsct_harbour_export HSCT_OBJCOPY=`hsct_get_var_from_uspace OBJCOPY`
+	hsct_harbour_export HSCT_OBJDUMP=`hsct_get_var_from_uspace OBJDUMP`
 	# HelenOS do not use ranlib or nm but some applications require it
-	export HSCT_RANLIB=`echo "$AR" | sed 's/-ar$/-ranlib/'`
-	export HSCT_NM=`echo "$AR" | sed 's/-ar$/-nm/'`
+	hsct_harbour_export HSCT_RANLIB=`echo "$HSCT_AR" | sed 's/-ar$/-ranlib/'`
+	hsct_harbour_export HSCT_NM=`echo "$HSCT_AR" | sed 's/-ar$/-nm/'`
 
 	# Get the flags
 	_CFLAGS=`hsct_get_var_from_uspace CFLAGS`
@@ -182,9 +192,9 @@ hsct_prepare_env_build() {
 	done
 	
 	# Update the CFLAGS
-	export HSCT_CFLAGS="$_POSIX_INCLUDES $_CFLAGS"
-	export HSCT_LDFLAGS_FOR_CC="$_LDFLAGS_FOR_CC"
-	export HSCT_LDFLAGS="$_LDFLAGS"
+	hsct_harbour_export HSCT_CFLAGS="$_POSIX_INCLUDES $_CFLAGS"
+	hsct_harbour_export HSCT_LDFLAGS_FOR_CC="$_LDFLAGS_FOR_CC"
+	hsct_harbour_export HSCT_LDFLAGS="$_LDFLAGS"
 	
 	# Target architecture
 	_UARCH=`hsct_get_var_from_uspace UARCH`
@@ -203,13 +213,13 @@ hsct_prepare_env_build() {
 			hsct_fatal "Unsupported architecture $_UARCH."
 			;;
 	esac
-	export HSCT_GNU_TARGET="$_TARGET"
+	hsct_harbour_export HSCT_GNU_TARGET="$_TARGET"
 }
 
 hsct_prepare_env_package() {
-	export HSCT_INCLUDE_DIR
-	export HSCT_LIB_DIR
-	export HSCT_MISC_DIR
+	hsct_harbour_export HSCT_INCLUDE_DIR
+	hsct_harbour_export HSCT_LIB_DIR
+	hsct_harbour_export HSCT_MISC_DIR
 }
 
 hsct_clean() {
@@ -296,6 +306,15 @@ case "$1" in
 		if [ -z "$HSCT_HARBOUR_NAME" ]; then
 			hsct_usage "$0" 1
 		fi
+		;;
+	env)
+		HSCT_SHOW_EXPORTS=true
+		hsct_prepare_env_build
+		hsct_prepare_env_package
+		# We expect that with this we are actually sourced...
+		return 0 2>/dev/null
+		# ...but if that fails we exit forcefully
+		exit 0
 		;;
 	*)
 		hsct_usage "$0" 1
