@@ -214,13 +214,13 @@ hsct_prepare_env_package() {
 
 hsct_clean() {
 	hsct_info "Cleaning build directory..."
-	rm -rf "$HSCT_BUILD_DIR/$PORT_NAME/"*
+	rm -rf "$HSCT_BUILD_DIR/$shipname/"*
 }
 
 hsct_build() {
-	mkdir -p "$HSCT_BUILD_DIR/$PORT_NAME"
-	if [ -e "$HSCT_BUILD_DIR/${PORT_NAME}.built" ]; then
-		hsct_info "No need to build $PORT_NAME."
+	mkdir -p "$HSCT_BUILD_DIR/$shipname"
+	if [ -e "$HSCT_BUILD_DIR/${shipname}.built" ]; then
+		hsct_info "No need to build $shipname."
 		return 0;
 	fi
 	
@@ -229,21 +229,21 @@ hsct_build() {
 	for _url in $shipsources; do
 		_filename=`basename "$_url"`
 		if [ "$_filename" = "$_url" ]; then
-			_origin="$HSCT_HOME/$PORT_NAME/$_filename" 
+			_origin="$HSCT_HOME/$shipname/$_filename" 
 		else
 			_origin="$HSCT_SOURCES_DIR/$_filename"
 		fi
-		ln -sf "$_origin" "$HSCT_BUILD_DIR/$PORT_NAME/$_filename"
+		ln -sf "$_origin" "$HSCT_BUILD_DIR/$shipname/$_filename"
 	done
 	
 	hsct_prepare_env_build
 	
 	(
-		cd "$HSCT_BUILD_DIR/$PORT_NAME/"
+		cd "$HSCT_BUILD_DIR/$shipname/"
 		hsct_info "Building..."
 		build || hsct_fatal "Build failed!"
 	) || exit $?
-	touch "$HSCT_BUILD_DIR/${PORT_NAME}.built"
+	touch "$HSCT_BUILD_DIR/${shipname}.built"
 }
 
 hsct_package() {
@@ -251,8 +251,8 @@ hsct_package() {
 	mkdir -p "$HSCT_LIB_DIR" || hsct_fatal "Failed to create library directory."
 	mkdir -p "$HSCT_MISC_DIR" || hsct_fatal "Failed to create miscellaneous directory."
 	
-	if [ -e "$HSCT_BUILD_DIR/${PORT_NAME}.packaged" ]; then
-		hsct_info "No need to package $PORT_NAME."
+	if [ -e "$HSCT_BUILD_DIR/${shipname}.packaged" ]; then
+		hsct_info "No need to package $shipname."
 		return 0;
 	fi
 	
@@ -261,11 +261,11 @@ hsct_package() {
 	hsct_prepare_env_package
 	
 	(	
-		cd "$HSCT_BUILD_DIR/$PORT_NAME/"
+		cd "$HSCT_BUILD_DIR/$shipname/"
 		hsct_info "Packaging..."
 		package || hsct_fatal "Packaging failed!"
 	) || exit $?
-	touch "$HSCT_BUILD_DIR/${PORT_NAME}.packaged"
+	touch "$HSCT_BUILD_DIR/${shipname}.packaged"
 }
 
 hsct_install() {
@@ -287,23 +287,33 @@ fi
 HSCT_DIST="$HSCT_HELENOS_ROOT/uspace/dist"
 
 
-if [ -z "$1" ]; then
-	hsct_usage "$0" 1
-fi
+case "$1" in
+	help)
+		hsct_usage "$0" 0
+		;;
+	clean|build|package|install)
+		HSCT_HARBOUR_NAME="$2"
+		if [ -z "$HSCT_HARBOUR_NAME" ]; then
+			hsct_usage "$0" 1
+		fi
+		;;
+	*)
+		hsct_usage "$0" 1
+		;;
+esac
 
-PORT_NAME="$2"
 
-if [ -z "$PORT_NAME" ]; then
-	echo "Package name missing" >&2
-	exit 2
-fi
-
-if ! [ -d "$HSCT_HOME/$PORT_NAME" ]; then
+if ! [ -d "$HSCT_HOME/$HSCT_HARBOUR_NAME" ]; then
 	echo "Unknown package $1" >&2
 	exit 3
 fi
 
-source "$HSCT_HOME/$PORT_NAME/HARBOUR"
+if ! [ -r "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR" ]; then
+	echo "HARBOUR file missing." >&2
+	exit 3
+fi
+
+source "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR"
 
 case "$1" in
 	clean)
@@ -319,8 +329,6 @@ case "$1" in
 		hsct_install
 		;;
 	*)
-		hsct_usage 1
+		hsct_fatal "Internal error, we shall not get to this point!"
 		;;
 esac
-
-
