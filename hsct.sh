@@ -54,6 +54,10 @@ hsct_info2() {
 	echo "     ->" "$@" >&2
 }
 
+msg() {
+	hsct_info "$@"
+}
+
 hsct_fatal() {
 	echo "$@" >&2
 	exit 4
@@ -62,6 +66,10 @@ hsct_fatal() {
 hsct_run_echo() {
 	echo "[hsct]:" "$@"
 	"$@"
+}
+
+run() {
+	hsct_run_echo "$@"
 }
 
 # hsct_get_config CONFIG_FILE variable

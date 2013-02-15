@@ -42,7 +42,7 @@ build() {
 	# Where libgmp is supposed to be residing
 	extra_cflags="$extra_cflags -I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"
 	
-	hsct_run_echo ./configure \
+	run ./configure \
 		--disable-shared \
 		--host="$HSCT_GNU_TARGET" \
             	CC="$HSCT_CC" \
@@ -50,15 +50,16 @@ build() {
 		LD="$HSCT_LD" \
 		|| return 1
 	
-	hsct_info "Building the library..."
-	make || return 1
-	hsct_info "Building the tests..."
-	make check || return 0
+	msg "Building the library..."
+	run make || return 1
+	
+	msg "Building the tests..."
+	run make check || return 0
 }
 
 package() {
 	cd mpfr-3.1.1 || return 1
-	make install DESTDIR=$PWD/PKG || return 1
+	run make install DESTDIR=$PWD/PKG || return 1
 	
 	# Copy the headers and static library
 	cp PKG/usr/local/include/*.h "$HSCT_INCLUDE_DIR/" || return 1
@@ -78,6 +79,6 @@ package() {
 }
 
 dist() {
-	hsct_info "Not implemented!"
+	msg "Not implemented!"
 }
 

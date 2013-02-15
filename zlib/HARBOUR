@@ -32,18 +32,18 @@ shipsources="http://zlib.net/zlib-1.2.7.tar.bz2"
 build() {
 	tar xjf zlib-1.2.7.tar.bz2 || return 1
 	cd zlib-1.2.7 || return 1
-	hsct_run_echo env \
+	run env \
 		CC="$HSCT_CC" \
 		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC" \
 		LD="$HSCT_LD" \
 		./configure \
 			--static || return 1
-	make || return 1
+	run make || return 1
 }
 
 package() {
 	cd zlib-1.2.7 || return 1
-	make install DESTDIR=PKG || return 1
+	run make install DESTDIR=PKG || return 1
 	
 	# Copy the headers and static library
 	cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_INCLUDE_DIR/" || return 1
