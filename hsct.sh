@@ -28,6 +28,22 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+# Calling harbour functions:
+#    These functions are always called in a subshell to "guard" them a little
+# bit (variables set by the harbour, cd into package directory).
+# 
+# Notice on usage of set -o errexit (set -e) 
+#    We want to use that option for the harbour scripts to get rid of the
+# "|| return 1" at the end of each line.
+#    Obvious solution is to wrap the call like this:
+#       (  set -o errexit; build ) || hsct_fatal "Build failed"
+#    This doesn't work because the whole subshell is then part of a ||
+# operand and thus the set -e is ignored (even if it is a subshell).
+# See https://groups.google.com/d/msg/gnu.bash.bug/NCK_0GmIv2M/y6RQF1AWUQkJ
+#    Thus, we need to use the following template to get past this:
+#       ( set -o errexit; build; exit $? ); [ $? -eq 0 ] || hsct_fatal "..."
+#
+
 [ -z "$HSCT_HOME" ] && HSCT_HOME=`dirname "$0"`
 HSCT_SOURCES_DIR=`pwd`/sources
 HSCT_BUILD_DIR=`pwd`/build
@@ -251,8 +267,11 @@ hsct_build() {
 	(
 		cd "$HSCT_BUILD_DIR/$shipname/"
 		hsct_info "Building..."
-		build || hsct_fatal "Build failed!"
-	) || exit $?
+		set -o errexit
+		build
+		exit $?
+	)
+	[ $? -eq 0 ] || hsct_fatal "Build failed!"
 	touch "$HSCT_BUILD_DIR/${shipname}.built"
 }
 
@@ -273,8 +292,11 @@ hsct_package() {
 	(	
 		cd "$HSCT_BUILD_DIR/$shipname/"
 		hsct_info "Packaging..."
-		package || hsct_fatal "Packaging failed!"
-	) || exit $?
+		set -o errexit
+		package
+		exit $?
+	)
+	[ $? -eq 0 ] || hsct_fatal "Packaging failed!"
 	touch "$HSCT_BUILD_DIR/${shipname}.packaged"
 }
 
@@ -285,8 +307,11 @@ hsct_install() {
 	
 	(	
 		hsct_info "Installing..."
-		dist || hsct_fatal "Installing failed!"
-	) || exit $?
+		set -o errexit
+		dist
+		exit $?
+	)
+	[ $? -eq 0 ] || hsct_fatal "Installing failed!"
 }
 
 HSCT_CONFIG=hsct.conf
