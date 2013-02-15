@@ -26,8 +26,8 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-ptname=zlib
-ptsources="http://zlib.net/zlib-1.2.7.tar.bz2"
+shipname=zlib
+shipsources="http://zlib.net/zlib-1.2.7.tar.bz2"
 
 build() {
 	tar xjf zlib-1.2.7.tar.bz2 || return 1

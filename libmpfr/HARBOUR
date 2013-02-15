@@ -26,8 +26,8 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-ptname=libmpfr
-ptsources="http://www.mpfr.org/mpfr-current/mpfr-3.1.1.tar.bz2"
+shipname=libmpfr
+shipsources="http://www.mpfr.org/mpfr-current/mpfr-3.1.1.tar.bz2"
 
 build() {
 	tar xjf mpfr-3.1.1.tar.bz2 || return 1

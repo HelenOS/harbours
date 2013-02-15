@@ -26,8 +26,8 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-ptname=libgmp
-ptsources="ftp://ftp.gmplib.org/pub/gmp-5.1.0/gmp-5.1.0.tar.bz2 gmp-h.patch"
+shipname=libgmp
+shipsources="ftp://ftp.gmplib.org/pub/gmp-5.1.0/gmp-5.1.0.tar.bz2 gmp-h.patch"
 
 build() {
 	tar xjf gmp-5.1.0.tar.bz2 || return 1

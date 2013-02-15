@@ -73,7 +73,7 @@ hsct_get_config() {
 hsct_fetch() {
 	mkdir -p "$HSCT_SOURCES_DIR"
 	hsct_info "Fetching sources..."
-	for _url in $ptsources; do
+	for _url in $shipsources; do
 		_filename=`basename "$_url"`
 		if [ "$_filename" = "$_url" ]; then
 			continue
@@ -218,7 +218,7 @@ hsct_build() {
 	
 	hsct_fetch
 	
-	for _url in $ptsources; do
+	for _url in $shipsources; do
 		_filename=`basename "$_url"`
 		if [ "$_filename" = "$_url" ]; then
 			_origin="$HSCT_HOME/$PORT_NAME/$_filename" 
