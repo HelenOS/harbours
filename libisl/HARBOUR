@@ -32,9 +32,7 @@ shipversion=0.11.1
 shipsources="http://www.kotnet.org/~skimo/${shipname_}/${shipname_}-${shipversion}.tar.bz2 hacks_to_compile_libisl.patch"
 
 build() {
-	msg "This does not work!"
-	return 1
-	
+	tar xjf "${shipname_}-${shipversion}.tar.bz2"
 	cd ${shipname_}-${shipversion}
 		
 	extra_cflags="-I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"
@@ -52,6 +50,8 @@ build() {
 		OBJDUMP="$HSCT_OBJDUMP" \
 		NM="$HSCT_NM" \
 		RANLIB="$HSCT_RANLIB"
+	
+	make
 }
 
 package() {
