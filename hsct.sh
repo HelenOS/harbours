@@ -189,12 +189,12 @@ hsct_prepare_env_build() {
 	# Include paths
 	_POSIX_INCLUDES="-I$_POSIX_LIB/include/posix -I$_POSIX_LIB/include"
 	# Paths to libraries
-	_POSIX_LIBS_LFLAGS="-L$_POSIX_LIB -L$HSCT_HELENOS_ROOT/uspace/lib/c -L$HSCT_HELENOS_ROOT/uspace/lib/softint -L$HSCT_HELENOS_ROOT/uspace/lib/softfloat"
+	_POSIX_LIBS_LFLAGS="-L$_POSIX_LIB -L$HSCT_HELENOS_ROOT/uspace/lib/softint -L$HSCT_HELENOS_ROOT/uspace/lib/softfloat"
 	# Actually used libraries
 	# The --whole-archive is used to allow correct linking of static libraries
 	# (otherwise, the ordering is crucial and we usally cannot change that in the
 	# application Makefiles).
-	_POSIX_LINK_LFLAGS="--whole-archive --start-group -lposix -lsoftint --end-group --no-whole-archive -lc"
+	_POSIX_LINK_LFLAGS="--whole-archive --start-group -lposixaslibc -lsoftint --end-group --no-whole-archive -lc4posix"
 	_POSIX_BASE_LFLAGS="-n -T $_LINKER_SCRIPT"
 
 
