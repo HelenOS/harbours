@@ -370,6 +370,8 @@ if ! [ -r "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR" ]; then
 	exit 3
 fi
 
+HSCT_DIST2="$HSCT_DIST/coast/$HSCT_HARBOUR_NAME/"
+
 source "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR"
 
 case "$1" in
