@@ -27,11 +27,13 @@
 #
 
 shipname=libmpfr
-shipsources="http://www.mpfr.org/mpfr-current/mpfr-3.1.1.tar.bz2"
+shipname_=mpfr
+shipversion=3.1.1
+shipsources="http://www.mpfr.org/${shipname_}-current/${shipname_}-${shipversion}.tar.bz2"
 
 build() {
-	tar xjf mpfr-3.1.1.tar.bz2
-	cd mpfr-3.1.1
+	run tar xjf "${shipname_}-${shipversion}.tar.bz2"
+	cd "${shipname_}-${shipversion}"
 	
 	# Pretend we have something we really do not have
 	extra_cflags="-DCHAR_BIT=8 -D_MPFR_H_HAVE_FILE -D_MPFR_H_HAVE_INTMAX_T"
@@ -58,27 +60,32 @@ build() {
 }
 
 package() {
-	cd mpfr-3.1.1
+	cd "${shipname_}-${shipversion}"
 	run make install DESTDIR=$PWD/PKG
 	
 	# Copy the headers and static library
-	cp PKG/usr/local/include/*.h "$HSCT_INCLUDE_DIR/"
-	cp PKG/usr/local/lib/*.a "$HSCT_LIB_DIR/"
+	run cp PKG/usr/local/include/*.h "$HSCT_INCLUDE_DIR/"
+	run cp PKG/usr/local/lib/*.a "$HSCT_LIB_DIR/"
 	
 	# Copy the tests
 	(
-		mkdir -p "$HSCT_MISC_DIR/libmpfr/"
+		msg "Preparing tests..."
+		run mkdir -p "$HSCT_MISC_DIR/libmpfr/"
 		cd tests
 		cp *.dat* "$HSCT_MISC_DIR/libmpfr/"
 		echo "echo Running libmpfr tests..." >"$HSCT_MISC_DIR/libmpfr/run_tests.bdsh"
 		find . -executable -type f | while read testname; do
-			cp "$testname" "$HSCT_MISC_DIR/libmpfr/$testname" || exit 1
+			run cp "$testname" "$HSCT_MISC_DIR/libmpfr/$testname" || exit 1
 			echo "$testname" | sed 's#./##' >>"$HSCT_MISC_DIR/libmpfr/run_tests.bdsh"
 		done || exit 1		
 	)
 }
 
 dist() {
-	msg "Not implemented!"
+	run mkdir -p "$HSCT_DIST2"
+	run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
 }
 
+undist() {
+	run rm -rf "$HSCT_DIST2"
+}
