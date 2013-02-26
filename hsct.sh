@@ -56,10 +56,11 @@ HSCT_SHOW_EXPORTS=false
 hsct_usage() {
 	echo "$1 action [package]"
 	echo "action can be one of following:"
-	echo "   clean    Clean built directory."
-	echo "   build    Build given package."
-	echo "   package  Save installable files to allow cleaning."
-	echo "   install  Install to uspace/dist of HelenOS."
+	echo "   clean     Clean built directory."
+	echo "   build     Build given package."
+	echo "   package   Save installable files to allow cleaning."
+	echo "   install   Install to uspace/dist of HelenOS."
+	echo "   uninstall Try to remove what was installed to uspace/dist."
 	exit $2
 }
 
@@ -314,6 +315,18 @@ hsct_install() {
 	[ $? -eq 0 ] || hsct_fatal "Installing failed!"
 }
 
+hsct_uninstall() {
+	hsct_prepare_env_package
+
+	(
+		hsct_info "Uninstalling..."
+		set -o errexit
+		undist
+		exit $?
+	)
+	[ $? -eq 0 ] || hsct_fatal "Uninstalling failed!"
+}
+
 HSCT_CONFIG=hsct.conf
 HSCT_HELENOS_ROOT=`hsct_get_config "$HSCT_CONFIG" root`
 if [ -z "$HSCT_HELENOS_ROOT" ]; then
@@ -326,7 +339,7 @@ case "$1" in
 	help)
 		hsct_usage "$0" 0
 		;;
-	clean|build|package|install)
+	clean|build|package|install|uninstall)
 		HSCT_HARBOUR_NAME="$2"
 		if [ -z "$HSCT_HARBOUR_NAME" ]; then
 			hsct_usage "$0" 1
@@ -371,6 +384,9 @@ case "$1" in
 		;;
 	install)
 		hsct_install
+		;;
+	uninstall)
+		hsct_uninstall
 		;;
 	*)
 		hsct_fatal "Internal error, we shall not get to this point!"
