@@ -32,7 +32,7 @@ shipversion=1.0.1
 shipsources="http://www.multiprecision.org/${shipname_}/download/${shipname_}-${shipversion}.tar.gz"
 
 build() {
-	tar xzf ${shipname_}-${shipversion}.tar.gz
+	run tar xzf ${shipname_}-${shipversion}.tar.gz
 	cd ${shipname_}-${shipversion}
 	
 	# We shall define this macro somewhere, this is not the first
@@ -68,28 +68,34 @@ package() {
 	
 	# Copy the headers and static library
 	msg "Copying relevant files to the coast..."
-	cp PKG/usr/local/include/mpc.h "$HSCT_INCLUDE_DIR/"
-	cp PKG/usr/local/lib/libmpc.a "$HSCT_LIB_DIR/"
+	run cp PKG/usr/local/include/mpc.h "$HSCT_INCLUDE_DIR/"
+	run cp PKG/usr/local/lib/libmpc.a "$HSCT_LIB_DIR/"
 	
-	msg "Copying tests..."
 	# Copy the tests
 	(
-		mkdir -p "$HSCT_MISC_DIR/${shipname}/"
+		msg "Preparing tests..."
+		run mkdir -p "$HSCT_MISC_DIR/${shipname}/"
 		cd tests
 		
 		# Why this has executable bit set is a mystery
 		chmod -x mul.dat || true
 		
-		cp *.dat* "$HSCT_MISC_DIR/${shipname}/"
+		run cp *.dat* "$HSCT_MISC_DIR/${shipname}/"
 		echo "echo Running ${shipname} tests..." >"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh"
 		find . -executable -type f | while read testname; do
-			cp "$testname" "$HSCT_MISC_DIR/${shipname}/$testname" || exit 1
+			run cp "$testname" "$HSCT_MISC_DIR/${shipname}/$testname" || exit 1
 			echo "$testname" | sed 's#./##' >>"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh"
 		done || exit 1
 	)
 }
 
 dist() {
-	msg "Not implemented!"
+	run mkdir -p "$HSCT_DIST2"
+	run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
 }
+
+undist() {
+	run rm -rf "$HSCT_DIST2"
+}
+
 
