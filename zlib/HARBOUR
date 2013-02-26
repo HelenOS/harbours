@@ -27,11 +27,12 @@
 #
 
 shipname=zlib
-shipsources="http://zlib.net/zlib-1.2.7.tar.bz2"
+shipversion=1.2.7
+shipsources="http://zlib.net/${shipname}-${shipversion}.tar.bz2"
 
 build() {
-	tar xjf zlib-1.2.7.tar.bz2
-	cd zlib-1.2.7
+	run tar xjf "${shipname}-${shipversion}.tar.bz2"
+	cd "${shipname}-${shipversion}"
 	run env \
 		CC="$HSCT_CC" \
 		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC" \
@@ -42,20 +43,23 @@ build() {
 }
 
 package() {
-	cd zlib-1.2.7
+	cd "${shipname}-${shipversion}"
 	run make install DESTDIR=PKG
 	
 	# Copy the headers and static library
-	cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_INCLUDE_DIR/"
-	cp PKG/usr/local/lib/libz.a "$HSCT_LIB_DIR/"
+	run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_INCLUDE_DIR/"
+	run cp PKG/usr/local/lib/libz.a "$HSCT_LIB_DIR/"
 	
 	# Copy the executables
-	mkdir -p "$HSCT_MISC_DIR/zlib/"
-	cp minigzip minigzip64 example example64 "$HSCT_MISC_DIR/zlib/"
+	run mkdir -p "$HSCT_MISC_DIR/zlib/"
+	run cp minigzip minigzip64 example example64 "$HSCT_MISC_DIR/zlib/"
 }
 
 dist() {
-	mkdir -p "$HSCT_DIST/zlib"
-	cp "$HSCT_MISC_DIR/zlib/"* "$HSCT_DIST/zlib"
+	run mkdir -p "$HSCT_DIST2"
+	run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
 }
 
+undist() {
+	run rm -rf "$HSCT_DIST2"
+}
