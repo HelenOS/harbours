@@ -29,16 +29,14 @@
 shipname=libisl
 shipname_=isl
 shipversion=0.11.1
-shipsources="http://www.kotnet.org/~skimo/${shipname_}/${shipname_}-${shipversion}.tar.bz2 hacks_to_compile_libisl.patch"
+shipsources="http://www.kotnet.org/~skimo/${shipname_}/${shipname_}-${shipversion}.tar.bz2"
 
 build() {
-	tar xjf "${shipname_}-${shipversion}.tar.bz2"
+	run tar xjf "${shipname_}-${shipversion}.tar.bz2"
 	cd ${shipname_}-${shipversion}
 		
 	extra_cflags="-I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"
 	
-	# This will somehow compile it but the HelenOS source tree
-	# must be patched with the hacks_to_compile_libisl.patch file.
 	run ./configure \
 		--disable-shared \
 		--host="$HSCT_GNU_TARGET" \
@@ -51,14 +49,43 @@ build() {
 		NM="$HSCT_NM" \
 		RANLIB="$HSCT_RANLIB"
 	
-	make
+	run make
 }
 
 package() {
-	msg "Not implemented!"
+	cd "${shipname_}-${shipversion}"
+	run make install "DESTDIR=$PWD/PKG"
+	
+	# Copy the headers and static library
+	run mkdir -p "$HSCT_INCLUDE_DIR/${shipname_}"
+	run cp PKG/usr/local/include/${shipname_}/*.h "$HSCT_INCLUDE_DIR/${shipname_}"
+	run cp PKG/usr/local/lib/${shipname}.a "$HSCT_LIB_DIR/"
+	
+	(
+		msg "Preparing tests..."
+		run mkdir -p "$HSCT_MISC_DIR/${shipname}/"
+		run cp isl_pip "$HSCT_MISC_DIR/${shipname}/"
+		cd test_inputs
+		run cp *.pip "$HSCT_MISC_DIR/${shipname}/"
+		echo "echo Running ${shipname} tests..." >"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh"
+		for testname in *.pip; do
+			# This is taken from pip_test.sh
+			cat >>"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh" <<EOF_PIP_TEST
+echo --- $testname ---
+from $testname | isl_pip --format=set --context=gbr -T
+from $testname | isl_pip --format=set --context=lexmin -T
+from $testname | isl_pip --format=affine --context=gbr -T
+from $testname | isl_pip --format=affine --context=lexmin -T
+EOF_PIP_TEST
+		done || exit 1
+	)
 }
 
 dist() {
-	msg "Not implemented!"
+	run mkdir -p "$HSCT_DIST2"
+	run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
 }
 
+undist() {
+	run rm -rf "$HSCT_DIST2"
+}
