@@ -44,7 +44,11 @@
 #       ( set -o errexit; build; exit $? ); [ $? -eq 0 ] || hsct_fatal "..."
 #
 
-[ -z "$HSCT_HOME" ] && HSCT_HOME=`dirname "$0"`
+HSCT_HOME=`which -- "$0" 2>/dev/null`
+# Maybe, we are running Bash
+[ -z "$HSCT_HOME" ] && HSCT_HOME=`which -- "$BASH_SOURCE" 2>/dev/null`
+HSCT_HOME=`dirname -- "$HSCT_HOME"`
+
 HSCT_SOURCES_DIR=`pwd`/sources
 HSCT_BUILD_DIR=`pwd`/build
 HSCT_INCLUDE_DIR=`pwd`/include
