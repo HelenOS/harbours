@@ -61,7 +61,6 @@ hsct_usage() {
 	echo "   package   Save installable files to allow cleaning."
 	echo "   install   Install to uspace/dist of HelenOS."
 	echo "   uninstall Try to remove what was installed to uspace/dist."
-	exit $2
 }
 
 hsct_info() {
@@ -76,9 +75,8 @@ msg() {
 	hsct_info "$@"
 }
 
-hsct_fatal() {
-	echo "$@" >&2
-	exit 4
+hsct_error() {
+	echo "[hsct]:" "Error:" "$@" >&2
 }
 
 hsct_run_echo() {
@@ -106,11 +104,14 @@ hsct_fetch() {
 		fi
 		if ! [ -r "$HSCT_SOURCES_DIR/$_filename" ]; then
 			hsct_info2 "Fetching $_filename..."
-			wget "$_url" -O "$HSCT_SOURCES_DIR/$_filename" || \
-				hsct_fatal "Failed to fetch $_url."
+			if ! wget "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
+				hsct_error "Failed to fetch $_url."
+				return 1
+			fi
 		fi
 		# TODO - check MD5
 	done
+	return 0
 }
 
 
@@ -148,6 +149,7 @@ hsct_harbour_export() {
 		eval echo "$_varname=\$$_varname" | sed -e 's#"#\\"#g' -e 's#\\#\\\\#g' \
 				-e 's#=\(.*\)#="\1"#' >&2
 	fi
+	return 0 
 }
 
 hsct_prepare_env_build() {
@@ -227,16 +229,19 @@ hsct_prepare_env_build() {
 			_TARGET="mipsel-linux-gnu"
 			;;
 		*)
-			hsct_fatal "Unsupported architecture $_UARCH."
+			hsct_error 'Unsupported architecture: $(UARCH) =' "'$_UARCH'."
+			return 1
 			;;
 	esac
 	hsct_harbour_export HSCT_GNU_TARGET="$_TARGET"
+	return 0
 }
 
 hsct_prepare_env_package() {
 	hsct_harbour_export HSCT_INCLUDE_DIR
 	hsct_harbour_export HSCT_LIB_DIR
 	hsct_harbour_export HSCT_MISC_DIR
+	return 0
 }
 
 hsct_clean() {
@@ -248,10 +253,10 @@ hsct_build() {
 	mkdir -p "$HSCT_BUILD_DIR/$shipname"
 	if [ -e "$HSCT_BUILD_DIR/${shipname}.built" ]; then
 		hsct_info "No need to build $shipname."
-		return 0;
+		return 0
 	fi
 	
-	hsct_fetch
+	hsct_fetch || return 1
 	
 	for _url in $shipsources; do
 		_filename=`basename "$_url"`
@@ -263,7 +268,7 @@ hsct_build() {
 		ln -sf "$_origin" "$HSCT_BUILD_DIR/$shipname/$_filename"
 	done
 	
-	hsct_prepare_env_build
+	hsct_prepare_env_build || return 1
 	
 	(
 		cd "$HSCT_BUILD_DIR/$shipname/"
@@ -272,8 +277,12 @@ hsct_build() {
 		build
 		exit $?
 	)
-	[ $? -eq 0 ] || hsct_fatal "Build failed!"
+	if [ $? -ne 0 ]; then
+		hsct_error "Build failed!"
+		return 1
+	fi
 	touch "$HSCT_BUILD_DIR/${shipname}.built"
+	return 0
 }
 
 hsct_package() {
@@ -286,9 +295,9 @@ hsct_package() {
 		return 0;
 	fi
 	
-	hsct_build
+	hsct_build || return 1
 	
-	hsct_prepare_env_package
+	hsct_prepare_env_package || return 1
 	
 	(	
 		cd "$HSCT_BUILD_DIR/$shipname/"
@@ -297,14 +306,18 @@ hsct_package() {
 		package
 		exit $?
 	)
-	[ $? -eq 0 ] || hsct_fatal "Packaging failed!"
+	if [ $? -ne 0 ]; then
+		hsct_error "Packaging failed!"
+		return 1
+	fi
 	touch "$HSCT_BUILD_DIR/${shipname}.packaged"
+	return 0
 }
 
 hsct_install() {
-	hsct_package
+	hsct_package || return 1
 
-	hsct_prepare_env_package
+	hsct_prepare_env_package || return 1
 	
 	(	
 		hsct_info "Installing..."
@@ -312,11 +325,15 @@ hsct_install() {
 		dist
 		exit $?
 	)
-	[ $? -eq 0 ] || hsct_fatal "Installing failed!"
+	if [ $? -ne 0 ]; then
+		hsct_error "Installing failed!"
+		return 1
+	fi
+	return 0
 }
 
 hsct_uninstall() {
-	hsct_prepare_env_package
+	hsct_prepare_env_package || return 0
 
 	(
 		hsct_info "Uninstalling..."
@@ -324,50 +341,58 @@ hsct_uninstall() {
 		undist
 		exit $?
 	)
-	[ $? -eq 0 ] || hsct_fatal "Uninstalling failed!"
+	if [ $? -ne 0 ]; then
+		hsct_error "Uninstalling failed!"
+		return 1
+	fi
+	return 0
 }
+
+alias leave_script_ok='return 0 2>/dev/null || exit 0'
+alias leave_script_err='return 1 2>/dev/null || exit 1'
 
 HSCT_CONFIG=hsct.conf
 HSCT_HELENOS_ROOT=`hsct_get_config "$HSCT_CONFIG" root`
 if [ -z "$HSCT_HELENOS_ROOT" ]; then
-	hsct_fatal "root not set in $HSCT_CONFIG"
+	hsct_error "root not set in $HSCT_CONFIG"
+	leave_script_err
 fi
 HSCT_DIST="$HSCT_HELENOS_ROOT/uspace/dist"
 
 
 case "$1" in
 	help)
-		hsct_usage "$0" 0
+		hsct_usage "$0"
+		leave_script_ok
 		;;
 	clean|build|package|install|uninstall)
 		HSCT_HARBOUR_NAME="$2"
 		if [ -z "$HSCT_HARBOUR_NAME" ]; then
-			hsct_usage "$0" 1
+			hsct_usage "$0"
+			leave_script_err
 		fi
 		;;
 	env)
 		HSCT_SHOW_EXPORTS=true
-		hsct_prepare_env_build
-		hsct_prepare_env_package
-		# We expect that with this we are actually sourced...
-		return 0 2>/dev/null
-		# ...but if that fails we exit forcefully
-		exit 0
+		hsct_prepare_env_build || leave_script_err
+		hsct_prepare_env_package || leave_script_err
+		leave_script_ok
 		;;
 	*)
-		hsct_usage "$0" 1
+		hsct_usage "$0"
+		leave_script_err
 		;;
 esac
 
 
 if ! [ -d "$HSCT_HOME/$HSCT_HARBOUR_NAME" ]; then
-	echo "Unknown package $1" >&2
-	exit 3
+	hsct_error "Unknown package $1"
+	leave_script_err
 fi
 
 if ! [ -r "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR" ]; then
-	echo "HARBOUR file missing." >&2
-	exit 3
+	hsct_error "HARBOUR file missing." >&2
+	leave_script_err
 fi
 
 HSCT_DIST2="$HSCT_DIST/coast/$HSCT_HARBOUR_NAME/"
@@ -391,6 +416,13 @@ case "$1" in
 		hsct_uninstall
 		;;
 	*)
-		hsct_fatal "Internal error, we shall not get to this point!"
+		hsct_error "Internal error, we shall not get to this point!"
+		leave_script_err
 		;;
 esac
+
+if [ $? -eq 0 ]; then
+	leave_script_ok
+else
+	leave_script_err
+fi
