@@ -12,6 +12,9 @@ script, called HARBOUR (because it is a port).
 The wrapper script ``hsct.sh`` then takes care of downloading the necessary
 sources and running the user-defined commands.
 
+The whole idea is highly inspired by a
+`makepkg <https://wiki.archlinux.org/index.php/Makepkg>`_.
+
 
 Using the coastline
 -------------------
@@ -75,47 +78,154 @@ After booting HelenOS, ``minigzip`` shall be available in ``/coast/zlib``.
 
 Writing your own HARBOUR files
 ------------------------------
-This part would be finished later.
-For now, following hints must be sufficient:
+The HARBOUR file is actually a shell script fragment.
+The coastline script ``hsct.sh`` expects to find some variables and functions
+declared in it.
+These variables declare URLs of the source tarballs or versions while the
+functions actually build (or install) the application/library/whatever.
 
-- take inspiration from existing harbours
-- variable ``shipsources`` must contain the required sources,
-  separate them by spaces
-  
-  - local files (e.g. patches) are referenced just by the file name
-  - wget is used for downloading them
+Each HARBOUR is supposed to be in a separate directory.
+This directory is placed together with the ``hsct.sh`` script.
 
-- function ``build`` is invoked when building the package
-  
-  - it must take care of unpacking the source
-  - configuring it
-  - and finally building it
-  - following variables are available (not all of the are listed here,
-    run ``~/helenos/coast/hsct.sh env`` for a full list)
-    
-    - ``$HSCT_CC`` - C compiler to use
-    - ``$HSCT_CFLAGS`` - C flags to use
-    - ``$HSCT_LDFLAGS`` - linker flags
-    - ``$HSCT_LDFLAGS_FOR_CC`` - linker flags preceded by ``-Wl,`` - useful
-      when ``CC`` is used for linking as well
-      
+The commands in individual functions are expected to use special
+variables prepared by the wrapper script that would contain information
+about selected compiler (i.e. full path to GCC) or flags for the compiler
+to use.
+These variables are prefixed with ``HSCT_`` followed by the name commonly
+used in ``Makefile``s or in ``configure`` scripts
+(e.g. ``HSCT_CC`` contains path to the C compiler).
 
-- function ``package`` shall copy headers, libraries and executables outside
-  of the source tree
+However, usually it is not possible to write the HARBOUR file directly:
+for example various arguments to ``./configure`` scripts have to be tried
+or extra ``CFLAGS`` might be necessary.
+To simplify this it is possible to run the ``hsct.sh`` script in mode when
+it only prints (and exports) all the ``$HSCT_`` variables.
 
-  - ``$HSCT_INCLUDE_DIR`` points to directory for header files
-  - ``$HSCT_LIB_DIR`` points to directory for libraries
-  - ``$HSCT_MISC_DIR`` points to directory for other stuff (it is recommended
-    to create a subdirectory ``$HSCT_MISC_DIR/$shipname`` for these extra
-    files)
+Running::
 
-- function ``dist`` copies files to HelenOS source tree
+	~/helenos/coast/hsct.sh env
 
-  - ``$HSCT_DIST`` points to ``uspace/dist`` inside the source tree
-  - ``$HSCT_DIST2`` points to ``uspace/dist/coast/$shipname`` (but you need
-    to create this directory first)
+would list the variables available.
+If this command is sourced (notice the dot at the beginning)::
 
-- function ``undist`` removes files copied by ``dist``
-- it is highly recommended to precede all the commands with ``run`` to
-  echo them to the screen
-- for custom messages, you may call ``msg``
+	. ~/helenos/coast/hsct.sh env
+	
+then the printed variables are actually created in the current shell.
+You can then use them when running the commands responsible for the
+application building.
+
+Follows a shortened list of variables available.
+
+- ``$HSCT_CC``: C compiler to use.
+- ``$HSCT_CFLAGS``: C flags to use.
+- ``$HSCT_LD``: linker to use.
+- ``$HSCT_LDFLAGS``: linker flags
+- ``$HSCT_LDFLAGS_FOR_CC``: linker flags preceded by ``-Wl,``.
+  This is extremely useful when linker is not called explicitly and compiler
+  is used for linking as well.
+  Some of the flags would be recognized during the compilation phase so
+  marking them as linker-specific effectively hides them.
+- ``$HSCT_GNU_TARGET``: Target for which the application is being built.
+  Typically this is the value for the ``--host`` option of the ``configure``
+  script.
+
+Following variables are useful when the application is successfully built
+and you want to copy some of the created files elsewhere.
+E.g. to the HelenOS source tree so they could become part of the generated
+image.
+
+- ``$HSCT_INCLUDE_DIR``: Points to directory for header files.
+- ``$HSCT_LIB_DIR``: Points to directory for libraries.
+- ``$HSCT_MISC_DIR``: Points to directory for any other stuff.
+  It is recommended to create a subdirectory ``$HSCT_MISC_DIR/application-name``
+  for these extra files).
+
+For example, the ``./configure`` script for `libgmp <http://gmplib.org/>`_
+uses the following variables::
+
+	./configure \
+		--disable-shared \
+		--host="$HSCT_GNU_TARGET" \
+		CC="$HSCT_CC" \
+		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC <more flags>" \
+		LD="$HSCT_LD"
+
+Once you know the command sequence that leads to a successful built you
+should record this sequence into the HARBOUR file.
+The easiest way is to take an existing one and just change it for the
+particular application.
+
+The variable ``shipname`` declares the package (application or library)
+name and shall be the same as the directory the HARBOUR is part of.
+
+The variable ``shipsources`` contains space separated list of tarballs
+or other files that needs to be downloaded.
+Obviously, you can use ``$shipname`` inside as shell does the expansion.
+To simplify updating of the packages, it is a good practice to have
+variable ``$shipversion`` containing the application version and use this
+variable inside ``$shipsources``.
+If you need to reference a local file (a patch for example),
+just write a bare name there.
+The files are downloaded with ``wget`` so make sure the protocol used
+and the path format is supported by this tool.
+
+For building is used a ``build()`` function.
+The function is expected to complete the following tasks:
+
+- unpack the tarballs
+- configure the application or somehow prepare it for building
+- actually build it
+
+Look into existing files how does this process typically looks like.
+
+If you want to print an informative message to the screen, it is recommended
+to use ``msg()`` function as it would make the message more visible.
+
+To simplify debugging it is recommended to run commands prefixed with
+function named ``run``.
+That way the actual command is first printed to the screen and then
+executed.
+
+Once the application is built it is necessary to copy its files to a more
+permanent storage (to allow clean-up of the build directory) and finally copy
+the files to the HelenOS source tree.
+
+The function ``package()`` copies the files outside of the build directory
+and it typically consists of similar commands
+(this one is taken from ``zlib``)::
+
+	package() {
+		# shipname is "zlib" here
+		cd "${shipname}-${shipversion}"
+		
+		# Pretend we are actually installing
+		run make install "DESTDIR=$PWD/PKG"
+		
+		# Copy the headers and static library
+		run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_INCLUDE_DIR/"
+		run cp PKG/usr/local/lib/libz.a "$HSCT_LIB_DIR/"
+	}
+	
+The ``dist()`` function is used to copy these files to the HelenOS source
+tree.
+You have following two variables to simplify the path specification:
+
+- ``$HSCT_DIST``: points to ``uspace/dist`` inside the source tree.
+- ``$HSCT_DIST2``: points to ``uspace/dist/coast/$shipname``.
+  However, you first need to create this directory.
+
+Typically, the ``dist()`` function looks like this::
+
+	dist() {
+		run mkdir -p "$HSCT_DIST2"
+		run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
+	}
+
+Finally, there is ``undist()`` function that removes the files from the
+HelenOS source tree.
+Typical implementation is very simple::
+
+	undist() {
+		run rm -rf "$HSCT_DIST2"
+	}
+
