@@ -73,7 +73,7 @@ disk space.
 
 Finally, running::
 
-	~/helenos/coast/hsct.sh package zlib
+	~/helenos/coast/hsct.sh install zlib
 
 would copy zlib to HelenOS source tree so that you can actually try it live.
 After booting HelenOS, ``minigzip`` shall be available in ``/coast/zlib``.
