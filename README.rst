@@ -2,18 +2,20 @@ HelenOS coastline: build POSIX applications for HelenOS
 =======================================================
 
 This repository contains scripts that should simplify porting POSIX
-applications to run in HelenOS.
+applications to run in `HelenOS <http://www.helenos.org>`_.
 The motivation for this mini-project is that porting GNU/POSIX applications
 to HelenOS is mostly about setting correctly the CFLAGS when running
 ``./configure`` and then copying the generated executables somewhere to
 ``uspace/dist``.
 The idea is that this procedure would be recorded in a form of a simple shell
-script, called HARBOUR (because it is a port).
+script, called harbour (because it is a port).
 The wrapper script ``hsct.sh`` then takes care of downloading the necessary
-sources and running the user-defined commands.
+sources and running the user-defined commands from respective ``HARBOUR`` file.
 
-The whole idea is highly inspired by a
+The whole idea is highly inspired by
 `makepkg <https://wiki.archlinux.org/index.php/Makepkg>`_.
+
+
 
 
 Using the coastline
@@ -34,6 +36,7 @@ HelenOS first.
 Some of the prepared packages depends on some changes in ``libposix`` that
 are not yet in mainline, thus it is recommended to build against
 `lp:~vojtech-horky/helenos/gcc-port <https://code.launchpad.net/~vojtech-horky/helenos/gcc-port>`_.
+
 ``~/helenos/gcc-port`` might be a good location where to make the
 checkout.
 Once you checkout the branch, configure it for ``ia32`` and build it.
@@ -47,7 +50,7 @@ After the build is complete, it is possible to actually compile and build
 some of the ported software.
 But before that, a ``hsct.conf`` has to be prepared in
 ``~/helenos/coast-builds/ia32`` that contains the following line (path
-to the actual HelenOS root):
+to the actual HelenOS root)::
 
 	root = /home/username/helenos/gcc-port
 
@@ -76,15 +79,17 @@ would copy zlib to HelenOS source tree so that you can actually try it live.
 After booting HelenOS, ``minigzip`` shall be available in ``/coast/zlib``.
 
 
+
+
 Writing your own HARBOUR files
 ------------------------------
-The HARBOUR file is actually a shell script fragment.
+The ``HARBOUR`` file is actually a shell script fragment.
 The coastline script ``hsct.sh`` expects to find some variables and functions
 declared in it.
 These variables declare URLs of the source tarballs or versions while the
 functions actually build (or install) the application/library/whatever.
 
-Each HARBOUR is supposed to be in a separate directory.
+Each ``HARBOUR`` is supposed to be in a separate directory.
 This directory is placed together with the ``hsct.sh`` script.
 
 The commands in individual functions are expected to use special
@@ -95,7 +100,7 @@ These variables are prefixed with ``HSCT_`` followed by the name commonly
 used in ``Makefile``s or in ``configure`` scripts
 (e.g. ``HSCT_CC`` contains path to the C compiler).
 
-However, usually it is not possible to write the HARBOUR file directly:
+However, usually it is not possible to write the ``HARBOUR`` file directly:
 for example various arguments to ``./configure`` scripts have to be tried
 or extra ``CFLAGS`` might be necessary.
 To simplify this it is possible to run the ``hsct.sh`` script in mode when
@@ -126,7 +131,7 @@ Follows a shortened list of variables available.
   Some of the flags would be recognized during the compilation phase so
   marking them as linker-specific effectively hides them.
 - ``$HSCT_GNU_TARGET``: Target for which the application is being built.
-  Typically this is the value for the ``--host`` option of the ``configure``
+  Typically this is the value for the ``--target`` option of the ``configure``
   script.
 
 Following variables are useful when the application is successfully built
@@ -151,12 +156,12 @@ uses the following variables::
 		LD="$HSCT_LD"
 
 Once you know the command sequence that leads to a successful built you
-should record this sequence into the HARBOUR file.
+should record this sequence into the ``HARBOUR`` file.
 The easiest way is to take an existing one and just change it for the
 particular application.
 
 The variable ``shipname`` declares the package (application or library)
-name and shall be the same as the directory the HARBOUR is part of.
+name and shall be the same as the directory the ``HARBOUR`` is part of.
 
 The variable ``shipsources`` contains space separated list of tarballs
 or other files that needs to be downloaded.
