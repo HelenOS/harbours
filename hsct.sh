@@ -109,6 +109,7 @@ hsct_fetch() {
 		if ! [ -r "$HSCT_SOURCES_DIR/$_filename" ]; then
 			hsct_info2 "Fetching $_filename..."
 			if ! wget "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
+				rm -f "$HSCT_SOURCES_DIR/$_filename"
 				hsct_error "Failed to fetch $_url."
 				return 1
 			fi
