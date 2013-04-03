@@ -29,7 +29,7 @@
 shipname=libmpfr
 shipname_=mpfr
 shipversion=3.1.1
-shipsources="http://www.mpfr.org/${shipname_}-current/${shipname_}-${shipversion}.tar.bz2"
+shipsources="http://www.mpfr.org/${shipname_}-${shipversion}/${shipname_}-${shipversion}.tar.bz2"
 
 build() {
 	run tar xjf "${shipname_}-${shipversion}.tar.bz2"
