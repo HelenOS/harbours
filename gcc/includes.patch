@@ -1,0 +1,12 @@
+--- gcc-4.6.3/include/filenames.h
++++ gcc-4.6.3/include/filenames.h
+@@ -30,6 +30,8 @@
+ extern "C" {
+ #endif
+ 
++#include <sys/types.h>
++
+ #if defined(__MSDOS__) || defined(_WIN32) || defined(__OS2__) || defined (__CYGWIN__)
+ #  ifndef HAVE_DOS_BASED_FILE_SYSTEM
+ #    define HAVE_DOS_BASED_FILE_SYSTEM 1
+

@@ -1,0 +1,163 @@
+#
+# Copyright (c) 2013 Vojtech Horky
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# - The name of the author may not be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+shipname=gcc
+shipversion=4.6.3
+mirror_="ftp://ftp.fu-berlin.de/unix/languages/gcc"
+shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 gcc.template includes.patch libgcc.patch libiberty.patch"
+
+build() {
+	run tar xjf ${shipname}-${shipversion}.tar.bz2
+	
+	
+	msg "Patching sources..."
+	# Missing include diretives
+	patch -p0 <includes.patch
+	# This removes some #error directives that prevents compilation.
+	# I have no idea why the condition does not hold. Need to investigate
+	# this later.
+	patch -p0 <libgcc.patch
+	# Prevent name clashes in getopt.c and fnmatch.c
+	patch -p0 <libiberty.patch
+	
+	# HelenOS does not have its own unwind.h. Luckily,
+	# we may use the one provided by GCC itself.
+	msg "Fixing unwind.h..."
+	run mkdir -p include
+	run cp ${shipname}-${shipversion}/gcc/unwind-generic.h include/unwind.h
+	
+	# There is a name clash on the REVISION macro from config.h
+	# Luckily, we do not need the one from HelenOS and thus simply removing
+	# it from the original config.h shall be okay
+	msg "Purging HelenOS config.h, declaring compiler flags..."
+	sed -e '/REVISION/d' "$HSCT_DIST/../../config.h" >include/helenos_config.h
+	fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/config\.h#-imacros '$PWD'/include/helenos_config.h#'`"
+	
+	# We shall define this macro somewhere, this is not the first
+	# harbour we are defining this macro in
+	extra_ppflags="-DCHAR_BIT=8"
+	
+	# Other preprocessor flags due to bad guesses by configure
+	extra_ppflags="$extra_ppflags -DHAVE_SYS_STAT_H -Dinhibit_libc"
+	extra_ppflags="$extra_ppflags -I$HSCT_INCLUDE_DIR -I`pwd`/include"
+	
+	extra_cflags=""
+	# Do not use HelenOS libc due to file names clashes
+	fixed_cflags="`echo $fixed_cflags | sed 's#-I[^ \t]*lib/c/include##'`"
+	extra_ldflags="-L$HSCT_LIB_DIR"
+	
+	msg "Creating GCC wrapper..."
+	run mkdir -p bin
+	# This is kind of stupid because we do not have separate
+	# preprocessor flags in HelenOS. That is why C flags are empty		
+	m4 \
+		-DCROSS_CC="$HSCT_CC" \
+		-DPPFLAGS="$extra_ppflags $extra_cflags $fixed_cflags" \
+		-DCFLAGS="" \
+		-DLDFLAGS="$extra_ldflags $HSCT_LDFLAGS_FOR_CC" \
+		gcc.template >bin/patched-gcc
+	cc="`pwd`/bin/patched-gcc"
+	run chmod +x "$cc"
+	
+	# We need to trick configure into thinking that we are actually
+	# cross-compiling even if it does not think so.
+	msg "Fixing cross-compilation guesses..."
+	for d in . intl gcc libiberty fixincludes libcpp libdecnumber; do
+		run sed 's/^cross_compiling=no/cross_compiling=yes/' -i \
+			"${shipname}-${shipversion}/$d/configure"
+	done
+	
+	# Somewhere during the compilation C++ compiler is required
+	cxx=`echo "$HSCT_CC" | sed 's/gcc$/g++/'`
+	
+	
+	msg "Building..."
+	
+	# Out-of-source build is recommended for GCC
+	run mkdir build
+	cd build
+	
+	# This is extremely crippled version but it at least compiles
+	run ../${shipname}-${shipversion}/configure \
+		--build=`../${shipname}-${shipversion}/config.guess` \
+		--host=$HSCT_GNU_TARGET \
+		--target=$HSCT_GNU_TARGET \
+		--without-ppl \
+		--without-cloog \
+		--disable-mudflap \
+		--disable-libmudflap \
+		--disable-libgomp \
+		--disable-gomp \
+		--with-system-zlib \
+		--without-headers \
+		--disable-shared \
+		--enable-languages=c \
+		--disable-checking \
+		--disable-lto \
+		--disable-threads \
+		--disable-nls \
+		--disable-libssp \
+		--disable-libquadmath \
+		--enable-decimal-float=dpd \
+		--disable-multilib \
+		--disable-multiarch \
+		--disable-libstdcxx-pch \
+		--disable-libunwind-exceptions \
+		--with-gnu-as \
+		--with-gnu-ld \
+		CC="$cc" \
+		LD="$cc" \
+		AR="$HSCT_AR" \
+		AS="$HSCT_AS" \
+		NM="$HSCT_NM" \
+		OBJCOPY="$HSCT_OBJCOPY" \
+		RANLIB="$HSCT_RANLIB" \
+		STRIP="$HSCT_STRIP" \
+		OBJDUMP="$HSCT_OBJDUMP" \
+		CXX="$cxx" \
+		CC_FOR_TARGET="$cc"
+
+	run make	
+}
+
+package() {
+	msg "Not implemented"
+	false
+}
+
+dist() {
+	msg "Not implemented"
+	false
+}
+
+undist() {
+	msg "Not implemented"
+	false
+}
+
+

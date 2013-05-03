@@ -1,0 +1,34 @@
+--- gcc-4.6.3/libiberty/configure
++++ gcc-4.6.3/libiberty/configure
+@@ -6755,7 +6755,7 @@
+   $as_echo_n "(cached) " >&6
+ else
+   if test "$cross_compiling" = yes; then :
+-  ac_cv_func_strncmp_works=no
++  ac_cv_func_strncmp_works=yes
+ else
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+--- gcc-4.6.3/libiberty/Makefile.in
++++ gcc-4.6.3/libiberty/Makefile.in
+@@ -129,7 +129,7 @@
+ 	dyn-string.c							\
+ 	fdmatch.c ffs.c fibheap.c filename_cmp.c floatformat.c		\
+ 	fnmatch.c fopen_unlocked.c					\
+-	getcwd.c getopt.c getopt1.c getpagesize.c getpwd.c getruntime.c	\
++	getcwd.c getpagesize.c getpwd.c getruntime.c	\
+          gettimeofday.c                                                 \
+ 	hashtab.c hex.c							\
+ 	index.c insque.c						\
+@@ -169,8 +169,8 @@
+ 	./cp-demint.$(objext) ./crc32.$(objext) ./dyn-string.$(objext)	\
+ 	./fdmatch.$(objext) ./fibheap.$(objext)				\
+ 	./filename_cmp.$(objext) ./floatformat.$(objext)		\
+-	./fnmatch.$(objext) ./fopen_unlocked.$(objext)			\
+-	./getopt.$(objext) ./getopt1.$(objext) ./getpwd.$(objext)	\
++	./fopen_unlocked.$(objext)			\
++	./getpwd.$(objext)	\
+ 	./getruntime.$(objext) ./hashtab.$(objext) ./hex.$(objext)	\
+ 	./lbasename.$(objext) ./lrealpath.$(objext)			\
+ 	./make-relative-prefix.$(objext) ./make-temp-file.$(objext)	\
+
