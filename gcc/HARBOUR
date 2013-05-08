@@ -146,18 +146,25 @@ build() {
 }
 
 package() {
-	msg "Not implemented"
-	false
+	cd build
+	run make install "DESTDIR=$PWD/PKG"
+	
+	# Copy the executables
+	run mkdir "$HSCT_APPS_DIR/$shipname"
+	for app in gcc cpp gcov; do
+		run cp PKG/usr/local/bin/$app "$HSCT_APPS_DIR/$shipname"
+	done
+	
+	# TODO: copy the rest of the files
 }
 
 dist() {
-	msg "Not implemented"
-	false
+	run mkdir -p "$HSCT_DIST2"
+	run cp "$HSCT_APPS_DIR/${shipname}/"* "$HSCT_DIST2"
 }
 
 undist() {
-	msg "Not implemented"
-	false
+	run rm -rf "$HSCT_DIST2"
 }
 
 
