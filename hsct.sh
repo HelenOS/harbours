@@ -54,6 +54,7 @@ HSCT_BUILD_DIR=`pwd`/build
 HSCT_INCLUDE_DIR=`pwd`/include
 HSCT_LIB_DIR=`pwd`/libs
 HSCT_MISC_DIR=`pwd`/misc
+HSCT_APPS_DIR=`pwd`/apps
 HSCT_DISABLED_CFLAGS="-Werror -Werror-implicit-function-declaration"
 HSCT_SHOW_EXPORTS=false
 
@@ -246,6 +247,7 @@ hsct_prepare_env_package() {
 	hsct_harbour_export HSCT_INCLUDE_DIR
 	hsct_harbour_export HSCT_LIB_DIR
 	hsct_harbour_export HSCT_MISC_DIR
+	hsct_harbour_export HSCT_APPS_DIR
 	return 0
 }
 
@@ -294,6 +296,7 @@ hsct_package() {
 	mkdir -p "$HSCT_INCLUDE_DIR" || hsct_fatal "Failed to create include directory."
 	mkdir -p "$HSCT_LIB_DIR" || hsct_fatal "Failed to create library directory."
 	mkdir -p "$HSCT_MISC_DIR" || hsct_fatal "Failed to create miscellaneous directory."
+	mkdir -p "$HSCT_APPS_DIR" || hsct_fatal "Failed to create apps directory."
 	
 	if [ -e "$HSCT_BUILD_DIR/${shipname}.packaged" ]; then
 		hsct_info "No need to package $shipname."
