@@ -95,6 +95,9 @@ build() {
 	# Somewhere during the compilation C++ compiler is required
 	cxx=`echo "$HSCT_CC" | sed 's/gcc$/g++/'`
 	
+	# Prevent building documentation
+	# (there is a problem with newer version of texinfo?)
+	sed 's/^BUILD_INFO[ \t]*=.*/BUILD_INFO = /g' -i ${shipname}-${shipversion}/gcc/Makefile.in
 	
 	msg "Building..."
 	
@@ -142,12 +145,12 @@ build() {
 		CXX="$cxx" \
 		CC_FOR_TARGET="$cc"
 
-	run make	
+	run make all-gcc
 }
 
 package() {
 	cd build
-	run make install "DESTDIR=$PWD/PKG"
+	run make install-gcc "DESTDIR=$PWD/PKG"
 	
 	# Copy the executables
 	run mkdir "$HSCT_APPS_DIR/$shipname"
