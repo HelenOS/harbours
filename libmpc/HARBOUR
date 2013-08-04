@@ -30,6 +30,7 @@ shipname=libmpc
 shipname_=mpc
 shipversion=1.0.1
 shipsources="http://www.multiprecision.org/${shipname_}/download/${shipname_}-${shipversion}.tar.gz"
+shiptugs="libgmp libmpfr"
 
 build() {
 	run tar xzf ${shipname_}-${shipversion}.tar.gz

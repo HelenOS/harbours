@@ -30,6 +30,7 @@ shipname=gcc
 shipversion=4.6.3
 mirror_="ftp://ftp.fu-berlin.de/unix/languages/gcc"
 shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 gcc.template includes.patch libgcc.patch libiberty.patch"
+shiptugs="libgmp libmpfr libmpc libisl"
 
 build() {
 	run tar xjf ${shipname}-${shipversion}.tar.bz2
