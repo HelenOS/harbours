@@ -48,6 +48,7 @@ HSCT_HOME=`which -- "$0" 2>/dev/null`
 # Maybe, we are running Bash
 [ -z "$HSCT_HOME" ] && HSCT_HOME=`which -- "$BASH_SOURCE" 2>/dev/null`
 HSCT_HOME=`dirname -- "$HSCT_HOME"`
+HSCT_HSCT="$HSCT_HOME/hsct.sh"
 
 HSCT_SOURCES_DIR=`pwd`/sources
 HSCT_BUILD_DIR=`pwd`/build
@@ -262,6 +263,19 @@ hsct_build() {
 		hsct_info "No need to build $shipname."
 		return 0
 	fi
+	
+	# Check for prerequisities
+	for tug in $shiptugs; do
+		if ! [ -e "$HSCT_BUILD_DIR/${tug}.packaged" ]; then
+			hsct_info "Need to build $tug first."
+			hsct_info2 "Running $HSCT_HSCT package $tug"
+			(
+				$HSCT_HSCT package $tug
+				exit $?
+			) || return 1
+			hsct_info2 "Back from building $tug."
+		fi
+	done
 	
 	hsct_fetch || return 1
 	

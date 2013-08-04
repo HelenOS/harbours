@@ -174,6 +174,11 @@ just write a bare name there.
 The files are downloaded with ``wget`` so make sure the protocol used
 and the path format is supported by this tool.
 
+The variable ``shiptugs`` declares packages this one depends on
+(the twisted fun is here that tugs are required for the ship to actually
+leave the harbour).
+That is a string with space separated list of other ships.
+
 For building is used a ``build()`` function.
 The function is expected to complete the following tasks:
 
