@@ -78,6 +78,17 @@ Finally, running::
 would copy zlib to HelenOS source tree so that you can actually try it live.
 After booting HelenOS, ``minigzip`` shall be available in ``/coast/zlib``.
 
+If you often compile for different architectures, you may want to use the
+``arch`` option in ``hsct.conf`` (it is recommended to use it anyway).
+It contains the short architecture name (such as ``ia32`` or ``mips32``)::
+
+	arch = ia32
+
+and it is checked against currently selected architecture inside your HelenOS
+source tree prior building.
+This ensures that you do not mix different architecture accidentally.
+Empty or missing value means that no check is done at all.
+
 
 
 

@@ -84,6 +84,9 @@ msg() {
 hsct_error() {
 	echo "[hsct]:" "Error:" "$@" >&2
 }
+hsct_error2() {
+	echo "[hsct]:" "  ->  " "$@" >&2
+}
 
 hsct_run_echo() {
 	echo "[hsct]:" "$@"
@@ -223,9 +226,9 @@ hsct_prepare_env_build() {
 	hsct_harbour_export HSCT_LDFLAGS="$_LDFLAGS"
 	
 	# Target architecture
-	_UARCH=`hsct_get_var_from_uspace UARCH`
+	hsct_harbour_export HSCT_UARCH=`hsct_get_var_from_uspace UARCH`
 	HSCT_TARGET=""
-	case $_UARCH in
+	case $HSCT_UARCH in
 		ia32)
 			HSCT_GNU_TARGET="i686-pc-linux-gnu"
 			HSCT_HELENOS_TARGET="i686-pc-helenos"
@@ -239,7 +242,7 @@ hsct_prepare_env_build() {
 			HSCT_HELENOS_TARGET="mipsel-helenos"
 			;;
 		*)
-			hsct_error 'Unsupported architecture: $(UARCH) =' "'$_UARCH'."
+			hsct_error 'Unsupported architecture: $(UARCH) =' "'$HSCT_UARCH'."
 			return 1
 			;;
 	esac
@@ -297,6 +300,16 @@ hsct_build() {
 	done
 	
 	hsct_prepare_env_build || return 1
+	
+	# Check that selected architecture matches current one
+	_arch=`hsct_get_config "$HSCT_CONFIG" arch`
+	if [ -n "$_arch" ]; then
+		if [ "$_arch" '!=' "$HSCT_UARCH" ]; then
+			hsct_error "Target architecture mismatch (allowed is $_arch while HelenOS"
+			hsct_error2 "is configured for $HSCT_UARCH)."
+			return 1
+		fi
+	fi
 	
 	hsct_fetch || return 1
 	
