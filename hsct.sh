@@ -224,23 +224,36 @@ hsct_prepare_env_build() {
 	
 	# Target architecture
 	_UARCH=`hsct_get_var_from_uspace UARCH`
-	_TARGET=""
+	HSCT_TARGET=""
 	case $_UARCH in
 		ia32)
-			_TARGET="i686-pc-linux-gnu"
+			HSCT_GNU_TARGET="i686-pc-linux-gnu"
+			HSCT_HELENOS_TARGET="i686-pc-helenos"
 			;;
 		amd64)
-			_TARGET="amd64-linux-gnu"
+			HSCT_GNU_TARGET="amd64-linux-gnu"
+			HSCT_HELENOS_TARGET="amd64-helenos"
 			;;
 		mips32)
-			_TARGET="mipsel-linux-gnu"
+			HSCT_GNU_TARGET="mipsel-linux-gnu"
+			HSCT_HELENOS_TARGET="mipsel-helenos"
 			;;
 		*)
 			hsct_error 'Unsupported architecture: $(UARCH) =' "'$_UARCH'."
 			return 1
 			;;
 	esac
-	hsct_harbour_export HSCT_GNU_TARGET="$_TARGET"
+	hsct_harbour_export HSCT_GNU_TARGET="$HSCT_GNU_TARGET"
+	hsct_harbour_export HSCT_HELENOS_TARGET="$HSCT_HELENOS_TARGET"
+	case `hsct_get_var_from_uspace COMPILER` in
+		gcc_helenos)
+			hsct_harbour_export HSCT_TARGET="$HSCT_HELENOS_TARGET"
+			;;
+		*)
+			hsct_harbour_export HSCT_TARGET="$HSCT_GNU_TARGET"
+			;;
+	esac
+		
 	return 0
 }
 
