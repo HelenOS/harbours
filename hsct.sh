@@ -296,6 +296,8 @@ hsct_build() {
 		fi
 	done
 	
+	hsct_prepare_env_build || return 1
+	
 	hsct_fetch || return 1
 	
 	for _url in $shipsources; do
@@ -307,8 +309,6 @@ hsct_build() {
 		fi
 		ln -sf "$_origin" "$HSCT_BUILD_DIR/$shipname/$_filename"
 	done
-	
-	hsct_prepare_env_build || return 1
 	
 	(
 		cd "$HSCT_BUILD_DIR/$shipname/"
