@@ -277,6 +277,12 @@ hsct_build() {
 		return 0
 	fi
 	
+	# Check that the HelenOS source tree is in configured state
+	if ! [ -e "$HSCT_HELENOS_ROOT/Makefile.config" ]; then
+		hsct_error "It seems that HelenOS is not configured (Makefile.config is missing)."
+		return 1
+	fi
+	
 	# Check for prerequisities
 	for tug in $shiptugs; do
 		if ! [ -e "$HSCT_BUILD_DIR/${tug}.packaged" ]; then
