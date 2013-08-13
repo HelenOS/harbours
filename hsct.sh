@@ -36,12 +36,19 @@
 #    We want to use that option for the harbour scripts to get rid of the
 # "|| return 1" at the end of each line.
 #    Obvious solution is to wrap the call like this:
-#       (  set -o errexit; build ) || hsct_fatal "Build failed"
+#       (  set -o errexit; build ) || { hsct_error "..."; return 1; }
 #    This doesn't work because the whole subshell is then part of a ||
 # operand and thus the set -e is ignored (even if it is a subshell).
 # See https://groups.google.com/d/msg/gnu.bash.bug/NCK_0GmIv2M/y6RQF1AWUQkJ
 #    Thus, we need to use the following template to get past this:
-#       ( set -o errexit; build; exit $? ); [ $? -eq 0 ] || hsct_fatal "..."
+#       ( set -o errexit; build; exit $? );
+#       [ $? -eq 0 ] || { hsct_error "..."; return 1; }
+#
+# Also notice that we never ever call exit from the top-most shell when
+# leaving after an error. That is to prevent terminating user shell when
+# this script is sourced ("env" command). It complicates the error handling
+# a bit but it is more reliable than trying to guess whether we are running
+# in a subshell or not.
 #
 
 HSCT_HOME=`which -- "$0" 2>/dev/null`
@@ -341,10 +348,10 @@ hsct_build() {
 }
 
 hsct_package() {
-	mkdir -p "$HSCT_INCLUDE_DIR" || hsct_fatal "Failed to create include directory."
-	mkdir -p "$HSCT_LIB_DIR" || hsct_fatal "Failed to create library directory."
-	mkdir -p "$HSCT_MISC_DIR" || hsct_fatal "Failed to create miscellaneous directory."
-	mkdir -p "$HSCT_APPS_DIR" || hsct_fatal "Failed to create apps directory."
+	mkdir -p "$HSCT_INCLUDE_DIR" || { hsct_error "Failed to create include directory."; return 1; }
+	mkdir -p "$HSCT_LIB_DIR" || { hsct_error "Failed to create library directory."; return 1; }
+	mkdir -p "$HSCT_MISC_DIR" || { hsct_error "Failed to create miscellaneous directory."; return 1; }
+	mkdir -p "$HSCT_APPS_DIR" || { hsct_error "Failed to create apps directory."; return 1; }
 	
 	if [ -e "$HSCT_BUILD_DIR/${shipname}.packaged" ]; then
 		hsct_info "No need to package $shipname."
