@@ -108,7 +108,7 @@ variables prepared by the wrapper script that would contain information
 about selected compiler (i.e. full path to GCC) or flags for the compiler
 to use.
 These variables are prefixed with ``HSCT_`` followed by the name commonly
-used in ``Makefile``s or in ``configure`` scripts
+used in ``Makefile``\s or in ``configure`` scripts
 (e.g. ``HSCT_CC`` contains path to the C compiler).
 
 However, usually it is not possible to write the ``HARBOUR`` file directly:
