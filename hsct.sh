@@ -256,6 +256,8 @@ hsct_prepare_env_build() {
 			hsct_harbour_export HSCT_TARGET="$HSCT_GNU_TARGET"
 			;;
 	esac
+	
+	hsct_harbour_export HSTC_HELENOS_ROOT="$HSCT_HELENOS_ROOT"
 		
 	return 0
 }
