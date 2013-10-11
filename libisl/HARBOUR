@@ -29,7 +29,7 @@
 shipname=libisl
 shipname_=isl
 shipversion=0.11.1
-shipsources="http://www.kotnet.org/~skimo/${shipname_}/${shipname_}-${shipversion}.tar.bz2"
+shipsources="http://isl.gforge.inria.fr/${shipname_}-${shipversion}.tar.bz2"
 shiptugs="libgmp"
 
 build() {
