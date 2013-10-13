@@ -179,6 +179,7 @@ package() {
 	for app in gcc cpp gcov; do
 		run cp PKG/usr/local/bin/$app "$HSCT_APPS_DIR/$shipname"
 	done
+	run cp PKG/usr/local/libexec/gcc/i686-pc-linux-gnu/4.6.3/cc1 "$HSCT_APPS_DIR/$shipname"
 	
 	# TODO: copy the rest of the files
 }
