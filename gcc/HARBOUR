@@ -106,9 +106,18 @@ build() {
 	run mkdir build
 	cd build
 	
+	# Although we are forcing the cross-compilation, sometimes
+	# it is apparently not enough. This is an ungly hack until we
+	# patch the sources with some *-helenos-* target.
+	self_target=`../${shipname}-${shipversion}/config.guess`
+	if [ "$self_target" = "$HSCT_GNU_TARGET" ]; then
+		# Only works for building ia32 on i686
+		self_target=`echo "$self_target" | sed 's/686/386/'`
+	fi
+	
 	# This is extremely crippled version but it at least compiles
 	run ../${shipname}-${shipversion}/configure \
-		--build=`../${shipname}-${shipversion}/config.guess` \
+		--build=$self_target \
 		--host=$HSCT_GNU_TARGET \
 		--target=$HSCT_GNU_TARGET \
 		--without-ppl \
