@@ -7,7 +7,7 @@ run_it() {
 
 # These will be replaced by m4
 cross_cc="CROSS_CC"
-ppflags="PPFLAGS"
+ppflags="PPFLAGS -D__helenos__"
 cflags="CFLAGS"
 ldflags="LDFLAGS"
 

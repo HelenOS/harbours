@@ -29,7 +29,7 @@
 shipname=gcc
 shipversion=4.6.3
 mirror_="ftp://ftp.fu-berlin.de/unix/languages/gcc"
-shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 gcc.template includes.patch libgcc.patch libiberty.patch"
+shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 gcc.template includes.patch libgcc.patch libiberty.patch pex-helenos.c"
 shiptugs="libgmp libmpfr libmpc libisl zlib"
 
 build() {
@@ -91,6 +91,19 @@ build() {
 	find -name configure | while read fname; do
 		run sed 's/^cross_compiling=no/cross_compiling=yes/' -i "$fname"
 	done
+	
+	# PEX is used to wrap different means to launch an external program
+	# We do not implement the fork() system call, we need to fix it to
+	# use the task_spawn() API.
+	# As the msdos version is not needed at all, we replace it with our
+	# own at various places to ensure the HelenOS version is built
+	# correctly.
+	msg "Providing our pex implementation..."
+	run cp pex-helenos.c "${shipname}-${shipversion}/libiberty/"
+	run sed \
+		-e 's/@pexecute@/pex-helenos/' \
+		-e 's/pex-msdos/pex-helenos/g' \
+		-i "${shipname}-${shipversion}/libiberty/Makefile.in"
 	
 	# Somewhere during the compilation C++ compiler is required
 	cxx=`echo "$HSCT_CC" | sed 's/gcc$/g++/'`
