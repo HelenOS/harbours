@@ -88,9 +88,8 @@ build() {
 	# We need to trick configure into thinking that we are actually
 	# cross-compiling even if it does not think so.
 	msg "Fixing cross-compilation guesses..."
-	for d in . intl gcc libiberty fixincludes libcpp libdecnumber; do
-		run sed 's/^cross_compiling=no/cross_compiling=yes/' -i \
-			"${shipname}-${shipversion}/$d/configure"
+	find -name configure | while read fname; do
+		run sed 's/^cross_compiling=no/cross_compiling=yes/' -i "$fname"
 	done
 	
 	# Somewhere during the compilation C++ compiler is required
