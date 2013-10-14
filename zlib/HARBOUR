@@ -27,11 +27,11 @@
 #
 
 shipname=zlib
-shipversion=1.2.7
-shipsources="http://zlib.net/${shipname}-${shipversion}.tar.bz2"
+shipversion=1.2.8
+shipsources="http://zlib.net/${shipname}-${shipversion}.tar.gz"
 
 build() {
-	run tar xjf "${shipname}-${shipversion}.tar.bz2"
+	run tar xzf "${shipname}-${shipversion}.tar.gz"
 	cd "${shipname}-${shipversion}"
 	run env \
 		CC="$HSCT_CC" \
