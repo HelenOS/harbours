@@ -45,6 +45,9 @@ build() {
 	patch -p0 <libgcc.patch
 	# Prevent name clashes in getopt.c and fnmatch.c
 	patch -p0 <libiberty.patch
+
+	sed 's/\(static search_line_fast_type search_line_fast\);/\1 = search_line_acc_char;/' \
+		-i "${shipname}-${shipversion}/libcpp/lex.c"
 	
 	# HelenOS does not have its own unwind.h. Luckily,
 	# we may use the one provided by GCC itself.
