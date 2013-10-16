@@ -597,14 +597,6 @@ pex_unix_exec_child (struct pex_obj *obj, int flags, const char *executable,
                      int in, int out, int errdes,
 		     int toclose, const char **errmsg, int *err)
 {
-  printf("pex_exec_child(\"%s\"", executable);
-  char * const *argv_it = argv;
-  while (*argv_it != NULL) {
-	  printf(", \"%s\"", *argv_it);
-	  argv_it++;
-  }
-  printf(", %d, %d, %d)\n", in, out, errdes);
-
   int *files[4];
   files[0] = &in;
   files[1] = &out;
@@ -615,7 +607,6 @@ pex_unix_exec_child (struct pex_obj *obj, int flags, const char *executable,
   char  full_path[1024];
   snprintf(full_path, 1023, "/app/%s", executable);
   int rc = task_spawnvf(&task_id, full_path, argv, files);
-  printf("pex_exec_child, spawned %d, rc=%d\n", (int) task_id, rc);
 
   if (rc != 0) {
     *err = rc;
@@ -765,7 +756,6 @@ pex_unix_wait (struct pex_obj *obj, pid_t pid, int *status,
 	       struct pex_time *time, int done, const char **errmsg,
 	       int *err)
 {
-  printf("pex_unix_wait(%d, done=%d)\n", (int) pid, done);
   /* If we are cleaning up when the caller didn't retrieve process
      status for some reason, encourage the process to go away.  */
   if (done)
