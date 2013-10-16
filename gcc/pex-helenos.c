@@ -774,10 +774,19 @@ pex_unix_wait (struct pex_obj *obj, pid_t pid, int *status,
   task_exit_t task_exit;
   int task_retval;
   int rc = task_wait((task_id_t) pid, &task_exit, &task_retval);
-  if ((rc != 0) || (task_exit == TASK_EXIT_UNEXPECTED)) {
-    *status = -1;
-    *errmsg = "wait";
-    return -1;
+  if (rc != 0) {
+	  *err = -rc;
+	  *errmsg = "task_wait";
+	  *status = -rc;
+	  return -1;
+  } else {
+	  if (task_exit == TASK_EXIT_UNEXPECTED) {
+		  *status = INT_MIN;
+		  return -1;
+	  } else {
+		  *status = task_retval;
+		  return 0;
+	  }
   }
 
   return 0;
