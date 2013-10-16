@@ -46,7 +46,7 @@ build() {
 	# Prevent name clashes in getopt.c and fnmatch.c
 	patch -p0 <libiberty.patch
 
-	sed 's/\(static search_line_fast_type search_line_fast\);/\1 = search_line_acc_char;/' \
+	run sed 's/\(static search_line_fast_type search_line_fast\);/\1 = search_line_acc_char;/' \
 		-i "${shipname}-${shipversion}/libcpp/lex.c"
 	run sed '/fopen/s#w+b#wb+#' -i "${shipname}-${shipversion}/gcc/toplev.c"
 	
@@ -97,7 +97,7 @@ build() {
 	done
 
 	# We really do not need to fix any includes
-	sed 's/STMP_FIXINC=stmp-fixinc/STMP_FIXINC=/' -i "${shipname}-${shipversion}/gcc/configure"
+	run sed 's/STMP_FIXINC=stmp-fixinc/STMP_FIXINC=/' -i "${shipname}-${shipversion}/gcc/configure"
 	
 	# PEX is used to wrap different means to launch an external program
 	# We do not implement the fork() system call, we need to fix it to
