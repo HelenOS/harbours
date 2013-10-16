@@ -32,6 +32,9 @@ shipsources="http://zlib.net/${shipname}-${shipversion}.tar.gz"
 
 build() {
 	run tar xzf "${shipname}-${shipversion}.tar.gz"
+	# FIXME - need to create patch replacing all write() with write_all()
+	# because apparently zlib expects that write() has to write() everything
+	# (see gzwrite.c:84).
 	cd "${shipname}-${shipversion}"
 	run env \
 		CC="$HSCT_CC" \
