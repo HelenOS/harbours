@@ -48,6 +48,7 @@ build() {
 
 	sed 's/\(static search_line_fast_type search_line_fast\);/\1 = search_line_acc_char;/' \
 		-i "${shipname}-${shipversion}/libcpp/lex.c"
+	run sed '/fopen/s#w+b#wb+#' -i "${shipname}-${shipversion}/gcc/toplev.c"
 	
 	# HelenOS does not have its own unwind.h. Luckily,
 	# we may use the one provided by GCC itself.
