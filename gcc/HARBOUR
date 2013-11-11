@@ -194,6 +194,13 @@ package() {
 dist() {
 	run mkdir -p "$HSCT_DIST2"
 	run cp "$HSCT_APPS_DIR/${shipname}/"* "$HSCT_DIST2"
+	msg "Creating install script"
+	cat >"$HSCT_DIST/coast/install.gcc" <<EOF_INSTALLER
+mv coast/gcc/cc1 /app/cc1
+mv coast/gcc/cpp /app/cpp
+mv coast/gcc/gcc /app/gcc 
+mv coast/gcc/gcov /app/gcov
+EOF_INSTALLER
 }
 
 undist() {
