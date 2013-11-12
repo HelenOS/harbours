@@ -1,0 +1,129 @@
+#
+# Copyright (c) 2013 Vojtech Horky
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# - The name of the author may not be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# This harbour is based on scripts and patches from HelenOS
+# source tree. Thanks to Petr Koupy for creating the original
+# binutils port and for figuring most of the difficult stuff out.
+#
+
+shipname=binutils
+shipversion=2.21.1
+mirror_="ftp://ftp.gnu.org/gnu/binutils/"
+shipsources="$mirror_/$shipname-$shipversion.tar.bz2 pex-helenos.c"
+shiptugs=""
+
+build() {
+	run tar xjf ${shipname}-${shipversion}.tar.bz2
+	
+	# Get rid of HelenOS libc include path as it causes name clashes
+	# (over sort.h).
+	fixed_cflags="`echo $HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC | sed 's#-I[^ \t]*lib/c/include##'`"
+	# And add flags when configure is not that smart
+	extra_cflags="-D__helenos__ -DHAVE_STDLIB_H -DHAVE_SYS_STAT_H -Wno-error -Wl,--undefined=longjmp"
+	
+	
+	msg "Patching sources..."
+	# Prevent name clashes in getopt.c
+	run sed \
+		-e '1i#pragma weak optind' \
+		-e '1i#pragma weak optarg' \
+		-e '1i#pragma weak opterr' \
+		-e '1i#pragma weak optopt' \
+		-e '1i#pragma weak getopt' \
+		-i "${shipname}-${shipversion}/libiberty/getopt.c"
+	run sed \
+		-e '1i#pragma weak getopt_long' \
+		-i "${shipname}-${shipversion}/libiberty/getopt1.c"
+	
+	
+	# PEX implementation copied from GCC harbour
+	msg "Providing our pex implementation..."
+	run cp pex-helenos.c "${shipname}-${shipversion}/libiberty/"
+	run sed \
+		-e 's/@pexecute@/pex-helenos/' \
+		-e 's/pex-msdos/pex-helenos/g' \
+		-i "${shipname}-${shipversion}/libiberty/Makefile.in"
+	
+	
+	msg "Fixing BFD and core files"
+	run sed 's/COREFILE=".*"/COREFILE='\'\''/g' -i "${shipname}-${shipversion}/bfd/configure"
+	run sed 's/COREFILE=[^ ]*/COREFILE='\'\''/g' -i "${shipname}-${shipversion}/bfd/configure"
+	
+	
+	cd ${shipname}-${shipversion}
+	run ./configure \
+		--build=`./config.guess` \
+		--host="$HSCT_GNU_TARGET" \
+		--disable-nls \
+		--disable-shared \
+		--enable-static \
+		--with-zlib=no \
+		--with-ppl=no \
+		--with-cloog=no \
+		--with-gmp=no \
+		--with-mpfr=no \
+		--with-mpc=no \
+		CC="$HSCT_CC" \
+		LD="$HSCT_LD" \
+		CFLAGS="$fixed_cflags $extra_cflags" \
+		AR="$HSCT_AR" \
+		AS="$HSCT_AS" \
+		NM="$HSCT_NM" \
+		OBJCOPY="$HSCT_OBJCOPY" \
+		RANLIB="$HSCT_RANLIB" \
+		STRIP="$HSCT_STRIP" \
+		OBJDUMP="$HSCT_OBJDUMP"
+	
+	run make all-gas all-ld
+}
+
+package() {
+	cd ${shipname}-${shipversion}
+	
+	run make install-gas install-ld "DESTDIR=$PWD/PKG"
+	
+	run mkdir "$HSCT_APPS_DIR/$shipname"
+	for app in as ld; do
+		run cp PKG/usr/local/bin/$app "$HSCT_APPS_DIR/$shipname"
+	done
+}
+
+dist() {
+	run mkdir -p "$HSCT_DIST2"
+	run cp "$HSCT_APPS_DIR/${shipname}/"* "$HSCT_DIST2"
+	msg "Creating install script"
+	cat >"$HSCT_DIST/coast/install.binutils" <<EOF_INSTALLER
+mv coast/binutils/as /app/as
+mv coast/binutils/ld /app/ld
+EOF_INSTALLER
+}
+
+undist() {
+	run rm -rf "$HSCT_DIST2"
+}
