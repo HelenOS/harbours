@@ -29,7 +29,7 @@
 shipname=gcc
 shipversion=4.6.3
 mirror_="ftp://ftp.fu-berlin.de/unix/languages/gcc"
-shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 gcc.template includes.patch libgcc.patch libiberty.patch pex-helenos.c"
+shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 gcc.template includes.patch libiberty.patch pex-helenos.c"
 shiptugs="libgmp libmpfr libmpc libisl zlib"
 
 build() {
@@ -39,10 +39,6 @@ build() {
 	msg "Patching sources..."
 	# Missing include diretives
 	patch -p0 <includes.patch
-	# This removes some #error directives that prevents compilation.
-	# I have no idea why the condition does not hold. Need to investigate
-	# this later.
-	patch -p0 <libgcc.patch
 	# Prevent name clashes in getopt.c and fnmatch.c
 	patch -p0 <libiberty.patch
 
