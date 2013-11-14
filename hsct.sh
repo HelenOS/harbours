@@ -67,13 +67,18 @@ HSCT_DISABLED_CFLAGS="-Werror -Werror-implicit-function-declaration"
 HSCT_SHOW_EXPORTS=false
 
 hsct_usage() {
-	echo "$1 action [package]"
-	echo "action can be one of following:"
-	echo "   clean     Clean built directory."
-	echo "   build     Build given package."
-	echo "   package   Save installable files to allow cleaning."
-	echo "   install   Install to uspace/dist of HelenOS."
-	echo "   uninstall Try to remove what was installed to uspace/dist."
+	echo "Usage:"
+	echo " $1 action [package]"
+	echo "    Action can be one of following:"
+	echo "       clean     Clean built directory."
+	echo "       build     Build given package."
+	echo "       package   Save installable files to allow cleaning."
+	echo "       install   Install to uspace/dist of HelenOS."
+	echo "       uninstall Try to remove what was installed to uspace/dist."
+	echo " $1 env"
+	echo "    Display variables prepared for HARBOUR scripts."
+	echo " $1 help"
+	echo "    Display this help and exit."
 }
 
 hsct_info() {
