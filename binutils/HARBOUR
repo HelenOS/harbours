@@ -35,7 +35,7 @@
 shipname=binutils
 shipversion=2.21.1
 mirror_="ftp://ftp.gnu.org/gnu/binutils/"
-shipsources="$mirror_/$shipname-$shipversion.tar.bz2 pex-helenos.c"
+shipsources="$mirror_/$shipname-$shipversion.tar.bz2 pex-helenos.c gcc.template"
 shiptugs=""
 
 build() {
@@ -43,12 +43,13 @@ build() {
 	
 	# Get rid of HelenOS libc include path as it causes name clashes
 	# (over sort.h).
-	fixed_cflags="`echo $HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC | sed 's#-I[^ \t]*lib/c/include##'`"
+	fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-I[^ \t]*lib/c/include##'`"
 	# And add flags when configure is not that smart
-	extra_cflags="-D__helenos__ -DHAVE_STDLIB_H -DHAVE_SYS_STAT_H -Wno-error -Wl,--undefined=longjmp"
+	extra_ppflags="-DHAVE_STDLIB_H -DHAVE_SYS_STAT_H"
+	extra_cflags="-Wl,--undefined=longjmp"
 	
 	
-	msg "Patching sources..."
+	msg "Weakening some symbols..."
 	# Prevent name clashes in getopt.c
 	run sed \
 		-e '1i#pragma weak optind' \
@@ -60,6 +61,12 @@ build() {
 	run sed \
 		-e '1i#pragma weak getopt_long' \
 		-i "${shipname}-${shipversion}/libiberty/getopt1.c"
+	run sed \
+		-e '1i#pragma weak strncmp' \
+		-i "${shipname}-${shipversion}/libiberty/strncmp.c"
+	run sed \
+		-e '1i#pragma weak fnmatch' \
+		-i "${shipname}-${shipversion}/libiberty/fnmatch.c"
 	
 	
 	# PEX implementation copied from GCC harbour
@@ -74,7 +81,26 @@ build() {
 	msg "Fixing BFD and core files"
 	run sed 's/COREFILE=".*"/COREFILE='\'\''/g' -i "${shipname}-${shipversion}/bfd/configure"
 	run sed 's/COREFILE=[^ ]*/COREFILE='\'\''/g' -i "${shipname}-${shipversion}/bfd/configure"
+	run sed "s#CORE_HEADER='.*'#CORE_HEADER=''#g" -i "${shipname}-${shipversion}/bfd/configure"
 	
+	msg "Creating GCC wrapper..."
+	run mkdir -p bin
+	# This is kind of stupid because we do not have separate
+	# preprocessor flags in HelenOS. That is why C flags are empty
+	m4 \
+		-DCROSS_CC="$HSCT_CC" \
+		-DPPFLAGS="$extra_ppflags $extra_cflags $fixed_cflags" \
+		-DCFLAGS="" \
+		-DLDFLAGS="$extra_ldflags $HSCT_LDFLAGS_FOR_CC" \
+		gcc.template >bin/patched-gcc
+	cc="`pwd`/bin/patched-gcc"
+	run chmod +x "$cc"
+	
+	
+	msg "Fixing cross-compilation guesses..."
+	find "${shipname}-${shipversion}" -name configure | while read fname; do
+		run sed 's/^cross_compiling=no/cross_compiling=yes/' -i "$fname"
+	done
 	
 	cd ${shipname}-${shipversion}
 	run ./configure \
@@ -89,9 +115,9 @@ build() {
 		--with-gmp=no \
 		--with-mpfr=no \
 		--with-mpc=no \
-		CC="$HSCT_CC" \
-		LD="$HSCT_LD" \
-		CFLAGS="$fixed_cflags $extra_cflags" \
+		CC="$cc" \
+		LD="$cc" \
+		CC_FOR_TARGET="$cc" \
 		AR="$HSCT_AR" \
 		AS="$HSCT_AS" \
 		NM="$HSCT_NM" \
