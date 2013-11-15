@@ -270,10 +270,18 @@ hsct_init() {
 	# Linker script
 	hsct_info2 "Copying linker script and startup object file"
 	_LINKER_SCRIPT=`hsct_get_var_from_uspace LINKER_SCRIPT`
-	_STARTUP_OBJECT=`sed -n 's#.*STARTUP(\([^)]*\)).*#\1#p' <"$_LINKER_SCRIPT"`
-	cp "$_STARTUP_OBJECT" "$HSCT_CACHE_DIR/lib/entry.o"
-	sed "s#$_STARTUP_OBJECT#$HSCT_CACHE_DIR/lib/entry.o#" \
-		<"$_LINKER_SCRIPT" >"$HSCT_CACHE_DIR/link.ld"
+	(
+		set -o errexit
+		_STARTUP_OBJECT=`sed -n 's#.*STARTUP(\([^)]*\)).*#\1#p' <"$_LINKER_SCRIPT" 2>/dev/null`
+		cp "$_STARTUP_OBJECT" "$HSCT_CACHE_DIR/lib/entry.o" || return 1 
+		sed "s#$_STARTUP_OBJECT#$HSCT_CACHE_DIR/lib/entry.o#" \
+			<"$_LINKER_SCRIPT" >"$HSCT_CACHE_DIR/link.ld"
+	)
+	if [ $? -ne 0 ]; then
+		hsct_error "Failed preparing linker script."
+		return 1
+	fi
+	
 	_LINKER_SCRIPT="$HSCT_CACHE_DIR/link.ld"
 	
 	# Libraries
@@ -285,15 +293,27 @@ hsct_init() {
 		"$HSTC_HELENOS_ROOT/uspace/lib/posix/libc4posix.a" \
 		"$HSTC_HELENOS_ROOT/uspace/lib/posix/libposixaslibc.a" \
 		"$HSCT_CACHE_DIR/lib/"
+	if [ $? -ne 0 ]; then
+		hsct_error "Failed copying libraries to cache."
+		return 1
+	fi
 	
 	# Headers
 	hsct_info2 "Copying headers"
-	cp "$HSTC_HELENOS_ROOT/config.h" "$HSCT_CACHE_DIR/include/system_config.h"
-	cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/posix/include/posix/" "$HSCT_CACHE_DIR/include/"
-	mkdir -p "$HSCT_CACHE_DIR/include/libc"
-	cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/include/"* "$HSCT_CACHE_DIR/include/libc"
-	cp -L -R "$HSTC_HELENOS_ROOT/abi/include/abi/" "$HSCT_CACHE_DIR/include/"
-	cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/arch/$HSCT_UARCH/include/libarch/" "$HSCT_CACHE_DIR/include/"
+	(
+		set -o errexit
+		cp "$HSTC_HELENOS_ROOT/config.h" "$HSCT_CACHE_DIR/include/system_config.h"
+		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/posix/include/posix/" "$HSCT_CACHE_DIR/include/"
+		mkdir -p "$HSCT_CACHE_DIR/include/libc"
+		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/include/"* "$HSCT_CACHE_DIR/include/libc"
+		cp -L -R "$HSTC_HELENOS_ROOT/abi/include/abi/" "$HSCT_CACHE_DIR/include/"
+		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/arch/$HSCT_UARCH/include/libarch/" "$HSCT_CACHE_DIR/include/"
+	)
+	if [ $? -ne 0 ]; then
+		hsct_error "Failed copying headers to cache."
+		return 1
+	fi
+		
 	
 	
 	#
@@ -436,7 +456,6 @@ hsct_build() {
 	
 	if hsct_can_update_cache; then
 		if ! hsct_init; then
-			hsct_error "Failed to initialize/update the cache."
 			return 1
 		fi
 	fi
