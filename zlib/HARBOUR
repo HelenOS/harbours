@@ -47,7 +47,7 @@ build() {
 
 package() {
 	cd "${shipname}-${shipversion}"
-	run make install DESTDIR=PKG
+	run make install DESTDIR=$PWD/PKG
 	
 	# Copy the headers and static library
 	run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_INCLUDE_DIR/"
