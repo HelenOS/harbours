@@ -608,8 +608,10 @@ hsct_global_init() {
 				hsct_error "Failed to automatically configure HelenOS for $2."
 				return 1
 			fi
-			_uarch=`echo "$2" | cut '-d/' -f 1`
 		fi
+	fi
+	if [ -z "$_uarch" ]; then
+		_uarch=`echo "$2" | cut '-d/' -f 1`
 	fi
 	
 	hsct_info2 "Generating the configuration file."
