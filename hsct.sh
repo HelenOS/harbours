@@ -570,15 +570,82 @@ hsct_uninstall() {
 	return 0
 }
 
+hsct_global_init() {
+	if [ -e "$HSCT_CONFIG" ]; then
+		hsct_error "Directory is already initialized ($HSCT_CONFIG exists)."
+		return 1
+	fi
+	
+	hsct_info "Initializing this build directory."
+	_root_dir=`( cd "$1"; pwd ) 2>/dev/null`
+	if ! [ -e "$_root_dir/HelenOS.config" ]; then
+		hsct_error "$1 does not look like a valid HelenOS directory.";
+		return 1
+	fi
+	
+	# If no architecture is specified, we would read it from
+	# Makefile.config
+	_uarch=`hsct_get_var_from_uspace UARCH`
+	if [ -z "$2" ]; then	
+		if [ -z "$_uarch" ]; then
+			hsct_error "HelenOS is not configured and you haven't specified the architecture";
+			return 1
+		fi
+	fi
+	if [ "$3" = "build" ]; then
+		if [ "$_uarch" != "$2" ]; then
+			(
+				set -o errexit
+				cd "$_root_dir"
+				hsct_info2 "Cleaning previous configuration in $PWD."
+				make distclean >/dev/null 2>&1
+				hsct_info2 "Configuring for $2."
+				make Makefile.config "PROFILE=$2" HANDS_OFF=y >/dev/null
+				hsct_info2 "Building (may take a while)."
+				make >/dev/null 2>&1
+			)
+			if [ $? -ne 0 ]; then
+				hsct_error "Failed to automatically configure HelenOS for $2."
+				return 1
+			fi
+			_uarch=`echo "$2" | cut '-d/' -f 1`
+		fi
+	fi
+	
+	hsct_info2 "Generating the configuration file."
+	cat >$HSCT_CONFIG <<EOF_CONFIG
+root = $_root_dir
+arch = $_uarch
+EOF_CONFIG
+}
+
 alias leave_script_ok='return 0 2>/dev/null || exit 0'
 alias leave_script_err='return 1 2>/dev/null || exit 1'
 
 HSCT_CONFIG=hsct.conf
-HSCT_HELENOS_ROOT=`hsct_get_config "$HSCT_CONFIG" root`
+
+
+if [ "$1" = "init" ]; then
+	HSCT_HELENOS_ROOT="$2"
+else
+	if ! [ -e "$HSCT_CONFIG" ]; then
+		hsct_error "Configuration file $HSCT_CONFIG missing."
+		leave_script_err
+	fi
+	HSCT_HELENOS_ROOT=`hsct_get_config "$HSCT_CONFIG" root`
+	HSCT_HELENOS_ARCH=`hsct_get_config "$HSCT_CONFIG" arch`
+	
+	if [ -z "$HSCT_HELENOS_ARCH" ]; then
+		hsct_error "I don't know for which architecture you want to build."
+		leave_script_err
+	fi
+fi
+
 if [ -z "$HSCT_HELENOS_ROOT" ]; then
-	hsct_error "root not set in $HSCT_CONFIG"
+	hsct_error "I don't know where is the HelenOS source root."
 	leave_script_err
 fi
+
 HSCT_DIST="$HSCT_HELENOS_ROOT/uspace/dist"
 
 
@@ -593,6 +660,10 @@ case "$1" in
 			hsct_usage "$0"
 			leave_script_err
 		fi
+		;;
+	init)
+		hsct_global_init "$2" "$3" "$4"
+		leave_script_ok
 		;;
 	*)
 		hsct_usage "$0"
