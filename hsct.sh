@@ -413,6 +413,29 @@ hsct_clean() {
 	rm -rf "$HSCT_BUILD_DIR/$shipname/"*
 }
 
+hsct_can_update_cache() {
+	# If HelenOS is configured, we want to update the cache.
+	# However, if architecture is specified only if the current
+	# configuration is the same.
+	_arch=`hsct_get_config "$HSCT_CONFIG" arch`
+	if [ -z "$_arch" ]; then
+		# Building for any architecture. We update the cache if
+		# HelenOS is configured.
+		hsct_is_helenos_configured
+		return $?
+	else
+		# Update the cache only if HelenOS is configured and the
+		# architecture matches
+		if hsct_is_helenos_configured; then
+			_uarch=`hsct_get_var_from_uspace UARCH`
+			[ "$_uarch" = "$_arch" ]
+			return $?
+		else
+			return 1
+		fi
+	fi
+}
+
 hsct_build() {
 	mkdir -p "$HSCT_BUILD_DIR/$shipname"
 	if [ -e "$HSCT_BUILD_DIR/${shipname}.built" ]; then
@@ -420,27 +443,7 @@ hsct_build() {
 		return 0
 	fi
 	
-	# If HelenOS is configured, we want to update the cache.
-	# However, if architecture is specified only if the current
-	# configuration is the same.
-	_update_cache=true
-	_arch=`hsct_get_config "$HSCT_CONFIG" arch`
-	if [ -z "$_arch" ]; then
-		# Building for any architecture. We update the cache if
-		# HelenOS is configured.
-		_update_cache=`hsct_print_condition_result hsct_is_helenos_configured`
-	else
-		# Update the cache only if HelenOS is configured and the
-		# architecture matches
-		if hsct_is_helenos_configured; then
-			_uarch=`hsct_get_var_from_uspace UARCH`
-			_update_cache=`hsct_print_condition_result [ "$_uarch" = "$_arch" ]`
-		else
-			_update_cache=false
-		fi
-	fi
-	
-	if $_update_cache; then
+	if hsct_can_update_cache; then
 		if ! hsct_init; then
 			hsct_error "Failed to initialize/update the cache."
 			return 1
@@ -522,8 +525,12 @@ hsct_package() {
 hsct_install() {
 	hsct_package || return 1
 
-	hsct_prepare_env || return 1
-	
+	if ! hsct_can_update_cache; then
+		hsct_error "Installation cannot be performed."
+		hsct_error2 "HelenOS is not configured for the proper architecture."
+		return 1
+	fi
+
 	(	
 		hsct_info "Installing..."
 		set -o errexit
