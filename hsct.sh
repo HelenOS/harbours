@@ -64,7 +64,7 @@ HSCT_LIB_DIR=`pwd`/libs
 HSCT_MISC_DIR=`pwd`/misc
 HSCT_APPS_DIR=`pwd`/apps
 HSCT_DISABLED_CFLAGS="-Werror -Werror-implicit-function-declaration"
-HSCT_SHOW_EXPORTS=false
+HSCT_CACHE_DIR=`pwd`/helenos
 
 hsct_usage() {
 	echo "Usage:"
@@ -107,6 +107,19 @@ hsct_run_echo() {
 
 run() {
 	hsct_run_echo "$@"
+}
+
+hsct_is_helenos_configured() {
+	[ -e "$HSCT_HELENOS_ROOT/Makefile.config" ]
+	return $?
+}
+
+hsct_print_condition_result() {
+	if "$@"; then
+		echo "true";
+	else
+		echo "false";
+	fi
 }
 
 # hsct_get_config CONFIG_FILE variable
@@ -164,81 +177,61 @@ hsct_get_var_from_uspace() {
 	fi
 }
 
-hsct_harbour_export() {
-	export "$1"
-	_varname=`echo "$1" | sed 's/=.*//'`
-	if $HSCT_SHOW_EXPORTS; then
-		eval echo "$_varname=\$$_varname" | sed -e 's#"#\\"#g' -e 's#\\#\\\\#g' \
-				-e 's#=\(.*\)#="\1"#' >&2
-	fi
-	return 0 
+hsct_cache_variable() {
+	export "$1=$2"
+	(
+		if [ -n "$3" ]; then
+			echo "#" "$3"
+		fi
+		echo -n "export $1=\"";
+		echo -n "$2" | sed -e 's#"#\\"#g' -e 's#\\#\\\\#g'
+		echo "\""
+	) >>"$HSCT_CACHE_DIR/env.sh"
 }
 
-hsct_prepare_env_build() {
-	hsct_info "Obtaining CC, CFLAGS etc."
-	hsct_harbour_export HSCT_CC=`hsct_get_var_from_uspace CC`
-	hsct_harbour_export HSCT_AS=`hsct_get_var_from_uspace AS`
-	hsct_harbour_export HSCT_LD=`hsct_get_var_from_uspace LD`
-	hsct_harbour_export HSCT_AR=`hsct_get_var_from_uspace AR`
-	hsct_harbour_export HSCT_STRIP=`hsct_get_var_from_uspace STRIP`
-	hsct_harbour_export HSCT_OBJCOPY=`hsct_get_var_from_uspace OBJCOPY`
-	hsct_harbour_export HSCT_OBJDUMP=`hsct_get_var_from_uspace OBJDUMP`
+hsct_init() {
+	hsct_info "Caching headers, libraries and compile flags"
+	
+	mkdir -p "$HSCT_CACHE_DIR"
+	(
+		echo "#!/bin/sh"
+		echo
+		echo "# This is automatically generated file."
+		echo "# All changes will be LOST upon next invocation of hsct.sh"
+		echo
+	) >"$HSCT_CACHE_DIR/env.sh"
+	chmod +x "$HSCT_CACHE_DIR/env.sh"
+	
+	
+	#
+	# Start with binaries
+	#
+
+	hsct_cache_variable HSCT_CC `hsct_get_var_from_uspace CC`
+	hsct_cache_variable HSCT_AS `hsct_get_var_from_uspace AS`
+	hsct_cache_variable HSCT_LD `hsct_get_var_from_uspace LD`
+	hsct_cache_variable HSCT_AR `hsct_get_var_from_uspace AR`
+	hsct_cache_variable HSCT_STRIP `hsct_get_var_from_uspace STRIP`
+	hsct_cache_variable HSCT_OBJCOPY `hsct_get_var_from_uspace OBJCOPY`
+	hsct_cache_variable HSCT_OBJDUMP `hsct_get_var_from_uspace OBJDUMP`
 	# HelenOS do not use ranlib or nm but some applications require it
-	hsct_harbour_export HSCT_RANLIB=`echo "$HSCT_AR" | sed 's/-ar$/-ranlib/'`
-	hsct_harbour_export HSCT_NM=`echo "$HSCT_AR" | sed 's/-ar$/-nm/'`
-
-	# Get the flags
-	_CFLAGS=`hsct_get_var_from_uspace CFLAGS`
-	_LDFLAGS=`hsct_get_var_from_uspace LFLAGS`
-	_LINKER_SCRIPT=`hsct_get_var_from_uspace LINKER_SCRIPT`
+	hsct_cache_variable HSCT_RANLIB `echo "$HSCT_AR" | sed 's/-ar$/-ranlib/'`
+	hsct_cache_variable HSCT_NM `echo "$HSCT_AR" | sed 's/-ar$/-nm/'`
 	
-	# Get rid of the disabled CFLAGS
-	_CFLAGS_OLD="$_CFLAGS"
-	_CFLAGS=""
-	for _flag in $_CFLAGS_OLD; do
-		_disabled=false
-		for _disabled_flag in $HSCT_DISABLED_CFLAGS; do
-			if [ "$_disabled_flag" = "$_flag" ]; then
-				_disabled=true
-				break
-			fi
-		done
-		if ! $_disabled; then
-			_CFLAGS="$_CFLAGS $_flag"
-		fi
-	done
+	#
+	# Various paths
+	#
+	hsct_cache_variable HSTC_HELENOS_ROOT "$HSCT_HELENOS_ROOT"
+	hsct_cache_variable HSCT_INCLUDE_DIR "$HSCT_INCLUDE_DIR"
+	hsct_cache_variable HSCT_LIB_DIR "$HSCT_LIB_DIR"
+	hsct_cache_variable HSCT_MISC_DIR "$HSCT_MISC_DIR"
+	hsct_cache_variable HSCT_APPS_DIR "$HSCT_APPS_DIR"
+	hsct_cache_variable HSCT_CACHE_DIR "$HSCT_CACHE_DIR"
 	
-	
-	
-	_POSIX_LIB="$HSCT_HELENOS_ROOT/uspace/lib/posix"
-	# Include paths
-	_POSIX_INCLUDES="-I$_POSIX_LIB/include/posix -I$_POSIX_LIB/include"
-	# Paths to libraries
-	_POSIX_LIBS_LFLAGS="-L$_POSIX_LIB -L$HSCT_HELENOS_ROOT/uspace/lib/softint -L$HSCT_HELENOS_ROOT/uspace/lib/softfloat"
-	# Actually used libraries
-	# The --whole-archive is used to allow correct linking of static libraries
-	# (otherwise, the ordering is crucial and we usally cannot change that in the
-	# application Makefiles).
-	_POSIX_LINK_LFLAGS="--whole-archive --start-group -lposixaslibc -lsoftint --end-group --no-whole-archive -lc4posix"
-	_POSIX_BASE_LFLAGS="-n -T $_LINKER_SCRIPT"
-
-
-	# Update LDFLAGS
-	_LDFLAGS="$_LDFLAGS $_POSIX_LIBS_LFLAGS $_POSIX_LINK_LFLAGS $_POSIX_BASE_LFLAGS"
-
-	# The LDFLAGS might be used through CC, thus prefixing with -Wl is required
-	_LDFLAGS_FOR_CC=""
-	for _flag in $_LDFLAGS; do
-		_LDFLAGS_FOR_CC="$_LDFLAGS_FOR_CC -Wl,$_flag"
-	done
-	
-	# Update the CFLAGS
-	hsct_harbour_export HSCT_CFLAGS="$_POSIX_INCLUDES $_CFLAGS"
-	hsct_harbour_export HSCT_LDFLAGS_FOR_CC="$_LDFLAGS_FOR_CC"
-	hsct_harbour_export HSCT_LDFLAGS="$_LDFLAGS"
-	
-	# Target architecture
-	hsct_harbour_export HSCT_UARCH=`hsct_get_var_from_uspace UARCH`
+	#
+	# Get architecture, convert to target
+	#
+	hsct_cache_variable HSCT_UARCH `hsct_get_var_from_uspace UARCH`
 	HSCT_TARGET=""
 	case $HSCT_UARCH in
 		ia32)
@@ -258,28 +251,161 @@ hsct_prepare_env_build() {
 			return 1
 			;;
 	esac
-	hsct_harbour_export HSCT_GNU_TARGET="$HSCT_GNU_TARGET"
-	hsct_harbour_export HSCT_HELENOS_TARGET="$HSCT_HELENOS_TARGET"
+	hsct_cache_variable HSCT_GNU_TARGET="$HSCT_GNU_TARGET"
+	hsct_cache_variable HSCT_HELENOS_TARGET="$HSCT_HELENOS_TARGET"
 	case `hsct_get_var_from_uspace COMPILER` in
 		gcc_helenos)
-			hsct_harbour_export HSCT_TARGET="$HSCT_HELENOS_TARGET"
+			hsct_cache_variable HSCT_TARGET="$HSCT_HELENOS_TARGET"
 			;;
 		*)
-			hsct_harbour_export HSCT_TARGET="$HSCT_GNU_TARGET"
+			hsct_cache_variable HSCT_TARGET="$HSCT_GNU_TARGET"
 			;;
 	esac
 	
-	hsct_harbour_export HSTC_HELENOS_ROOT="$HSCT_HELENOS_ROOT"
+	
+	#
+	# Copy the files and update the flags accordingly
+	#
+	mkdir -p "$HSCT_CACHE_DIR/include"
+	mkdir -p "$HSCT_CACHE_DIR/lib"
+
+	# Linker script
+	hsct_info2 "Copying linker script and startup object file"
+	_LINKER_SCRIPT=`hsct_get_var_from_uspace LINKER_SCRIPT`
+	_STARTUP_OBJECT=`sed -n 's#.*STARTUP(\([^)]*\)).*#\1#p' <"$_LINKER_SCRIPT"`
+	cp "$_STARTUP_OBJECT" "$HSCT_CACHE_DIR/lib/entry.o"
+	sed "s#$_STARTUP_OBJECT#$HSCT_CACHE_DIR/lib/entry.o#" \
+		<"$_LINKER_SCRIPT" >"$HSCT_CACHE_DIR/link.ld"
+	_LINKER_SCRIPT="$HSCT_CACHE_DIR/link.ld"
+	
+	# Libraries
+	hsct_info2 "Copying libraries"
+	cp \
+		"$HSTC_HELENOS_ROOT/uspace/lib/c/libc.a" \
+		"$HSTC_HELENOS_ROOT/uspace/lib/softint/libsoftint.a" \
+		"$HSTC_HELENOS_ROOT/uspace/lib/softfloat/libsoftfloat.a" \
+		"$HSTC_HELENOS_ROOT/uspace/lib/posix/libc4posix.a" \
+		"$HSTC_HELENOS_ROOT/uspace/lib/posix/libposixaslibc.a" \
+		"$HSCT_CACHE_DIR/lib/"
+	
+	# Headers
+	hsct_info2 "Copying headers"
+	cp "$HSTC_HELENOS_ROOT/config.h" "$HSCT_CACHE_DIR/include/system_config.h"
+	cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/posix/include/posix/" "$HSCT_CACHE_DIR/include/"
+	mkdir -p "$HSCT_CACHE_DIR/include/libc"
+	cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/include/"* "$HSCT_CACHE_DIR/include/libc"
+	cp -L -R "$HSTC_HELENOS_ROOT/abi/include/abi/" "$HSCT_CACHE_DIR/include/"
+	cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/arch/$HSCT_UARCH/include/libarch/" "$HSCT_CACHE_DIR/include/"
+	
+	
+	#
+	# Fix the flags
+	#
+	hsct_info2 "Fixing compiler flags"
+	
+	# Get the flags
+	_CFLAGS=`hsct_get_var_from_uspace CFLAGS`
+	_LDFLAGS=`hsct_get_var_from_uspace LFLAGS`
+	
+	# CC flags clean-up
+	#_CFLAGS=`echo "$_CFLAGS" | sed 's#-imacros[ \t]*\([^ \t]*/config.h\)#-imacros '"$HSCT_CACHE_DIR"'/include/system_config.h#'`
+	_CFLAGS_OLD="$_CFLAGS"
+	_CFLAGS=""
+	_next_kind="none"
+	for _flag in $_CFLAGS_OLD; do
+		_disabled=false
+		case "$_next_kind" in
+			skip)
+				_disable=true
+				;;
+			imacro)
+				if echo "$_flag" | grep -q '/config.h$'; then
+					_flag="$HSCT_CACHE_DIR/include/system_config.h"
+				fi
+				;;
+			*)
+				;;
+		esac
+		_next_kind="none"
 		
-	return 0
+		for _disabled_flag in $HSCT_DISABLED_CFLAGS; do
+			if [ "$_disabled_flag" = "$_flag" ]; then
+				_disabled=true
+				break
+			fi
+		done
+		
+		if [ "$_flag" = "-L" ]; then
+			_next_kind="skip"
+			_disabled=true
+		fi
+		if [ "$_flag" = "-I" ]; then
+			_next_kind="skip"
+			_disabled=true
+		fi
+		if [ "$_flag" = "-imacros" ]; then
+			_next_kind="imacro"
+		fi
+		if echo "$_flag" | grep -q '^-[IL]'; then
+			_disabled=true
+		fi
+		
+		if ! $_disabled; then
+			_CFLAGS="$_CFLAGS $_flag"
+		fi
+	done
+	
+	# LD flags clean-up
+	_LDFLAGS_OLD="$_LDFLAGS"
+	_LDFLAGS=""
+	for _flag in $_LDFLAGS_OLD; do
+		_disabled=false
+		# Get rid of library paths, the files are stored locally
+		if echo "$_flag" | grep -q '^-[L]'; then
+			_disabled=true
+		fi
+		if ! $_disabled; then
+			_LDFLAGS="$_LDFLAGS $_flag"
+		fi
+	done
+	
+	# Add paths to cached headers and libraries
+	_LDFLAGS="$_LDFLAGS -L$HSCT_CACHE_DIR/lib -n -T $_LINKER_SCRIPT"
+	_CFLAGS="$_CFLAGS -I$HSCT_CACHE_DIR/include/posix -I$HSCT_CACHE_DIR/include/"
+	
+	# Actually used libraries
+	# The --whole-archive is used to allow correct linking of static libraries
+	# (otherwise, the ordering is crucial and we usally cannot change that in the
+	# application Makefiles).
+	_POSIX_LINK_LFLAGS="--whole-archive --start-group -lposixaslibc -lsoftint --end-group --no-whole-archive -lc4posix"
+	
+	_LDFLAGS="$_LDFLAGS $_POSIX_LINK_LFLAGS"
+	
+	# The LDFLAGS might be used through CC, thus prefixing with -Wl is required
+	_LDFLAGS_FOR_CC=""
+	for _flag in $_LDFLAGS; do
+		_LDFLAGS_FOR_CC="$_LDFLAGS_FOR_CC -Wl,$_flag"
+	done
+	
+	hsct_cache_variable HSCT_LDFLAGS "$_LDFLAGS"
+	hsct_cache_variable HSCT_LDFLAGS_FOR_CC "$_LDFLAGS_FOR_CC"
+	hsct_cache_variable HSCT_CFLAGS "$_CFLAGS"
 }
 
-hsct_prepare_env_package() {
-	hsct_harbour_export HSCT_INCLUDE_DIR
-	hsct_harbour_export HSCT_LIB_DIR
-	hsct_harbour_export HSCT_MISC_DIR
-	hsct_harbour_export HSCT_APPS_DIR
-	return 0
+hsct_force_init() {
+	if ! hsct_is_helenos_configured; then
+		hsct_error "Could not initialize, HelenOS is not configured."
+		return 1
+	fi
+}
+
+hsct_prepare_env() {
+	if ! [ -e "$HSCT_CACHE_DIR/env.sh" ]; then
+		hsct_error "Cache not initialized. Have you tried running 'init'?"
+		return 1
+	fi
+	
+	source "$HSCT_CACHE_DIR/env.sh"
 }
 
 hsct_clean() {
@@ -294,10 +420,31 @@ hsct_build() {
 		return 0
 	fi
 	
-	# Check that the HelenOS source tree is in configured state
-	if ! [ -e "$HSCT_HELENOS_ROOT/Makefile.config" ]; then
-		hsct_error "It seems that HelenOS is not configured (Makefile.config is missing)."
-		return 1
+	# If HelenOS is configured, we want to update the cache.
+	# However, if architecture is specified only if the current
+	# configuration is the same.
+	_update_cache=true
+	_arch=`hsct_get_config "$HSCT_CONFIG" arch`
+	if [ -z "$_arch" ]; then
+		# Building for any architecture. We update the cache if
+		# HelenOS is configured.
+		_update_cache=`hsct_print_condition_result hsct_is_helenos_configured`
+	else
+		# Update the cache only if HelenOS is configured and the
+		# architecture matches
+		if hsct_is_helenos_configured; then
+			_uarch=`hsct_get_var_from_uspace UARCH`
+			_update_cache=`hsct_print_condition_result [ "$_uarch" = "$_arch" ]`
+		else
+			_update_cache=false
+		fi
+	fi
+	
+	if $_update_cache; then
+		if ! hsct_init; then
+			hsct_error "Failed to initialize/update the cache."
+			return 1
+		fi
 	fi
 	
 	# Check for prerequisities
@@ -313,17 +460,7 @@ hsct_build() {
 		fi
 	done
 	
-	hsct_prepare_env_build || return 1
-	
-	# Check that selected architecture matches current one
-	_arch=`hsct_get_config "$HSCT_CONFIG" arch`
-	if [ -n "$_arch" ]; then
-		if [ "$_arch" '!=' "$HSCT_UARCH" ]; then
-			hsct_error "Target architecture mismatch (allowed is $_arch while HelenOS"
-			hsct_error2 "is configured for $HSCT_UARCH)."
-			return 1
-		fi
-	fi
+	hsct_prepare_env || return 1
 	
 	hsct_fetch || return 1
 	
@@ -365,7 +502,7 @@ hsct_package() {
 	
 	hsct_build || return 1
 	
-	hsct_prepare_env_package || return 1
+	hsct_prepare_env || return 1
 	
 	(	
 		cd "$HSCT_BUILD_DIR/$shipname/"
@@ -385,7 +522,7 @@ hsct_package() {
 hsct_install() {
 	hsct_package || return 1
 
-	hsct_prepare_env_package || return 1
+	hsct_prepare_env || return 1
 	
 	(	
 		hsct_info "Installing..."
@@ -401,7 +538,7 @@ hsct_install() {
 }
 
 hsct_uninstall() {
-	hsct_prepare_env_package || return 0
+	hsct_prepare_env || return 1
 
 	(
 		hsct_info "Uninstalling..."
@@ -441,9 +578,11 @@ case "$1" in
 		fi
 		;;
 	env)
-		HSCT_SHOW_EXPORTS=true
-		hsct_prepare_env_build || leave_script_err
-		hsct_prepare_env_package || leave_script_err
+		hsct_error "This option now does not make sense"
+		leave_script_err
+		;;
+	init)
+		hsct_force_init || leave_script_err
 		leave_script_ok
 		;;
 	*)
