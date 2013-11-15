@@ -75,8 +75,6 @@ hsct_usage() {
 	echo "       package   Save installable files to allow cleaning."
 	echo "       install   Install to uspace/dist of HelenOS."
 	echo "       uninstall Try to remove what was installed to uspace/dist."
-	echo " $1 env"
-	echo "    Display variables prepared for HARBOUR scripts."
 	echo " $1 help"
 	echo "    Display this help and exit."
 }
@@ -392,16 +390,9 @@ hsct_init() {
 	hsct_cache_variable HSCT_CFLAGS "$_CFLAGS"
 }
 
-hsct_force_init() {
-	if ! hsct_is_helenos_configured; then
-		hsct_error "Could not initialize, HelenOS is not configured."
-		return 1
-	fi
-}
-
 hsct_prepare_env() {
 	if ! [ -e "$HSCT_CACHE_DIR/env.sh" ]; then
-		hsct_error "Cache not initialized. Have you tried running 'init'?"
+		hsct_error "Cache is not initialized. Maybe HelenOS is not configured?"
 		return 1
 	fi
 	
@@ -583,14 +574,6 @@ case "$1" in
 			hsct_usage "$0"
 			leave_script_err
 		fi
-		;;
-	env)
-		hsct_error "This option now does not make sense"
-		leave_script_err
-		;;
-	init)
-		hsct_force_init || leave_script_err
-		leave_script_ok
 		;;
 	*)
 		hsct_usage "$0"
