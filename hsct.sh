@@ -619,6 +619,8 @@ hsct_global_init() {
 root = $_root_dir
 arch = $_uarch
 EOF_CONFIG
+	hsct_init
+	return $?
 }
 
 alias leave_script_ok='return 0 2>/dev/null || exit 0'
