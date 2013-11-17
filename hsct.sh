@@ -249,14 +249,14 @@ hsct_init() {
 			return 1
 			;;
 	esac
-	hsct_cache_variable HSCT_GNU_TARGET="$HSCT_GNU_TARGET"
-	hsct_cache_variable HSCT_HELENOS_TARGET="$HSCT_HELENOS_TARGET"
+	hsct_cache_variable HSCT_GNU_TARGET "$HSCT_GNU_TARGET"
+	hsct_cache_variable HSCT_HELENOS_TARGET "$HSCT_HELENOS_TARGET"
 	case `hsct_get_var_from_uspace COMPILER` in
 		gcc_helenos)
-			hsct_cache_variable HSCT_TARGET="$HSCT_HELENOS_TARGET"
+			hsct_cache_variable HSCT_TARGET "$HSCT_HELENOS_TARGET"
 			;;
 		*)
-			hsct_cache_variable HSCT_TARGET="$HSCT_GNU_TARGET"
+			hsct_cache_variable HSCT_TARGET "$HSCT_GNU_TARGET"
 			;;
 	esac
 	
