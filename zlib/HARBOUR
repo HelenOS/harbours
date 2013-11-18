@@ -40,6 +40,8 @@ build() {
 		CC="$HSCT_CC" \
 		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC" \
 		LD="$HSCT_LD" \
+		AR="$HSCT_AR" \
+		RANLIB="$HSCT_RANLIB" \
 		./configure \
 			--static
 	run make
