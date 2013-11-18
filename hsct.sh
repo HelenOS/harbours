@@ -395,7 +395,16 @@ hsct_init() {
 	# The --whole-archive is used to allow correct linking of static libraries
 	# (otherwise, the ordering is crucial and we usally cannot change that in the
 	# application Makefiles).
-	_POSIX_LINK_LFLAGS="--whole-archive --start-group -lposixaslibc -lsoftint --end-group --no-whole-archive -lc4posix"
+	_BASE_LIBS=`hsct_get_var_from_uspace BASE_LIBS |  sed 's#[ \t]\+#\n#g' | sed 's#.*/lib\(.*\).a$#\1#' | paste '-sd '`
+	_USE_SOFTFLOAT=""
+	case $_BASE_LIBS in
+		*softfloat*)
+			_USE_SOFTFLOAT="-lsoftfloat"
+			;;
+		*)
+			;;
+	esac
+	_POSIX_LINK_LFLAGS="--whole-archive --start-group -lposixaslibc -lsoftint $_USE_SOFTFLOAT --end-group --no-whole-archive -lc4posix"
 	
 	_LDFLAGS="$_LDFLAGS $_POSIX_LINK_LFLAGS"
 	
