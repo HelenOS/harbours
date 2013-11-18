@@ -593,25 +593,26 @@ hsct_global_init() {
 		fi
 	fi
 	if [ "$3" = "build" ]; then
-		if [ "$_uarch" != "$2" ]; then
-			(
-				set -o errexit
-				cd "$_root_dir"
-				hsct_info2 "Cleaning previous configuration in $PWD."
-				make distclean >/dev/null 2>&1
-				hsct_info2 "Configuring for $2."
-				make Makefile.config "PROFILE=$2" HANDS_OFF=y >/dev/null
-				hsct_info2 "Building (may take a while)."
-				make >/dev/null 2>&1
-			)
-			if [ $? -ne 0 ]; then
-				hsct_error "Failed to automatically configure HelenOS for $2."
-				return 1
-			fi
+		(
+			set -o errexit
+			cd "$_root_dir"
+			hsct_info2 "Cleaning previous configuration in $PWD."
+			make distclean >/dev/null 2>&1
+			hsct_info2 "Configuring for $2."
+			make Makefile.config "PROFILE=$2" HANDS_OFF=y >/dev/null
+			hsct_info2 "Building (may take a while)."
+			make >/dev/null 2>&1
+		)
+		if [ $? -ne 0 ]; then
+			hsct_error "Failed to automatically configure HelenOS for $2."
+			return 1
 		fi
-	fi
-	if [ -z "$_uarch" ]; then
 		_uarch=`echo "$2" | cut '-d/' -f 1`
+	else
+		if [ "$_uarch" != "$2" ]; then
+			hsct_error "HelenOS is configured for different architecture (maybe add 'build' parameter?)"
+			return 1
+		fi
 	fi
 	
 	hsct_info2 "Generating the configuration file."
