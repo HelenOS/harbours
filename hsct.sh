@@ -313,7 +313,14 @@ hsct_init() {
 		hsct_error "Failed copying headers to cache."
 		return 1
 	fi
-		
+
+	hsct_info2 "Fixing includes in libc headers"
+	find "$HSCT_CACHE_DIR/include/libc" "$HSCT_CACHE_DIR/include/libarch" -name '*.h' -exec sed \
+		-e 's:#include <:#include <libc/:' \
+		-e 's:#include <libc/libarch/:#include <libarch/:' \
+		-e 's:#include <libc/abi/:#include <abi/:' \
+		-e 's:#include <libc/libc/:#include <libc/:' \
+		-i {} \;
 	
 	
 	#
