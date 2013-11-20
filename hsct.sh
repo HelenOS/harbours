@@ -232,17 +232,45 @@ hsct_init() {
 	hsct_cache_variable HSCT_UARCH `hsct_get_var_from_uspace UARCH`
 	HSCT_TARGET=""
 	case $HSCT_UARCH in
-		ia32)
-			HSCT_GNU_TARGET="i686-pc-linux-gnu"
-			HSCT_HELENOS_TARGET="i686-pc-helenos"
-			;;
-		amd64)
+		"amd64")
 			HSCT_GNU_TARGET="amd64-linux-gnu"
 			HSCT_HELENOS_TARGET="amd64-helenos"
 			;;
-		mips32)
+		"arm32")
+			HSCT_GNU_TARGET="arm-linux-gnueabi"
+			HSCT_HELENOS_TARGET="arm-helenos-gnueabi"
+			;;
+		"ia32")
+			HSCT_GNU_TARGET="i686-pc-linux-gnu"
+			HSCT_HELENOS_TARGET="i686-pc-helenos"
+			;;
+		"ia64")
+			HSCT_GNU_TARGET="ia64-pc-linux-gnu"
+			HSCT_HELENOS_TARGET="ia64-pc-helenos"
+			;;
+		"mips32")
 			HSCT_GNU_TARGET="mipsel-linux-gnu"
 			HSCT_HELENOS_TARGET="mipsel-helenos"
+			;;
+		"mips32eb")
+			HSCT_GNU_TARGET="mips-linux-gnu"
+			HSCT_HELENOS_TARGET="mips-helenos"
+			;;
+		"mips64")
+			HSCT_GNU_TARGET="mips64el-linux-gnu"
+			HSCT_HELENOS_TARGET="mips64el-helenos"
+			;;
+		"ppc32")
+			HSCT_GNU_TARGET="ppc-linux-gnu"
+			HSCT_HELENOS_TARGET="ppc-helenos"
+			;;
+		"ppc64")
+			HSCT_GNU_TARGET="ppc64-linux-gnu"
+			HSCT_HELENOS_TARGET="ppc64-helenos"
+			;;
+		"sparc64")
+			HSCT_GNU_TARGET="sparc64-linux-gnu"
+			HSCT_HELENOS_TARGET="sparc64-helenos"
 			;;
 		*)
 			hsct_error 'Unsupported architecture: $(UARCH) =' "'$HSCT_UARCH'."
