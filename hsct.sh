@@ -439,6 +439,16 @@ hsct_init() {
 		*)
 			;;
 	esac
+	case $HSCT_UARCH in
+		arm32)
+			_USE_SOFTFLOAT="-lsoftfloat"
+			;;
+		sparc64)
+			_USE_SOFTFLOAT="-lsoftfloat"
+			;;
+		*)
+			;;
+	esac
 	_POSIX_LINK_LFLAGS="--whole-archive --start-group -lposixaslibc -lsoftint $_USE_SOFTFLOAT --end-group --no-whole-archive -lc4posix"
 	
 	_LDFLAGS="$_LDFLAGS $_POSIX_LINK_LFLAGS"
