@@ -695,6 +695,14 @@ EOF_CONFIG
 	return $?
 }
 
+hsct_update() {
+	if ! hsct_can_update_cache; then
+		return 1
+	fi
+	hsct_init
+	return $?
+}
+
 alias leave_script_ok='return 0 2>/dev/null || exit 0'
 alias leave_script_err='return 1 2>/dev/null || exit 1'
 
@@ -739,6 +747,10 @@ case "$1" in
 		;;
 	init)
 		hsct_global_init "$2" "$3" "$4"
+		leave_script_ok
+		;;
+	update)
+		hsct_update
 		leave_script_ok
 		;;
 	*)
