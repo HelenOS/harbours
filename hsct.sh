@@ -333,7 +333,6 @@ hsct_init() {
 	hsct_info2 "Copying headers"
 	(
 		set -o errexit
-		cp "$HSTC_HELENOS_ROOT/config.h" "$HSCT_CACHE_DIR/include/system_config.h"
 		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/posix/include/posix/" "$HSCT_CACHE_DIR/include/"
 		mkdir -p "$HSCT_CACHE_DIR/include/libc"
 		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/include/"* "$HSCT_CACHE_DIR/include/libc"
@@ -353,6 +352,17 @@ hsct_init() {
 		-e 's:#include <libc/libc/:#include <libc/:' \
 		-i {} \;
 	
+	# Remember the configuration
+	hsct_info2 "Saving config files"
+	(
+		set -o errexit
+		cp "$HSTC_HELENOS_ROOT/config.h" "$HSCT_CACHE_INCLUDE/system_config.h"
+		cp "$HSTC_HELENOS_ROOT/Makefile.config" "$HSCT_CACHE_DIR/Makefile.config"
+	)
+	if [ $? -ne 0 ]; then
+		hsct_error "Failed saving config files."
+		return 1
+	fi
 	
 	# Extra libraries and headers
 	hsct_info2 "Copying extra headers and libraries"
