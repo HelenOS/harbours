@@ -34,11 +34,8 @@
 
 /* Because of asprintf. */
 #define _GNU_SOURCE
-#include "../../io/input.h"
-#include "../../io/output.h"
-#include "../../fault.h"
 #include "helenos.h"
-#include <tinput.h>
+#include <libclui/tinput.h>
 #include <errno.h>
 #include <stdlib.h>
 

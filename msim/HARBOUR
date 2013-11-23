@@ -63,7 +63,13 @@ build() {
 	
 	# Now we would use the HelenOS-style Makefile to actually build
 	# the binary.
-	run make -C src USPACE_PREFIX="$HSTC_HELENOS_ROOT/uspace"
+	run make -C src \
+		CC="$HSCT_CC" \
+		HSCT_CFLAGS="$HSCT_CFLAGS" \
+		LD="$HSCT_LD" \
+		HSCT_LDFLAGS="$HSCT_LDFLAGS" \
+		HSCT_CACHE_INCLUDE="$HSCT_CACHE_INCLUDE" \
+		HSCT_CACHE_LIB="$HSCT_CACHE_LIB"
 }
 
 package() {

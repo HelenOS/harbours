@@ -28,11 +28,37 @@
 
 
 BINARY = msim
-LIBS = $(LIBCLUI_PREFIX)/libclui.a
-POSIX_COMPAT = y
+
+LDFLAGS = \
+	-lclui \
+	-L$(HSCT_CACHE_LIB) \
+	$(HSCT_LDFLAGS)
+
+CFLAGS = \
+	$(HSCT_CFLAGS) \
+	-I$(HSCT_CACHE_INCLUDE)/libc/ \
+	-Wno-error
+
+CFLAGS_HELENOS = \
+	-I$(HSCT_CACHE_INCLUDE)/libc/ \
+	-I$(HSCT_CACHE_INCLUDE)/libclui \
+	$(HSCT_CFLAGS)
+
+
+#LIBS = $(LIBCLUI_PREFIX)/libclui.a
+#POSIX_COMPAT = y
 # Needed because MSIM is not that strict as HelenOS
-EXTRA_CFLAGS = -Wno-error -I$(LIBCLUI_PREFIX)
+#EXTRA_CFLAGS = -Wno-error -I$(LIBCLUI_PREFIX)
 
 include Makefile.sources
 
-include $(USPACE_PREFIX)/Makefile.common
+OBJECTS := $(addsuffix .o, $(basename $(SOURCES)))
+
+msim: $(OBJECTS)
+	$(LD) -o $@ $(OBJECTS) $(LDFLAGS)
+
+arch/helenos/%.o: arch/helenos/%.c
+	$(CC) $(CFLAGS_HELENOS) -c -o $@ $<
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
