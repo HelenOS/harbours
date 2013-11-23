@@ -667,6 +667,7 @@ hsct_global_init() {
 	# If no architecture is specified, we would read it from
 	# Makefile.config
 	_uarch=`hsct_get_var_from_uspace UARCH`
+	_machine=`hsct_get_var_from_uspace MACHINE`
 	if [ -z "$2" ]; then	
 		if [ -z "$_uarch" ]; then
 			hsct_error "HelenOS is not configured and you haven't specified the architecture";
@@ -689,6 +690,7 @@ hsct_global_init() {
 			return 1
 		fi
 		_uarch=`echo "$2" | cut '-d/' -f 1`
+		_machine=`echo "$2" | cut '-d/' -f 2`
 	else
 		if [ "$_uarch" != "$2" ]; then
 			hsct_error "HelenOS is configured for different architecture (maybe add 'build' parameter?)"
@@ -700,6 +702,7 @@ hsct_global_init() {
 	cat >$HSCT_CONFIG <<EOF_CONFIG
 root = $_root_dir
 arch = $_uarch
+machine = $_machine
 EOF_CONFIG
 	hsct_init
 	return $?
