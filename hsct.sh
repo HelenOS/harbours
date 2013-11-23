@@ -706,9 +706,33 @@ EOF_CONFIG
 }
 
 hsct_update() {
-	if ! hsct_can_update_cache; then
-		return 1
+	if [ "$1" = "rebuild" ]; then
+		hsct_info "Rebuilding HelenOS to match local configuration"
+		(
+			set -o errexit
+			cd "$HSCT_HELENOS_ROOT"
+			hsct_info2 "Cleaning previous configuration in $PWD."
+			make distclean >/dev/null 2>&1
+			hsct_info2 "Configuring for $HSCT_HELENOS_PROFILE."
+			make Makefile.config \
+				"PROFILE=$HSCT_HELENOS_PROFILE" HANDS_OFF=y \
+				2>&1 >/dev/null | sed '/^Fetching current.*ok$/d'
+			hsct_info2 "Overriding configuration with the stored one."
+			cp "$HSCT_CACHE_DIR/Makefile.config" Makefile.config
+			cp "$HSCT_CACHE_DIR/include/system_config.h" config.h
+			hsct_info2 "Building (may take a while)."
+			make >/dev/null 2>&1
+		)
+		if [ $? -ne 0 ]; then
+			hsct_error "Failed to automatically rebuild HelenOS."
+			return 1
+		fi
+	else
+		if ! hsct_can_update_cache; then
+			return 1
+		fi	
 	fi
+	
 	hsct_init
 	return $?
 }
@@ -728,10 +752,17 @@ else
 	fi
 	HSCT_HELENOS_ROOT=`hsct_get_config "$HSCT_CONFIG" root`
 	HSCT_HELENOS_ARCH=`hsct_get_config "$HSCT_CONFIG" arch`
+	HSCT_HELENOS_MACHINE=`hsct_get_config "$HSCT_CONFIG" machine`
 	
 	if [ -z "$HSCT_HELENOS_ARCH" ]; then
 		hsct_error "I don't know for which architecture you want to build."
 		leave_script_err
+	fi
+	
+	if [ -z "$HSCT_HELENOS_MACHINE" ]; then
+		HSCT_HELENOS_PROFILE="$HSCT_HELENOS_ARCH"
+	else
+		HSCT_HELENOS_PROFILE="$HSCT_HELENOS_ARCH/$HSCT_HELENOS_MACHINE"
 	fi
 fi
 
@@ -760,7 +791,7 @@ case "$1" in
 		leave_script_ok
 		;;
 	update)
-		hsct_update
+		hsct_update "$2"
 		leave_script_ok
 		;;
 	*)
