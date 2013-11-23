@@ -225,6 +225,8 @@ hsct_init() {
 	hsct_cache_variable HSCT_MISC_DIR "$HSCT_MISC_DIR"
 	hsct_cache_variable HSCT_APPS_DIR "$HSCT_APPS_DIR"
 	hsct_cache_variable HSCT_CACHE_DIR "$HSCT_CACHE_DIR"
+	hsct_cache_variable HSCT_CACHE_INCLUDE "$HSCT_CACHE_DIR/include"
+	hsct_cache_variable HSCT_CACHE_LIB "$HSCT_CACHE_DIR/lib/other"
 	
 	#
 	# Get architecture, convert to target
@@ -292,8 +294,9 @@ hsct_init() {
 	#
 	# Copy the files and update the flags accordingly
 	#
-	mkdir -p "$HSCT_CACHE_DIR/include"
+	mkdir -p "$HSCT_CACHE_INCLUDE"
 	mkdir -p "$HSCT_CACHE_DIR/lib"
+	mkdir -p "$HSCT_CACHE_LIB"
 
 	# Linker script
 	hsct_info2 "Copying linker script and startup object file"
@@ -350,6 +353,20 @@ hsct_init() {
 		-e 's:#include <libc/libc/:#include <libc/:' \
 		-i {} \;
 	
+	
+	# Extra libraries and headers
+	hsct_info2 "Copying extra headers and libraries"
+	(
+		set -o errexit
+		# libclui
+		cp -L "$HSTC_HELENOS_ROOT/uspace/lib/clui/libclui.a" "$HSCT_CACHE_LIB"
+		mkdir -p "$HSCT_CACHE_INCLUDE/libclui/"
+		cp -L "$HSTC_HELENOS_ROOT/uspace/lib/clui/tinput.h" "$HSCT_CACHE_INCLUDE/libclui/"
+	)
+	if [ $? -ne 0 ]; then
+		hsct_error "Failed copying extra headers and libraries to cache."
+		return 1
+	fi
 	
 	#
 	# Fix the flags
