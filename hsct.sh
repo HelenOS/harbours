@@ -75,6 +75,15 @@ hsct_usage() {
 	echo "       package   Save installable files to allow cleaning."
 	echo "       install   Install to uspace/dist of HelenOS."
 	echo "       uninstall Try to remove what was installed to uspace/dist."
+	echo " $1 update [rebuild]"
+	echo "    Update the cached headers and libraries."
+	echo "    If 'rebuild' is specified, HelenOS is forcefully rebuild and"
+	echo "      cache is updated afterwards."
+	echo " $1 init /path/to/HelenOS [profile] [build]"
+	echo "    Initialize current directory as coastline build directory".
+	echo "    Full path has to be provided to the HelenOS source tree."
+	echo "    If profile is specified, prepare for that configuration."
+	echo "    If 'build' is given, forcefully rebuild to specified profile."
 	echo " $1 help"
 	echo "    Display this help and exit."
 }
