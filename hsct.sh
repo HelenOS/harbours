@@ -112,14 +112,6 @@ hsct_is_helenos_configured() {
 	return $?
 }
 
-hsct_print_condition_result() {
-	if "$@"; then
-		echo "true";
-	else
-		echo "false";
-	fi
-}
-
 # hsct_get_config CONFIG_FILE variable
 hsct_get_config() {
 	grep '^[ \t]*'"$2" "$1" | cut '-d=' -f 2 | \
@@ -187,7 +179,7 @@ hsct_cache_variable() {
 	) >>"$HSCT_CACHE_DIR/env.sh"
 }
 
-hsct_init() {
+hsct_cache_update() {
 	hsct_info "Caching headers, libraries and compile flags"
 	
 	mkdir -p "$HSCT_CACHE_DIR"
@@ -536,7 +528,7 @@ hsct_build() {
 	fi
 	
 	if hsct_can_update_cache; then
-		if ! hsct_init; then
+		if ! hsct_cache_update; then
 			return 1
 		fi
 	fi
@@ -651,7 +643,7 @@ hsct_uninstall() {
 	return 0
 }
 
-hsct_global_init() {
+hsct_init() {
 	if [ -e "$HSCT_CONFIG" ]; then
 		hsct_error "Directory is already initialized ($HSCT_CONFIG exists)."
 		return 1
@@ -704,7 +696,7 @@ root = $_root_dir
 arch = $_uarch
 machine = $_machine
 EOF_CONFIG
-	hsct_init
+	hsct_cache_update
 	return $?
 }
 
@@ -736,7 +728,7 @@ hsct_update() {
 		fi	
 	fi
 	
-	hsct_init
+	hsct_cache_update
 	return $?
 }
 
@@ -790,7 +782,7 @@ case "$1" in
 		fi
 		;;
 	init)
-		hsct_global_init "$2" "$3" "$4"
+		hsct_init "$2" "$3" "$4"
 		leave_script_ok
 		;;
 	update)
