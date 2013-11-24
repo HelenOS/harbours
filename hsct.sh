@@ -66,6 +66,8 @@ HSCT_APPS_DIR=`pwd`/apps
 HSCT_DISABLED_CFLAGS="-Werror -Werror-implicit-function-declaration"
 HSCT_CACHE_DIR=`pwd`/helenos
 
+# Print short help.
+# Does not exit the whole script.
 hsct_usage() {
 	echo "Usage:"
 	echo " $1 action [package]"
@@ -88,34 +90,43 @@ hsct_usage() {
 	echo "    Display this help and exit."
 }
 
+# Print high-level information message.
 hsct_info() {
 	echo ">>>" "$@" >&2
 }
 
+# Print lower-level information message (additional info after hsct_info).
 hsct_info2() {
 	echo "     ->" "$@" >&2
 }
 
+# Print information message from HARBOUR script.
 msg() {
 	hsct_info "$@"
 }
 
+# Print high-level error message.
 hsct_error() {
 	echo "[hsct]:" "Error:" "$@" >&2
 }
+
+# Print additional details to the error message.
 hsct_error2() {
 	echo "[hsct]:" "  ->  " "$@" >&2
 }
 
+# Run a command but print it first.
 hsct_run_echo() {
 	echo "[hsct]:" "$@"
 	"$@"
 }
 
+# Run comman from HARBOUR script and print it as well.
 run() {
 	hsct_run_echo "$@"
 }
 
+# Tells whether HelenOS in $HSCT_HELENOS_ROOT is configured.
 hsct_is_helenos_configured() {
 	[ -e "$HSCT_HELENOS_ROOT/Makefile.config" ]
 	return $?
@@ -127,6 +138,7 @@ hsct_get_config() {
 		sed -e 's/^[ \t]*//' -e 's/[ \t]*$//'
 }
 
+# Fetch all the specified files in the HARBOUR
 hsct_fetch() {
 	mkdir -p "$HSCT_SOURCES_DIR"
 	hsct_info "Fetching sources..."
@@ -168,6 +180,7 @@ hsct_get_var_from_makefile() {
 	)  | make -C `dirname "$2"` -f - -s __armagedon__
 }
 
+# Retrieve variable from uspace/ Makefile.
 hsct_get_var_from_uspace() {
 	if [ -z "$2" ]; then
 		hsct_get_var_from_makefile "$1" "$HSCT_HELENOS_ROOT/uspace/Makefile.common" "USPACE_PREFIX=$HSCT_HELENOS_ROOT/uspace"
@@ -176,6 +189,9 @@ hsct_get_var_from_uspace() {
 	fi
 }
 
+# Cache and export a variable.
+# $1 variable name
+# $2 value to cache
 hsct_cache_variable() {
 	export "$1=$2"
 	(
@@ -188,6 +204,8 @@ hsct_cache_variable() {
 	) >>"$HSCT_CACHE_DIR/env.sh"
 }
 
+# Update the cache - copy headers, libraries etc to this directory.
+# Does not check that update is possible!
 hsct_cache_update() {
 	hsct_info "Caching headers, libraries and compile flags"
 	
@@ -492,6 +510,7 @@ hsct_cache_update() {
 	hsct_cache_variable HSCT_CFLAGS "$_CFLAGS"
 }
 
+# Source the env.sh if present otherwise exit with failure.
 hsct_prepare_env() {
 	if ! [ -e "$HSCT_CACHE_DIR/env.sh" ]; then
 		hsct_error "Cache is not initialized. Maybe HelenOS is not configured?"
@@ -501,11 +520,13 @@ hsct_prepare_env() {
 	source "$HSCT_CACHE_DIR/env.sh"
 }
 
+# Remove the build directory of given package.
 hsct_clean() {
 	hsct_info "Cleaning build directory..."
 	rm -rf "$HSCT_BUILD_DIR/$shipname/"*
 }
 
+# Decide whether it is possible to update the cache.
 hsct_can_update_cache() {
 	# If HelenOS is configured, we want to update the cache.
 	# However, if architecture is specified only if the current
@@ -529,6 +550,7 @@ hsct_can_update_cache() {
 	fi
 }
 
+# Build the package.
 hsct_build() {
 	mkdir -p "$HSCT_BUILD_DIR/$shipname"
 	if [ -e "$HSCT_BUILD_DIR/${shipname}.built" ]; then
@@ -584,6 +606,7 @@ hsct_build() {
 	return 0
 }
 
+# Package the package - copy from build directory to proper directories.
 hsct_package() {
 	mkdir -p "$HSCT_INCLUDE_DIR" || { hsct_error "Failed to create include directory."; return 1; }
 	mkdir -p "$HSCT_LIB_DIR" || { hsct_error "Failed to create library directory."; return 1; }
@@ -614,6 +637,7 @@ hsct_package() {
 	return 0
 }
 
+# Install the package to HelenOS source tree (to uspace/dist).
 hsct_install() {
 	hsct_package || return 1
 
@@ -636,6 +660,7 @@ hsct_install() {
 	return 0
 }
 
+# Uninstall the package from HelenOS source tree.
 hsct_uninstall() {
 	hsct_prepare_env || return 1
 
@@ -652,6 +677,7 @@ hsct_uninstall() {
 	return 0
 }
 
+# Initialize current directory for coastline building.
 hsct_init() {
 	if [ -e "$HSCT_CONFIG" ]; then
 		hsct_error "Directory is already initialized ($HSCT_CONFIG exists)."
@@ -709,6 +735,7 @@ EOF_CONFIG
 	return $?
 }
 
+# Update the cache manually.
 hsct_update() {
 	if [ "$1" = "rebuild" ]; then
 		hsct_info "Rebuilding HelenOS to match local configuration"
