@@ -16,7 +16,8 @@ The whole idea is highly inspired by
 `makepkg <https://wiki.archlinux.org/index.php/Makepkg>`_.
 
 
-
+**WARNING**: some information here is obsoleted.
+I will try to update it as soon as possible.
 
 Using the coastline
 -------------------
