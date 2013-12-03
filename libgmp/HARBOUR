@@ -61,21 +61,12 @@ package() {
 	# Copy the tests
 	(
 		msg "Preparing tests..."
-		run mkdir -p "$HSCT_MISC_DIR/libgmp/"
+		run mkdir -p "$HSCT_MY_DIR/tests/${shipname}/"
 		cd tests
-		echo "echo Running libgmp tests..." >"$HSCT_MISC_DIR/libgmp/run_tests.bdsh"
+		echo "echo Running ${shipname} tests..." >"$HSCT_MY_DIR/tests/run_${shipname}.bdsh"
 		find . -executable -type f | while read testname; do
-			run cp "$testname" "$HSCT_MISC_DIR/libgmp/$testname" || exit 1
-			echo "$testname" | sed 's#./##' >>"$HSCT_MISC_DIR/libgmp/run_tests.bdsh"
+			run cp "$testname" "$HSCT_MY_DIR/tests/${shipname}/$testname" || exit 1
+			echo "/tests/${shipname}/$testname" | sed 's#\./##' >>"$HSCT_MY_DIR/tests/run_${shipname}.bdsh"
 		done || exit 1
 	)
-}
-
-dist() {
-	run mkdir -p "$HSCT_DIST2"
-	run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
-}
-
-undist() {
-	run rm -rf "$HSCT_DIST2"
 }

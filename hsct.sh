@@ -61,8 +61,6 @@ HSCT_SOURCES_DIR=`pwd`/sources
 HSCT_BUILD_DIR=`pwd`/build
 HSCT_INCLUDE_DIR=`pwd`/include
 HSCT_LIB_DIR=`pwd`/libs
-HSCT_MISC_DIR=`pwd`/misc
-HSCT_APPS_DIR=`pwd`/apps
 HSCT_DISABLED_CFLAGS="-Werror -Werror-implicit-function-declaration"
 HSCT_CACHE_DIR=`pwd`/helenos
 
@@ -76,7 +74,6 @@ hsct_usage() {
 	echo "       build     Build given package."
 	echo "       package   Save installable files to allow cleaning."
 	echo "       install   Install to uspace/dist of HelenOS."
-	echo "       uninstall Try to remove what was installed to uspace/dist."
 	echo " $1 update [rebuild]"
 	echo "    Update the cached headers and libraries."
 	echo "    If 'rebuild' is specified, HelenOS is forcefully rebuild and"
@@ -606,13 +603,12 @@ hsct_build() {
 	return 0
 }
 
-# Package the package - copy from build directory to proper directories.
+# Pseudo-installation - copy from build directory to "my" directory, copy libraries
 hsct_package() {
 	mkdir -p "$HSCT_INCLUDE_DIR" || { hsct_error "Failed to create include directory."; return 1; }
 	mkdir -p "$HSCT_LIB_DIR" || { hsct_error "Failed to create library directory."; return 1; }
-	mkdir -p "$HSCT_MISC_DIR" || { hsct_error "Failed to create miscellaneous directory."; return 1; }
-	mkdir -p "$HSCT_APPS_DIR" || { hsct_error "Failed to create apps directory."; return 1; }
-	
+	mkdir -p "$HSCT_MY_DIR" || { hsct_error "Failed to create package directory."; return 1; }
+
 	if [ -e "$HSCT_BUILD_DIR/${shipname}.packaged" ]; then
 		hsct_info "No need to package $shipname."
 		return 0;
@@ -637,7 +633,7 @@ hsct_package() {
 	return 0
 }
 
-# Install the package to HelenOS source tree (to uspace/dist).
+# Install the package to HelenOS source tree (to uspace/overlay).
 hsct_install() {
 	hsct_package || return 1
 
@@ -647,35 +643,16 @@ hsct_install() {
 		return 1
 	fi
 
-	(	
-		hsct_info "Installing..."
-		set -o errexit
-		dist
-		exit $?
-	)
-	if [ $? -ne 0 ]; then
-		hsct_error "Installing failed!"
-		return 1
+	hsct_info "Installing..."
+	if ls "$HSCT_MY_DIR"/* &>/dev/null; then
+		cp -v -r -L "$HSCT_MY_DIR"/* "$HSCT_OVERLAY" || return 1
+		hsct_info2 "Do not forget to rebuild the image."
+	else
+		hsct_info2 "Note: nothing to install."
 	fi
 	return 0
 }
 
-# Uninstall the package from HelenOS source tree.
-hsct_uninstall() {
-	hsct_prepare_env || return 1
-
-	(
-		hsct_info "Uninstalling..."
-		set -o errexit
-		undist
-		exit $?
-	)
-	if [ $? -ne 0 ]; then
-		hsct_error "Uninstalling failed!"
-		return 1
-	fi
-	return 0
-}
 
 # Initialize current directory for coastline building.
 hsct_init() {
@@ -802,15 +779,12 @@ if [ -z "$HSCT_HELENOS_ROOT" ]; then
 	leave_script_err
 fi
 
-HSCT_DIST="$HSCT_HELENOS_ROOT/uspace/dist"
-
-
 case "$1" in
 	help)
 		hsct_usage "$0"
 		leave_script_ok
 		;;
-	clean|build|package|install|uninstall)
+	clean|build|package|install)
 		HSCT_HARBOUR_NAME="$2"
 		if [ -z "$HSCT_HARBOUR_NAME" ]; then
 			hsct_usage "$0"
@@ -842,7 +816,8 @@ if ! [ -r "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR" ]; then
 	leave_script_err
 fi
 
-HSCT_DIST2="$HSCT_DIST/coast/$HSCT_HARBOUR_NAME/"
+HSCT_OVERLAY="$HSCT_HELENOS_ROOT/uspace/overlay"
+HSCT_MY_DIR="`pwd`/dist/$HSCT_HARBOUR_NAME"
 
 source "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR"
 
@@ -858,9 +833,6 @@ case "$1" in
 		;;
 	install)
 		hsct_install
-		;;
-	uninstall)
-		hsct_uninstall
 		;;
 	*)
 		hsct_error "Internal error, we shall not get to this point!"

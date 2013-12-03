@@ -75,15 +75,6 @@ build() {
 package() {
 	cd "${shipname}-${shipversion}"
 	
-	run mkdir -p "$HSCT_APPS_DIR/${shipname}"
-	run cp "src/${shipname}" "$HSCT_APPS_DIR/${shipname}"
-}
-
-dist() {
-	run mkdir -p "$HSCT_DIST2"
-	run cp "$HSCT_APPS_DIR/${shipname}/${shipname}" "$HSCT_DIST2/"
-}
-
-undist() {
-	run rm -rf "$HSCT_DIST2"
+	run mkdir "$HSCT_MY_DIR/app/"
+	run cp "src/${shipname}" "$HSCT_MY_DIR/app/"
 }
