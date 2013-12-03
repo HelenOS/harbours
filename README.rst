@@ -114,21 +114,9 @@ used in ``Makefile``\s or in ``configure`` scripts
 However, usually it is not possible to write the ``HARBOUR`` file directly:
 for example various arguments to ``./configure`` scripts have to be tried
 or extra ``CFLAGS`` might be necessary.
-To simplify this it is possible to run the ``hsct.sh`` script in mode when
-it only prints (and exports) all the ``$HSCT_`` variables.
 
-Running::
-
-	~/helenos/coast/hsct.sh env
-
-would list the variables available.
-If this command is sourced (notice the dot at the beginning)::
-
-	. ~/helenos/coast/hsct.sh env
-	
-then the printed variables are actually created in the current shell.
-You can then use them when running the commands responsible for the
-application building.
+For testing, you can use the ``helenos/env.sh`` script and source it.
+This script sets all the variables that you can use in the HARBOUR script.
 
 Follows a shortened list of variables available.
 
