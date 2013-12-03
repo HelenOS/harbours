@@ -61,6 +61,8 @@ HSCT_SOURCES_DIR=`pwd`/sources
 HSCT_BUILD_DIR=`pwd`/build
 HSCT_INCLUDE_DIR=`pwd`/include
 HSCT_LIB_DIR=`pwd`/libs
+HSCT_DIST_DIR="`pwd`/dist/"
+HSCT_ARCHIVE_DIR="`pwd`/archives/"
 HSCT_DISABLED_CFLAGS="-Werror -Werror-implicit-function-declaration"
 HSCT_CACHE_DIR=`pwd`/helenos
 
@@ -74,6 +76,7 @@ hsct_usage() {
 	echo "       build     Build given package."
 	echo "       package   Save installable files to allow cleaning."
 	echo "       install   Install to uspace/dist of HelenOS."
+	echo "       archive   Create tarball instead of installing."
 	echo " $1 update [rebuild]"
 	echo "    Update the cached headers and libraries."
 	echo "    If 'rebuild' is specified, HelenOS is forcefully rebuild and"
@@ -653,6 +656,25 @@ hsct_install() {
 	return 0
 }
 
+# Create tarball to allow redistribution of the build packages
+hsct_archive() {
+	hsct_package || return 1
+	
+	hsct_info "Creating the tarball..."
+	mkdir -p "$HSCT_ARCHIVE_DIR"
+	(
+		set -o errexit
+		cd "$HSCT_DIST_DIR/$shipname"
+		tar czf "$HSCT_ARCHIVE_DIR/$shipname.tar.gz" .
+	)
+	if [ $? -ne 0 ]; then
+		hsct_error "Archiving failed!"
+		return 1
+	fi
+	
+	return 0
+}
+
 
 # Initialize current directory for coastline building.
 hsct_init() {
@@ -784,7 +806,7 @@ case "$1" in
 		hsct_usage "$0"
 		leave_script_ok
 		;;
-	clean|build|package|install)
+	clean|build|package|install|archive)
 		HSCT_HARBOUR_NAME="$2"
 		if [ -z "$HSCT_HARBOUR_NAME" ]; then
 			hsct_usage "$0"
@@ -817,7 +839,7 @@ if ! [ -r "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR" ]; then
 fi
 
 HSCT_OVERLAY="$HSCT_HELENOS_ROOT/uspace/overlay"
-HSCT_MY_DIR="`pwd`/dist/$HSCT_HARBOUR_NAME"
+HSCT_MY_DIR="$HSCT_DIST_DIR/$HSCT_HARBOUR_NAME"
 
 source "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR"
 
@@ -833,6 +855,9 @@ case "$1" in
 		;;
 	install)
 		hsct_install
+		;;
+	archive)
+		hsct_archive
 		;;
 	*)
 		hsct_error "Internal error, we shall not get to this point!"
