@@ -75,28 +75,13 @@ package() {
 	# Copy the tests
 	(
 		msg "Preparing tests..."
-		run mkdir -p "$HSCT_MISC_DIR/${shipname}/"
+		run mkdir -p "$HSCT_MY_DIR/tests/${shipname}/"
 		cd tests
-		
-		# Why this has executable bit set is a mystery
-		chmod -x mul.dat || true
-		
-		run cp *.dat* "$HSCT_MISC_DIR/${shipname}/"
-		echo "echo Running ${shipname} tests..." >"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh"
+		echo "echo Running ${shipname} tests..." >"$HSCT_MY_DIR/tests/run_${shipname}.bdsh"
 		find . -executable -type f | while read testname; do
-			run cp "$testname" "$HSCT_MISC_DIR/${shipname}/$testname" || exit 1
-			echo "$testname" | sed 's#./##' >>"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh"
+			run cp "$testname" "$HSCT_MY_DIR/tests/${shipname}/$testname" || exit 1
+			echo "/tests/${shipname}/$testname" | sed 's#\./##' >>"$HSCT_MY_DIR/tests/run_${shipname}.bdsh"
 		done || exit 1
 	)
+
 }
-
-dist() {
-	run mkdir -p "$HSCT_DIST2"
-	run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
-}
-
-undist() {
-	run rm -rf "$HSCT_DIST2"
-}
-
-

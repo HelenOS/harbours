@@ -59,34 +59,25 @@ package() {
 	
 	# Copy the headers and static library
 	run mkdir -p "$HSCT_INCLUDE_DIR/${shipname_}"
-	run cp PKG/usr/local/include/${shipname_}/*.h "$HSCT_INCLUDE_DIR/${shipname_}"
-	run cp PKG/usr/local/lib/${shipname}.a "$HSCT_LIB_DIR/"
+	run cp PKG/usr/local/include/isl/*.h "$HSCT_INCLUDE_DIR/isl"
+	run cp PKG/usr/local/lib/libisl.a "$HSCT_LIB_DIR/"
 	
 	(
 		msg "Preparing tests..."
-		run mkdir -p "$HSCT_MISC_DIR/${shipname}/"
-		run cp isl_pip "$HSCT_MISC_DIR/${shipname}/"
+		run mkdir -p "$HSCT_MY_DIR/tests/${shipname}/"
+		run cp isl_pip "$HSCT_MY_DIR/tests/${shipname}/"
 		cd test_inputs
-		run cp *.pip "$HSCT_MISC_DIR/${shipname}/"
-		echo "echo Running ${shipname} tests..." >"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh"
+		run cp *.pip "$HSCT_MY_DIR/tests/${shipname}/"
+		echo "echo Running ${shipname} tests..." >"$HSCT_MY_DIR/tests/run_${shipname}.bdsh"
 		for testname in *.pip; do
 			# This is taken from pip_test.sh
-			cat >>"$HSCT_MISC_DIR/${shipname}/run_tests.bdsh" <<EOF_PIP_TEST
+			cat >>"$HSCT_MY_DIR/tests/run_${shipname}.bdsh" <<EOF_PIP_TEST
 echo --- $testname ---
-from $testname | isl_pip --format=set --context=gbr -T
-from $testname | isl_pip --format=set --context=lexmin -T
-from $testname | isl_pip --format=affine --context=gbr -T
-from $testname | isl_pip --format=affine --context=lexmin -T
+from /tests/${shipname}/$testname | /tests/${shipname}/isl_pip --format=set --context=gbr -T
+from /tests/${shipname}/$testname | /tests/${shipname}/isl_pip --format=set --context=lexmin -T
+from /tests/${shipname}/$testname | /tests/${shipname}/isl_pip --format=affine --context=gbr -T
+from /tests/${shipname}/$testname | /tests/${shipname}/isl_pip --format=affine --context=lexmin -T
 EOF_PIP_TEST
 		done || exit 1
 	)
-}
-
-dist() {
-	run mkdir -p "$HSCT_DIST2"
-	run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
-}
-
-undist() {
-	run rm -rf "$HSCT_DIST2"
 }

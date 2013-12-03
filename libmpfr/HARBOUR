@@ -67,26 +67,16 @@ package() {
 	# Copy the headers and static library
 	run cp PKG/usr/local/include/*.h "$HSCT_INCLUDE_DIR/"
 	run cp PKG/usr/local/lib/*.a "$HSCT_LIB_DIR/"
-	
+
 	# Copy the tests
 	(
 		msg "Preparing tests..."
-		run mkdir -p "$HSCT_MISC_DIR/libmpfr/"
+		run mkdir -p "$HSCT_MY_DIR/tests/${shipname}/"
 		cd tests
-		run cp *.dat* "$HSCT_MISC_DIR/libmpfr/"
-		echo "echo Running libmpfr tests..." >"$HSCT_MISC_DIR/libmpfr/run_tests.bdsh"
+		echo "echo Running ${shipname} tests..." >"$HSCT_MY_DIR/tests/run_${shipname}.bdsh"
 		find . -executable -type f | while read testname; do
-			run cp "$testname" "$HSCT_MISC_DIR/libmpfr/$testname" || exit 1
-			echo "$testname" | sed 's#./##' >>"$HSCT_MISC_DIR/libmpfr/run_tests.bdsh"
-		done || exit 1		
+			run cp "$testname" "$HSCT_MY_DIR/tests/${shipname}/$testname" || exit 1
+			echo "/tests/${shipname}/$testname" | sed 's#\./##' >>"$HSCT_MY_DIR/tests/run_${shipname}.bdsh"
+		done || exit 1
 	)
-}
-
-dist() {
-	run mkdir -p "$HSCT_DIST2"
-	run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
-}
-
-undist() {
-	run rm -rf "$HSCT_DIST2"
 }

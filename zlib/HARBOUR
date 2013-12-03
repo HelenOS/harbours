@@ -56,15 +56,6 @@ package() {
 	run cp PKG/usr/local/lib/libz.a "$HSCT_LIB_DIR/"
 	
 	# Copy the executables
-	run mkdir -p "$HSCT_MISC_DIR/zlib/"
-	run cp minigzip minigzip64 example example64 "$HSCT_MISC_DIR/zlib/"
-}
-
-dist() {
-	run mkdir -p "$HSCT_DIST2"
-	run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
-}
-
-undist() {
-	run rm -rf "$HSCT_DIST2"
+	run mkdir "$HSCT_MY_DIR/app/"
+	run cp minigzip minigzip64 "$HSCT_MY_DIR/app/"
 }

@@ -177,29 +177,9 @@ package() {
 	run make install-gcc "DESTDIR=$PWD/PKG"
 	
 	# Copy the executables
-	run mkdir "$HSCT_APPS_DIR/$shipname"
+	run mkdir "$HSCT_MY_DIR/app/"
 	for app in gcc cpp gcov; do
-		run cp PKG/usr/local/bin/$app "$HSCT_APPS_DIR/$shipname"
+		run cp PKG/usr/local/bin/$app "$HSCT_MY_DIR/app/"
 	done
-	run cp PKG/usr/local/libexec/gcc/*/4.6.3/cc1 "$HSCT_APPS_DIR/$shipname"
-	
-	# TODO: copy the rest of the files
+	run cp PKG/usr/local/libexec/gcc/*/4.6.3/cc1 "$HSCT_MY_DIR/app/"
 }
-
-dist() {
-	run mkdir -p "$HSCT_DIST2"
-	run cp "$HSCT_APPS_DIR/${shipname}/"* "$HSCT_DIST2"
-	msg "Creating install script"
-	cat >"$HSCT_DIST/coast/install.gcc" <<EOF_INSTALLER
-mv coast/gcc/cc1 /app/cc1
-mv coast/gcc/cpp /app/cpp
-mv coast/gcc/gcc /app/gcc 
-mv coast/gcc/gcov /app/gcov
-EOF_INSTALLER
-}
-
-undist() {
-	run rm -rf "$HSCT_DIST2"
-}
-
-
