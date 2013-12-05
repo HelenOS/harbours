@@ -520,6 +520,16 @@ hsct_prepare_env() {
 	fi
 	
 	source "$HSCT_CACHE_DIR/env.sh"
+	
+	if [ "$shipfunnels" -gt "$HSCT_PARALLELISM" ] 2>/dev/null; then
+		shipfunnels="$HSCT_PARALLELISM"
+	elif [ "$shipfunnels" -le "$HSCT_PARALLELISM" ] 2>/dev/null; then
+		if [ "$shipfunnels" -le "0" ]; then
+			shipfunnels="$HSCT_PARALLELISM"
+		fi
+	else
+		shipfunnels="1"
+	fi
 }
 
 # Remove the build directory of given package.
@@ -731,6 +741,7 @@ hsct_init() {
 root = $_root_dir
 arch = $_uarch
 machine = $_machine
+parallel = 1
 EOF_CONFIG
 	hsct_cache_update
 	return $?
@@ -785,6 +796,7 @@ else
 	HSCT_HELENOS_ROOT=`hsct_get_config "$HSCT_CONFIG" root`
 	HSCT_HELENOS_ARCH=`hsct_get_config "$HSCT_CONFIG" arch`
 	HSCT_HELENOS_MACHINE=`hsct_get_config "$HSCT_CONFIG" machine`
+	HSCT_PARALLELISM=`hsct_get_config "$HSCT_CONFIG" parallel`
 	
 	if [ -z "$HSCT_HELENOS_ARCH" ]; then
 		hsct_error "I don't know for which architecture you want to build."
@@ -795,6 +807,10 @@ else
 		HSCT_HELENOS_PROFILE="$HSCT_HELENOS_ARCH"
 	else
 		HSCT_HELENOS_PROFILE="$HSCT_HELENOS_ARCH/$HSCT_HELENOS_MACHINE"
+	fi
+	
+	if ! [ "$HSCT_PARALLELISM" -ge 0 ] 2>/dev/null; then
+		HSCT_PARALLELISM="1"
 	fi
 fi
 
