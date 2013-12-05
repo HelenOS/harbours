@@ -75,6 +75,6 @@ build() {
 package() {
 	cd "${shipname}-${shipversion}"
 	
-	run mkdir "$HSCT_MY_DIR/app/"
+	run mkdir -p "$HSCT_MY_DIR/app/"
 	run cp "src/${shipname}" "$HSCT_MY_DIR/app/"
 }

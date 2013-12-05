@@ -56,6 +56,6 @@ package() {
 	run cp PKG/usr/local/lib/libz.a "$HSCT_LIB_DIR/"
 	
 	# Copy the executables
-	run mkdir "$HSCT_MY_DIR/app/"
+	run mkdir -p "$HSCT_MY_DIR/app/"
 	run cp minigzip minigzip64 "$HSCT_MY_DIR/app/"
 }

@@ -134,7 +134,7 @@ package() {
 	
 	run make install-gas install-ld "DESTDIR=$PWD/PKG"
 	
-	run mkdir "$HSCT_MY_DIR/app/"
+	run mkdir -p "$HSCT_MY_DIR/app/"
 	for app in as ld; do
 		run cp PKG/usr/local/bin/$app "$HSCT_MY_DIR/app/"
 	done

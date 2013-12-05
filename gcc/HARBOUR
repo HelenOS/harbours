@@ -117,7 +117,7 @@ build() {
 	msg "Building..."
 	
 	# Out-of-source build is recommended for GCC
-	run mkdir build
+	run mkdir -p build
 	cd build
 	
 	# Although we are forcing the cross-compilation, sometimes
@@ -177,7 +177,7 @@ package() {
 	run make install-gcc "DESTDIR=$PWD/PKG"
 	
 	# Copy the executables
-	run mkdir "$HSCT_MY_DIR/app/"
+	run mkdir -p "$HSCT_MY_DIR/app/"
 	for app in gcc cpp gcov; do
 		run cp PKG/usr/local/bin/$app "$HSCT_MY_DIR/app/"
 	done
