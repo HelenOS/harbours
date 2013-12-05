@@ -134,8 +134,10 @@ hsct_is_helenos_configured() {
 
 # hsct_get_config CONFIG_FILE variable
 hsct_get_config() {
-	grep '^[ \t]*'"$2" "$1" | cut '-d=' -f 2 | \
-		sed -e 's/^[ \t]*//' -e 's/[ \t]*$//'
+	grep '^[ \t]*'"$2" "$1" \
+		| tail -n 1 \
+		| cut '-d=' -f 2 \
+		| sed -e 's/^[ \t]*//' -e 's/[ \t]*$//'
 }
 
 # Fetch all the specified files in the HARBOUR
