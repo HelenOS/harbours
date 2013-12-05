@@ -37,6 +37,8 @@ shipversion=2.21.1
 mirror_="ftp://ftp.gnu.org/gnu/binutils/"
 shipsources="$mirror_/$shipname-$shipversion.tar.bz2 pex-helenos.c gcc.template"
 shiptugs=""
+shipfunnels=4
+
 
 build() {
 	run tar xjf ${shipname}-${shipversion}.tar.bz2
@@ -126,7 +128,7 @@ build() {
 		STRIP="$HSCT_STRIP" \
 		OBJDUMP="$HSCT_OBJDUMP"
 	
-	run make all-gas all-ld
+	run make all-gas all-ld -j$shipfunnels
 }
 
 package() {

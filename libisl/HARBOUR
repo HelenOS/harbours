@@ -31,6 +31,7 @@ shipname_=isl
 shipversion=0.11.1
 shipsources="http://isl.gforge.inria.fr/${shipname_}-${shipversion}.tar.bz2"
 shiptugs="libgmp"
+shipfunnels=4
 
 build() {
 	run tar xjf "${shipname_}-${shipversion}.tar.bz2"
@@ -50,7 +51,7 @@ build() {
 		NM="$HSCT_NM" \
 		RANLIB="$HSCT_RANLIB"
 	
-	run make
+	run make -j$shipfunnels
 }
 
 package() {

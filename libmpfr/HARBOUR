@@ -31,6 +31,7 @@ shipname_=mpfr
 shipversion=3.1.1
 shipsources="http://www.mpfr.org/${shipname_}-${shipversion}/${shipname_}-${shipversion}.tar.bz2"
 shiptugs="libgmp"
+shipfunnels=4
 
 build() {
 	run tar xjf "${shipname_}-${shipversion}.tar.bz2"
@@ -54,7 +55,7 @@ build() {
 		|| return 1
 	
 	msg "Building the library..."
-	run make
+	run make -j$shipfunnels
 	
 	msg "Building the tests..."
 	run make check || true

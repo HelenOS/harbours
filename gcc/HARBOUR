@@ -31,6 +31,7 @@ shipversion=4.6.3
 mirror_="ftp://ftp.fu-berlin.de/unix/languages/gcc"
 shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 gcc.template includes.patch libiberty.patch pex-helenos.c"
 shiptugs="libgmp libmpfr libmpc libisl zlib"
+shipfunnels=4
 
 build() {
 	run tar xjf ${shipname}-${shipversion}.tar.bz2
@@ -169,7 +170,7 @@ build() {
 		CXX="$cxx" \
 		CC_FOR_TARGET="$cc"
 
-	run make all-gcc
+	run make all-gcc -j$shipfunnels
 }
 
 package() {

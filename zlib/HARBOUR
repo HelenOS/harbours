@@ -29,6 +29,7 @@
 shipname=zlib
 shipversion=1.2.8
 shipsources="http://zlib.net/${shipname}-${shipversion}.tar.gz"
+shipfunnels=4
 
 build() {
 	run tar xzf "${shipname}-${shipversion}.tar.gz"
@@ -44,7 +45,7 @@ build() {
 		RANLIB="$HSCT_RANLIB" \
 		./configure \
 			--static
-	run make
+	run make -j$shipfunnels
 }
 
 package() {

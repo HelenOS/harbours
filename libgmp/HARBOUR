@@ -30,6 +30,7 @@ shipname=libgmp
 shipname_=gmp
 shipversion=5.1.0
 shipsources="ftp://ftp.gmplib.org/pub/${shipname_}-${shipversion}/${shipname_}-${shipversion}.tar.bz2 gmp-h.patch"
+shipfunnels=4
 
 build() {
 	run tar xjf "${shipname_}-${shipversion}.tar.bz2"
@@ -45,7 +46,7 @@ build() {
 		|| return 1
 	
 	msg "Building the library..."
-	run make
+	run make -j$shipfunnels
 	msg "Building the tests..."
 	run make check || true
 }

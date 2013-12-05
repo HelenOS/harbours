@@ -30,6 +30,7 @@ shipname=msim
 shipversion=1.3.8.1
 shipsources="http://d3s.mff.cuni.cz/~holub/sw/${shipname}/${shipname}-${shipversion}.tar.bz2 \
 	Makefile config.h helenos.h input.c misc.c"
+shipfunnels=0
 
 build() {
 	run tar xjf "${shipname}-${shipversion}.tar.bz2"
@@ -63,7 +64,7 @@ build() {
 	
 	# Now we would use the HelenOS-style Makefile to actually build
 	# the binary.
-	run make -C src \
+	run make -C src -j$shipfunnels \
 		CC="$HSCT_CC" \
 		HSCT_CFLAGS="$HSCT_CFLAGS" \
 		LD="$HSCT_LD" \
