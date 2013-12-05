@@ -56,7 +56,7 @@ build() {
 	# Luckily, we do not need the one from HelenOS and thus simply removing
 	# it from the original config.h shall be okay
 	msg "Purging HelenOS config.h, declaring compiler flags..."
-	sed -e '/REVISION/d' "$HSCT_CACHE_DIR/include/system_config.h" >include/helenos_config.h
+	sed -e '/REVISION/d' -e '/PROCESSOR/d' "$HSCT_CACHE_DIR/include/system_config.h" >include/helenos_config.h
 	fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/system_config\.h#-imacros '$PWD'/include/helenos_config.h#'`"
 	
 	# We shall define this macro somewhere, this is not the first
