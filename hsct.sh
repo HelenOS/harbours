@@ -677,7 +677,7 @@ hsct_archive() {
 	(
 		set -o errexit
 		cd "$HSCT_DIST_DIR/$shipname"
-		tar czf "$HSCT_ARCHIVE_DIR/$shipname.tar.gz" .
+		tar cJf "$HSCT_ARCHIVE_DIR/$shipname.tar.xz" .
 	)
 	if [ $? -ne 0 ]; then
 		hsct_error "Archiving failed!"
