@@ -584,7 +584,12 @@ hsct_build() {
 			(
 				$HSCT_HSCT package $tug
 				exit $?
-			) || return 1
+			)
+			if [ $? -ne 0 ]; then
+				hsct_error "Failed to package dependency $tug."
+				hsct_error2 "Cannot continue building $shipname."
+				return 1
+			fi
 			hsct_info2 "Back from building $tug."
 		fi
 	done
