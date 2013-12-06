@@ -56,6 +56,12 @@ package() {
 	run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_INCLUDE_DIR/"
 	run cp PKG/usr/local/lib/libz.a "$HSCT_LIB_DIR/"
 	
+	run mkdir -p "$HSCT_MY_DIR/inc/c"
+	run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_MY_DIR/inc/c"
+	
+	run mkdir -p "$HSCT_MY_DIR/lib"
+	run cp PKG/usr/local/lib/libz.a "$HSCT_MY_DIR/lib"
+	
 	# Copy the executables
 	run mkdir -p "$HSCT_MY_DIR/app/"
 	run cp minigzip minigzip64 "$HSCT_MY_DIR/app/"

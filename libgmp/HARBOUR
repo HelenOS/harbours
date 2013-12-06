@@ -65,6 +65,12 @@ package() {
 	run cp PKG/usr/local/include/gmp.h "$HSCT_INCLUDE_DIR/"
 	run cp PKG/usr/local/lib/libgmp.a "$HSCT_LIB_DIR/"
 	
+	run mkdir -p "$HSCT_MY_DIR/inc/c"
+	run cp PKG/usr/local/include/gmp.h "$HSCT_MY_DIR/inc/c"
+	
+	run mkdir -p "$HSCT_MY_DIR/lib"
+	run cp PKG/usr/local/lib/libgmp.a "$HSCT_MY_DIR/lib"
+	
 	# Copy the tests
 	(
 		msg "Preparing tests..."

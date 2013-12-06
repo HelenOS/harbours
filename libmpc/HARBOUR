@@ -85,6 +85,12 @@ package() {
 	run cp PKG/usr/local/include/mpc.h "$HSCT_INCLUDE_DIR/"
 	run cp PKG/usr/local/lib/libmpc.a "$HSCT_LIB_DIR/"
 	
+	run mkdir -p "$HSCT_MY_DIR/inc/c"
+	run cp PKG/usr/local/include/mpc.h "$HSCT_MY_DIR/inc/c"
+	
+	run mkdir -p "$HSCT_MY_DIR/lib"
+	run cp PKG/usr/local/lib/libmpc.a "$HSCT_MY_DIR/lib"
+	
 	# Copy the tests
 	(
 		msg "Preparing tests..."

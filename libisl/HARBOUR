@@ -63,6 +63,12 @@ package() {
 	run cp PKG/usr/local/include/isl/*.h "$HSCT_INCLUDE_DIR/isl"
 	run cp PKG/usr/local/lib/libisl.a "$HSCT_LIB_DIR/"
 	
+	run mkdir -p "$HSCT_MY_DIR/inc/c/isl"
+	run cp PKG/usr/local/include/isl/*.h "$HSCT_MY_DIR/inc/c/isl"
+	
+	run mkdir -p "$HSCT_MY_DIR/lib"
+	run cp PKG/usr/local/lib/libisl.a "$HSCT_MY_DIR/lib"
+	
 	(
 		msg "Preparing tests..."
 		run mkdir -p "$HSCT_MY_DIR/tests/${shipname}/"
