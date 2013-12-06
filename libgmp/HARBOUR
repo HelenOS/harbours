@@ -49,6 +49,12 @@ build() {
 	run make -j$shipfunnels
 	msg "Building the tests..."
 	run make check || true
+	(
+		cd tests
+		find t-bswap t-constants t-count_zeros t-gmpmax t-hightomask \
+			t-modlinv t-popc t-parity t-sub
+		exit $?
+	)
 }
 
 package() {
