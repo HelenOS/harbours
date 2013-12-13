@@ -1,0 +1,37 @@
+diff -r 3a1db0d2747e Makefile.pre.in
+--- a/Makefile.pre.in	Sun Nov 10 02:36:30 2013 -0500
++++ b/Makefile.pre.in	Fri Dec 13 16:10:56 2013 +0100
+@@ -191,6 +191,7 @@
+ 
+ PYTHON=		python$(EXE)
+ BUILDPYTHON=	python$(BUILDEXE)
++HOSTPYTHON=	$(BUILDPYTHON)
+ 
+ PYTHON_FOR_BUILD=@PYTHON_FOR_BUILD@
+ _PYTHON_HOST_PLATFORM=@_PYTHON_HOST_PLATFORM@
+@@ -231,6 +232,7 @@
+ ##########################################################################
+ # Parser
+ PGEN=		Parser/pgen$(EXE)
++HOSTPGEN=	$(PGEN)
+ 
+ PSRCS=		\
+ 		Parser/acceler.c \
+@@ -293,7 +295,7 @@
+ 
+ ASDLGEN_FILES=	$(srcdir)/Parser/asdl.py $(srcdir)/Parser/asdl_c.py
+ # XXX Note that a build now requires Python exist before the build starts
+-ASDLGEN=	$(srcdir)/Parser/asdl_c.py
++ASDLGEN=$(HOSTPYTHON)	$(srcdir)/Parser/asdl_c.py
+ 
+ ##########################################################################
+ # Python
+@@ -598,7 +600,7 @@
+ $(GRAMMAR_H): $(GRAMMAR_INPUT) $(PGENSRCS)
+ 		@$(MKDIR_P) Include
+ 		$(MAKE) $(PGEN)
+-		$(PGEN) $(GRAMMAR_INPUT) $(GRAMMAR_H) $(GRAMMAR_C)
++		$(HOSTPGEN) $(GRAMMAR_INPUT) $(GRAMMAR_H) $(GRAMMAR_C)
+ $(GRAMMAR_C): $(GRAMMAR_H) $(GRAMMAR_INPUT) $(PGENSRCS)
+ 		$(MAKE) $(GRAMMAR_H)
+ 		touch $(GRAMMAR_C)

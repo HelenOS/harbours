@@ -1,0 +1,12 @@
+diff -r 3a1db0d2747e Modules/Setup.dist
+--- a/Modules/Setup.dist	Sun Nov 10 02:36:30 2013 -0500
++++ b/Modules/Setup.dist	Fri Dec 13 15:36:30 2013 +0100
+@@ -114,7 +114,7 @@
+ 
+ posix posixmodule.c		# posix (UNIX) system calls
+ errno errnomodule.c		# posix (UNIX) errno values
+-pwd pwdmodule.c			# this is needed to find out the user's home dir
++# pwd pwdmodule.c			# this is needed to find out the user's home dir
+ 				# if $HOME is not set
+ _sre _sre.c			# Fredrik Lundh's new regular expressions
+ _codecs _codecsmodule.c		# access to the builtin codecs and codec registry

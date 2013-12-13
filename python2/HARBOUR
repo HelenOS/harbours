@@ -1,0 +1,133 @@
+#
+# Copyright (c) 2013 Vojtech Horky
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# - The name of the author may not be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# This script is based on patches of Zbigniew Halas from his Python on
+# HelenOS repository https://github.com/zhalas/helenos-build-python.
+# Thanks, Zbignew.
+#
+# All the praise belongs to him, errors are mine.
+#
+
+shipname=python2
+shipversion=2.7.6
+shipsources="http://www.python.org/ftp/python/${shipversion}/Python-${shipversion}.tar.xz \
+	cross-tools.patch modules.patch posixmodule.patch"
+shiptugs=""
+shipfunnels=16
+
+build() {
+	run tar xJf Python-${shipversion}.tar.xz
+	run mv Python-${shipversion} python-native
+	run cp -r python-native python-cross
+	
+	msg "Preparing native Python first..."
+	
+	(
+		set -o errexit
+		run cd python-native
+		run ./configure
+		run make -j$shipfunnels
+	)
+	[ $? -ne 0 ] && exit 1
+	
+	msg "Building cross Python now..."
+	
+	(
+		set -o errexit
+		run cd python-cross
+		
+		msg "Patching soures..."
+		# Use a native generator
+		patch -p1 <../cross-tools.patch
+		# Do not build all modules
+		patch -p1 <../modules.patch
+		# We are not fully POSIX-compliant
+		patch -p1 <../posixmodule.patch
+		
+		# There is a name clash on several macros in config.h
+		# Luckily, we do not need the one from HelenOS and thus simply
+		# removing it from the original config.h shall be okay
+		msg "Purging HelenOS config.h, declaring compiler flags..."
+		sed -e '/PLATFORM/d' -e '/PROCESSOR/d' -e '/COMPILER/d' "$HSCT_CACHE_DIR/include/system_config.h" >helenos_config.h
+		fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/system_config\.h#-imacros '$PWD'/helenos_config.h#'`"
+		
+		# Extract preprocessor flags
+		ppflags=""
+		for flag in $fixed_cflags; do
+			if echo "$flag" | grep -q '^-I'; then
+				ppflags="$ppflags $flag";
+			fi
+			if echo "$flag" | grep -q '^-D'; then
+				ppflags="$ppflags $flag";
+			fi
+		done
+		
+		msg "Building..."
+		
+		
+		run ./configure \
+			--build=`./config.guess` \
+			--host="$HSCT_GNU_TARGET" \
+			--without-libm \
+			--without-threads \
+			--prefix=/ \
+			--libdir=/lib \
+			--bindir=/app \
+			CC="$HSCT_CC" \
+			CFLAGS="$fixed_cflags" \
+			LD="$HSCT_LD" \
+			LDFLAGS="$HSCT_LDFLAGS_FOR_CC -nostdlib" \
+			CPP="$HSCT_CC -E" \
+			CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags" \
+			ac_cv_file__dev_ptmx=no \
+			ac_cv_file__dev_ptc=no \
+			ac_cv_have_long_long_format=yes \
+			ac_cv_sizeof_pid_t=4
+		
+		run make -j$shipfunnels \
+			HOSTPGEN=../python-native/Parser/pgen \
+			HOSTPYTHON=../python-native/python
+	)
+	[ $? -ne 0 ] && exit 1
+	
+	exit 0
+}
+
+package() {
+	cd python-cross
+	run make install "DESTDIR=$PWD/PKG" || true
+	
+	# Copy installed files
+	run mkdir -p "$HSCT_MY_DIR/app"
+	run cp -r PKG/app/python2.7 "$HSCT_MY_DIR/app/python"
+	
+	run mkdir -p "$HSCT_MY_DIR/lib"
+	run cp -r PKG/lib/*python* "$HSCT_MY_DIR/lib"
+	run chmod 0644 "$HSCT_MY_DIR/lib/"*.a
+}
