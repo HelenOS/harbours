@@ -127,8 +127,9 @@ if $BUILD; then
 	mkdir -p matrix
 		
 	for ARCH in $ARCHITECTURES; do
-		ARCH_DIR="build-`echo $ARCH | tr '/' '-'`"
-		TARBALL_DIR="matrix/`echo $ARCH | tr '/' '-'`"
+		ARCH_FILENAME="`echo $ARCH | tr '/' '-'`"
+		ARCH_DIR="build-$ARCH_FILENAME"
+		TARBALL_DIR="matrix/$ARCH_FILENAME"
 		msg ""
 		msg "Building for $ARCH (into $ARCH_DIR)."
 		msg ""
@@ -165,7 +166,7 @@ if $BUILD; then
 					msg3 "Creating the tarball..."
 					$HSCT archive $HARBOUR >>build/$HARBOUR.log 2>&1
 					
-					cp archives/$HARBOUR.tar.xz ../$TARBALL_DIR/
+					cp archives/$HARBOUR.tar.xz ../$TARBALL_DIR/$ARCH_FILENAME-$HARBOUR.tar.xz
 				)
 				if [ $? -ne 0 ]; then
 					log_tail build/$HARBOUR.log
@@ -296,10 +297,10 @@ EOF_HTML_HEADER
 			arch_human_readable "$ARCH"
 			echo "</th>"
 			for HARBOUR in $BUILD_HARBOURS; do
-				if [ -e matrix/$ARCH/$HARBOUR.tar.xz ]; then
+				if [ -e matrix/$ARCH/$ARCH-$HARBOUR.tar.xz ]; then
 					TD_CLASS="ok"
 					TD_MSG="OK"
-					TD_LINK="$ARCH/$HARBOUR.tar.xz"
+					TD_LINK="$ARCH/$ARCH-$HARBOUR.tar.xz"
 					TD_LINK_TEXT="Tarball"
 				else
 					TD_CLASS="fail"
