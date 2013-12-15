@@ -1,0 +1,24 @@
+--- python2.7/posixpath.py	2013-12-15 19:41:45.768518889 +0100
++++ python2.7/posixpath.py	2013-12-15 20:10:04.427832683 +0100
+@@ -263,20 +263,7 @@
+     i = path.find('/', 1)
+     if i < 0:
+         i = len(path)
+-    if i == 1:
+-        if 'HOME' not in os.environ:
+-            import pwd
+-            userhome = pwd.getpwuid(os.getuid()).pw_dir
+-        else:
+-            userhome = os.environ['HOME']
+-    else:
+-        import pwd
+-        try:
+-            pwent = pwd.getpwnam(path[1:i])
+-        except KeyError:
+-            return path
+-        userhome = pwent.pw_dir
+-    userhome = userhome.rstrip('/')
++    userhome = '/data'
+     return (userhome + path[i:]) or '/'
+ 
+ 

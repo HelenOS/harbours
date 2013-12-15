@@ -37,7 +37,7 @@
 shipname=python2
 shipversion=2.7.6
 shipsources="http://www.python.org/ftp/python/${shipversion}/Python-${shipversion}.tar.xz \
-	cross-tools.patch modules.patch posixmodule.patch"
+	cross-tools.patch modules.patch posixmodule.patch posixpath.patch"
 shiptugs=""
 shipfunnels=16
 
@@ -131,4 +131,6 @@ package() {
 	run mkdir -p "$HSCT_MY_DIR/lib"
 	run cp -r PKG/lib/*python* "$HSCT_MY_DIR/lib"
 	run chmod 0644 "$HSCT_MY_DIR/lib/"*.a
+
+	patch -d "$HSCT_MY_DIR/lib" -p0 <../posixpath.patch
 }
