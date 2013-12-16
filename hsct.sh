@@ -57,6 +57,8 @@ HSCT_HOME=`which -- "$0" 2>/dev/null`
 HSCT_HOME=`dirname -- "$HSCT_HOME"`
 HSCT_HSCT="$HSCT_HOME/hsct.sh"
 
+HSCT_CONFIG=hsct.conf
+
 HSCT_SOURCES_DIR=`pwd`/sources
 HSCT_BUILD_DIR=`pwd`/build
 HSCT_INCLUDE_DIR=`pwd`/include
@@ -788,12 +790,27 @@ hsct_update() {
 alias leave_script_ok='return 0 2>/dev/null || exit 0'
 alias leave_script_err='return 1 2>/dev/null || exit 1'
 
-HSCT_CONFIG=hsct.conf
+
+case "$1" in
+	help|--help|-h|-?)
+		hsct_usage "$0"
+		leave_script_ok
+		;;
+	init)
+		HSCT_HELENOS_ROOT="$2"
+		HSCT_LOAD_CONFIG=false
+		;;
+	update|clean|build|package|install|archive)
+		HSCT_LOAD_CONFIG=true
+		;;
+	*)
+		hsct_usage "$0"
+		leave_script_err
+		;;
+esac
 
 
-if [ "$1" = "init" ]; then
-	HSCT_HELENOS_ROOT="$2"
-else
+if $HSCT_LOAD_CONFIG; then
 	if ! [ -e "$HSCT_CONFIG" ]; then
 		hsct_error "Configuration file $HSCT_CONFIG missing."
 		leave_script_err
@@ -825,10 +842,6 @@ if [ -z "$HSCT_HELENOS_ROOT" ]; then
 fi
 
 case "$1" in
-	help)
-		hsct_usage "$0"
-		leave_script_ok
-		;;
 	clean|build|package|install|archive)
 		HSCT_HARBOUR_NAME="$2"
 		if [ -z "$HSCT_HARBOUR_NAME" ]; then
@@ -845,14 +858,14 @@ case "$1" in
 		leave_script_ok
 		;;
 	*)
-		hsct_usage "$0"
+		hsct_error "Internal error, we shall not get to this point!"
 		leave_script_err
 		;;
 esac
 
 
 if ! [ -d "$HSCT_HOME/$HSCT_HARBOUR_NAME" ]; then
-	hsct_error "Unknown package $1"
+	hsct_error "Unknown package $2"
 	leave_script_err
 fi
 
