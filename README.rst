@@ -31,64 +31,40 @@ coast-line sources.
 ``~/helenos/coast-builds/ia32`` is a good choice if you plan to build for
 ``ia32`` configuration.
 
-The script currently supports only static libraries (to be more precise, I
-never tried to build any shared library with it) and thus you need to build
-HelenOS first.
-Some of the prepared packages depends on some changes in ``libposix`` that
-are not yet in mainline, thus it is recommended to build against
-`lp:~vojtech-horky/helenos/gcc-port <https://code.launchpad.net/~vojtech-horky/helenos/gcc-port>`_.
+Next, you obviously need check-out of HelenOS sources.
+In the following examples, I would assume ``~/helenos/mainline``.
 
-``~/helenos/gcc-port`` might be a good location where to make the
-checkout.
-Once you checkout the branch, configure it for ``ia32`` and build it.
-Running::
+To use the coastline, go into the ``~/helenos/coast-builds/ia32`` and
+issue the following command::
 
-	make PROFILE=ia32 HANDS_OFF=y
+	~/helenos/coast/hsct.sh init ~/helenos/mainline ia32 build
+
+This command would initialize the build directory and forcefully rebuild
+HelenOS to the defaults of ``ia32`` configuration.
+Once this command finishes, you can freely play inside ``~/helenos/mainline``
+as all the necessary files are already cached in the build directory.
+
+Now you can build some software.
+Just choose one (for example, ``msim``) and run::
+
+	~/helenos/coast/hsct.sh build msim
+
+It may take a while but it shall eventually produce the simulator binary.
+If you want to copy it to your HelenOS source tree, run::
+
+	~/helenos/coast/hsct.sh install msim
 	
-shall do it.
+If you want to transfer the built files to another machine etc, you may
+want to run::
 
-After the build is complete, it is possible to actually compile and build
-some of the ported software.
-But before that, a ``hsct.conf`` has to be prepared in
-``~/helenos/coast-builds/ia32`` that contains the following line (path
-to the actual HelenOS root)::
-
-	root = /home/username/helenos/gcc-port
-
-Then, change directory to ``~/helenos/coast-builds/ia32`` and execute the
-following command to build `zlib <http://www.zlib.net/>`_::
-
-	~/helenos/coast/hsct.sh build zlib
+	~/helenos/coast/hsct.sh archive msim
 	
-If all is well, zlib sources shall be fetched, zlib shall be configured
-and built.
-Inside directory ``build/zlib/zlib-1.2.7`` shall reside the compiled library.
+that produces a TAR.XZ file in ``archives`` that you can directly unpack
+into the ``uspace/overlay`` directory.
 
-Issuing::
-
-	~/helenos/coast/hsct.sh package zlib
-	
-would copy the compiled library and some example applications outside of
-the build tree to allow removing the build directory if you are low on free
-disk space.
-
-Finally, running::
-
-	~/helenos/coast/hsct.sh install zlib
-
-would copy zlib to HelenOS source tree so that you can actually try it live.
-After booting HelenOS, ``minigzip`` shall be available in ``/coast/zlib``.
-
-If you often compile for different architectures, you may want to use the
-``arch`` option in ``hsct.conf`` (it is recommended to use it anyway).
-It contains the short architecture name (such as ``ia32`` or ``mips32``)::
-
-	arch = ia32
-
-and it is checked against currently selected architecture inside your HelenOS
-source tree prior building.
-This ensures that you do not mix different architecture accidentally.
-Empty or missing value means that no check is done at all.
+If you have a multicore machine, you may try setting the variable
+``parallel`` in ``hsct.conf`` inside your build directory to a higher
+value to allow parallel builds.
 
 
 
@@ -133,22 +109,18 @@ Follows a shortened list of variables available.
 - ``$HSCT_GNU_TARGET``: Target for which the application is being built.
   Typically this is the value for the ``--target`` option of the ``configure``
   script.
-
-Following variables are useful when the application is successfully built
-and you want to copy some of the created files elsewhere.
-E.g. to the HelenOS source tree so they could become part of the generated
-image.
-
 - ``$HSCT_INCLUDE_DIR``: Points to directory for header files.
+  This directory is shared by all packages.
 - ``$HSCT_LIB_DIR``: Points to directory for libraries.
-- ``$HSCT_MISC_DIR``: Points to directory for any other stuff.
-  It is recommended to create a subdirectory ``$HSCT_MISC_DIR/application-name``
-  for these extra files).
+- ``$HSCT_MY_DIR``: Points to installation directory.
+  All files that shall appear in HelenOS must be copied here.
+  The structure of this directory shall mirror the HelenOS one
+  (i.e. the ``app/`` and ``inc/`` directories).
 
 For example, the ``./configure`` script for `libgmp <http://gmplib.org/>`_
 uses the following variables::
 
-	./configure \
+	run ./configure \
 		--disable-shared \
 		--host="$HSCT_GNU_TARGET" \
 		CC="$HSCT_CC" \
@@ -186,8 +158,6 @@ The function is expected to complete the following tasks:
 - configure the application or somehow prepare it for building
 - actually build it
 
-Look into existing files how does this process typically looks like.
-
 If you want to print an informative message to the screen, it is recommended
 to use ``msg()`` function as it would make the message more visible.
 
@@ -196,46 +166,71 @@ function named ``run``.
 That way the actual command is first printed to the screen and then
 executed.
 
-Once the application is built it is necessary to copy its files to a more
-permanent storage (to allow clean-up of the build directory) and finally copy
-the files to the HelenOS source tree.
+Below is an example from ``libgmp`` that illustrates a typical
+``build()`` function::
 
-The function ``package()`` copies the files outside of the build directory
-and it typically consists of similar commands
-(this one is taken from ``zlib``)::
-
-	package() {
-		# shipname is "zlib" here
-		cd "${shipname}-${shipversion}"
-		
-		# Pretend we are actually installing
-		run make install "DESTDIR=$PWD/PKG"
-		
-		# Copy the headers and static library
-		run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_INCLUDE_DIR/"
-		run cp PKG/usr/local/lib/libz.a "$HSCT_LIB_DIR/"
-	}
+	# Manually extract the files
+	run tar xjf "${shipname_}-${shipversion}.tar.bz2"
 	
-The ``dist()`` function is used to copy these files to the HelenOS source
-tree.
-You have following two variables to simplify the path specification:
+	# HelenOS-specific patches are needed
+	msg "Patching gmp.h..."
+	patch -p0 <gmp-h.patch
+	
+	# Run the configure script, notice the extra C flags
+	cd "${shipname_}-${shipversion}"
+	run ./configure \
+		--disable-shared \
+		--host="$HSCT_GNU_TARGET" \
+		CC="$HSCT_CC" \
+		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC -D_STDIO_H -DHAVE_STRCHR -Wl,--undefined=longjmp" \
+		LD="$HSCT_LD" \
+		|| return 1
+	
+	# The variable $shipfunnels reflects maximum parallelism allowed
+	# by the HARBOUR and by the current build directory
+	msg "Building the library..."
+	run make -j$shipfunnels
+	
+	# Tests are built and run as one target so this target always fails
+	# We check that the tests were built by explicitly checking for
+	# them below.
+	msg "Building the tests..."
+	run make check || true
+	(
+		cd tests
+		# Check that all tests were built
+		find t-bswap t-constants t-count_zeros t-gmpmax t-hightomask \
+			t-modlinv t-popc t-parity t-sub
+		exit $?
+	)
 
-- ``$HSCT_DIST``: points to ``uspace/dist`` inside the source tree.
-- ``$HSCT_DIST2``: points to ``uspace/dist/coast/$shipname``.
-  However, you first need to create this directory.
-
-Typically, the ``dist()`` function looks like this::
-
-	dist() {
-		run mkdir -p "$HSCT_DIST2"
-		run cp "$HSCT_MISC_DIR/${shipname}/"* "$HSCT_DIST2"
-	}
-
-Finally, there is ``undist()`` function that removes the files from the
+After the application is built, it can be either archived or copied to
 HelenOS source tree.
-Typical implementation is very simple::
+Both these actions requires that the application is *packaged* first.
 
-	undist() {
-		run rm -rf "$HSCT_DIST2"
-	}
+The function ``package()`` is expected to copy the necessary files outside
+of the build directory into ``$HSCT_MY_DIR``.
+If there are some headers or libraries used by other packages, they should
+be copied into ``$HSCT_INCLUDE_DIR`` and ``$HSCT_LIB_DIR``.
 
+Directories ``$HSCT_INCLUDE_DIR`` and ``$HSCT_LIB_DIR`` behave as standard
+Unix-like ``/usr/include`` and ``/usr/lib`` directories, while ``$HSCT_MY_DIR``
+mirros the HelenOS directory ``uspace/dist`` structure.
+Contents of ``$HSCT_MY_DIR`` is copied to ``uspace/overlay`` during
+installation or tarred when archived.
+
+Below is an excerpt from ``zlib`` ``package()`` function.
+Notice the usage of the variables and the ``run()`` function::
+
+	cd "${shipname}-${shipversion}"
+	run make install DESTDIR=$PWD/PKG
+	
+	# Copy the headers and static library
+	run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_INCLUDE_DIR/"
+	run cp PKG/usr/local/lib/libz.a "$HSCT_LIB_DIR/"
+	
+	run mkdir -p "$HSCT_MY_DIR/inc/c"
+	run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_MY_DIR/inc/c"
+	
+	run mkdir -p "$HSCT_MY_DIR/lib"
+	run cp PKG/usr/local/lib/libz.a "$HSCT_MY_DIR/lib"
