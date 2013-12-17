@@ -38,7 +38,7 @@ shipname=python2
 shipversion=2.7.6
 shipsources="http://www.python.org/ftp/python/${shipversion}/Python-${shipversion}.tar.xz \
 	cross-tools.patch modules.patch posixmodule.patch posixpath.patch"
-shiptugs=""
+shiptugs="fdlibm"
 shipfunnels=16
 
 build() {
@@ -90,6 +90,7 @@ build() {
 		
 		msg "Building..."
 		
+		ldflags_math="-Wl,--whole-archive -Wl,-L$HSCT_LIB_DIR -Wl,-lfdm -Wl,--no-whole-archive"
 		
 		run ./configure \
 			--build=`./config.guess` \
@@ -102,7 +103,7 @@ build() {
 			CC="$HSCT_CC" \
 			CFLAGS="$fixed_cflags" \
 			LD="$HSCT_LD" \
-			LDFLAGS="$HSCT_LDFLAGS_FOR_CC -nostdlib" \
+			LDFLAGS="$HSCT_LDFLAGS_FOR_CC -nostdlib $ldflags_math" \
 			CPP="$HSCT_CC -E" \
 			CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags" \
 			cross_compiling=yes \

@@ -30,7 +30,7 @@ shipname=libmpfr
 shipname_=mpfr
 shipversion=3.1.1
 shipsources="http://www.mpfr.org/${shipname_}-${shipversion}/${shipname_}-${shipversion}.tar.bz2"
-shiptugs="libgmp"
+shiptugs="libgmp fdlibm"
 shipfunnels=4
 
 build() {
@@ -45,12 +45,13 @@ build() {
 	
 	# Where libgmp is supposed to be residing
 	extra_cflags="$extra_cflags -I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"
+	ldflags_math="-Wl,--whole-archive -Wl,-L$HSCT_LIB_DIR -Wl,-lfdm -Wl,--no-whole-archive"
 	
 	run ./configure \
 		--disable-shared \
 		--host="$HSCT_GNU_TARGET" \
             	CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC $extra_cflags" \
+		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC $extra_cflags $ldflags_math" \
 		LD="$HSCT_LD" \
 		|| return 1
 	
