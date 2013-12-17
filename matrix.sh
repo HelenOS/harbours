@@ -99,7 +99,7 @@ else
 fi
 
 # Dependency-correct ordering
-ALL_HARBOURS="zlib libgmp libmpfr libisl libmpc gcc binutils msim"
+ALL_HARBOURS="zlib fdlibm libgmp libmpfr libisl libmpc gcc binutils msim python2"
 
 if $BUILD; then
 	[ -z "$ARCHITECTURES" ] && exit 1
