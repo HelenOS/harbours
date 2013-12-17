@@ -87,16 +87,25 @@ build() {
 				ppflags="$ppflags $flag";
 			fi
 		done
-		
+
+		# During compilation of the math module, the linker
+		# wants to -lm. Thus we provide the copy of fdlibm as libm.
+		msg "Preparing math library..."
+		mkdir fixedlibs
+		( cd fixedlibs; ln -s $HSCT_LIB_DIR/libfdm.a libm.a )
+		ldflags_math="-Wl,-L$HSCT_LIB_DIR -Wl,-L$PWD/fixedlibs -Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
+
+		# TODO: enable more static modules
+		msg "Setting static build for modules..."
+		sed -e '1i*static*' -e 's:^#math:math:' -i Modules/Setup.dist
+
 		msg "Building..."
-		
-		ldflags_math="-Wl,--whole-archive -Wl,-L$HSCT_LIB_DIR -Wl,-lfdm -Wl,--no-whole-archive"
-		
 		run ./configure \
 			--build=`./config.guess` \
 			--host="$HSCT_GNU_TARGET" \
 			--without-libm \
 			--without-threads \
+			--disable-shared \
 			--prefix=/ \
 			--libdir=/lib \
 			--bindir=/app \
