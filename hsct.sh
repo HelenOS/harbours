@@ -119,7 +119,11 @@ hsct_error2() {
 
 # Run a command but print it first.
 hsct_run_echo() {
-	echo "[hsct]:" "$@"
+	echo -n "[hsct]: "
+	for ___i in "$@"; do
+		echo -n "$___i" | sed -e 's#"#\\"#g' -e 's#.*#"&" #'
+	done
+	echo
 	"$@"
 }
 
