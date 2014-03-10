@@ -346,6 +346,7 @@ hsct_cache_update() {
 	hsct_info2 "Copying libraries"
 	cp \
 		"$HSTC_HELENOS_ROOT/uspace/lib/c/libc.a" \
+		"$HSTC_HELENOS_ROOT/uspace/lib/math/libmath.a" \
 		"$HSTC_HELENOS_ROOT/uspace/lib/softint/libsoftint.a" \
 		"$HSTC_HELENOS_ROOT/uspace/lib/softfloat/libsoftfloat.a" \
 		"$HSTC_HELENOS_ROOT/uspace/lib/posix/libc4posix.a" \
@@ -365,6 +366,9 @@ hsct_cache_update() {
 		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/include/"* "$HSCT_CACHE_DIR/include/libc"
 		cp -L -R "$HSTC_HELENOS_ROOT/abi/include/abi/" "$HSCT_CACHE_DIR/include/"
 		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/arch/$HSCT_UARCH/include/libarch/" "$HSCT_CACHE_DIR/include/"
+		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/math/include/"* "$HSCT_CACHE_DIR/include/libc"
+		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/math/arch/$HSCT_UARCH/include/libarch/" "$HSCT_CACHE_DIR/include/"
+		ln -s -f -n "libc" "$HSCT_CACHE_DIR/include/libmath"
 	)
 	if [ $? -ne 0 ]; then
 		hsct_error "Failed copying headers to cache."
