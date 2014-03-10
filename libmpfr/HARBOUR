@@ -45,7 +45,7 @@ build() {
 	
 	# Where libgmp is supposed to be residing
 	extra_cflags="$extra_cflags -I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"
-	ldflags_math="-Wl,--whole-archive -Wl,-L$HSCT_LIB_DIR -Wl,-lfdm -Wl,--no-whole-archive"
+	ldflags_math="-Wl,--whole-archive -Wl,-L$HSCT_LIB_DIR -Wl,-lfdm -Wl,--no-whole-archive -Wl,--undefined=trunc -Wl,-lmath"
 	
 	run ./configure \
 		--disable-shared \
