@@ -525,7 +525,8 @@ hsct_prepare_env() {
 		return 1
 	fi
 	
-	source "$HSCT_CACHE_DIR/env.sh"
+	# Source env.sh to get HSCT_* variables 
+	. "$HSCT_CACHE_DIR/env.sh"
 	
 	if [ "$shipfunnels" -gt "$HSCT_PARALLELISM" ] 2>/dev/null; then
 		shipfunnels="$HSCT_PARALLELISM"
@@ -881,7 +882,8 @@ fi
 HSCT_OVERLAY="$HSCT_HELENOS_ROOT/uspace/overlay"
 HSCT_MY_DIR="$HSCT_DIST_DIR/$HSCT_HARBOUR_NAME"
 
-source "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR"
+# Source the harbour to get access to the variables and functions
+. "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR"
 
 case "$1" in
 	clean)
