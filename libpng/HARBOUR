@@ -38,12 +38,14 @@ build() {
 	# FIXME - need to create patch replacing all write() with write_all()
 	# because apparently zlib expects that write() has to write() everything
 	# (see gzwrite.c:84).
-	cd /home/esteban/helenos/coastline/helenos/include/posix
+	cd $HSCT_HOME"/helenos/include/posix"
+
+	#patch the math header so it defines functions used in the compilation
 	cp ../../../libpng/math.patch .
 	patch -p0 <math.patch
 	cd -
 	cd "${shipname}-${shipversion}"
-	#self_target=`echo "$self_target" | set 's/686/386/'`
+	
 	#fixing cross-compilation guesses..."
 	self_target=`../${shipname}-${shipversion}/config.guess`
 	if [ "$self_target" = "$HSCT_GNU_TARGET" ]; then
@@ -71,8 +73,14 @@ build() {
 	
 	msg "Preparing math library..."
 	mkdir -p fixedlibs
-	( cd fixedlibs; ln -s $HSCT_LIB_DIR/libfdm.a libm.a )
+	cd fixedlibs
+	if [ ! -h libm.a ]; then
+		ln -s $HSCT_LIB_DIR/libfdm.a libm.a 
+	fi
+	cd -
+	
 	ldflags_math="-Wl,-L$HSCT_LIB_DIR -Wl,-L$PWD/fixedlibs -Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
+	echo $ldflags_math
 	#ldflags_math="-Wl,--whole-archive -Wl,-L$HSCT_LIB_DIR -Wl,-lfdm, -Wl,--no-whole-archive"
 
 	echo "self: "$self_target	
@@ -82,20 +90,19 @@ build() {
 		--host="$HSCT_GNU_TARGET" \
 		--target="$HSCT_GNU_TARGET"\
 		CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC $ldflags_math" \
+		CFLAGS="$HSCT_CFLAGS -I$HSCT_INCLUDE_DIR $HSCT_LDFLAGS_FOR_CC $ldflags_math" \
 		LD="$HSCT_LD" \
 		CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags"\
 		LDFLAGS=""\
 		#RANLIB="$HSCT_RANLIB" \
 		#AR="$HSCT_AR" \
-		#CPPFLAGS="-I/home/esteban/helenos/coastline/dist/zlib/inc/c"\
-		#./configure\
 	#cd contrib/tools/
 	#sed 's/fpos_t/_posix_fpos/' -i pngfix.c 
 	#cd -	
 	run make all-am
 }
 
+#this is from zlib, I have to rewrite it for libpng
 package() {
 	cd "${shipname}-${shipversion}"
 	run make install DESTDIR=$PWD/PKG
