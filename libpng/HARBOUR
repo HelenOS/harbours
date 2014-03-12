@@ -35,14 +35,15 @@ shipfunnels=4
 
 build() {
 	run tar xzf "${shipname}-${shipversion}.tar.gz"
-	# FIXME - need to create patch replacing all write() with write_all()
-	# because apparently zlib expects that write() has to write() everything
-	# (see gzwrite.c:84).
-	cd $HSCT_HOME"/helenos/include/posix"
 
-	#patch the math header so it defines functions used in the compilation
+	#patch some headers so they define functions used in the compilation
+	cd $HSCT_HOME"/helenos/include/posix"
 	cp ../../../libpng/math.patch .
 	patch -p0 <math.patch
+	cp ../../../libpng/stdio.patch .
+	patch -p0 <stdio.patch
+	cp ../../../libpng/limits.patch .
+	patch -p0 <limits.patch
 	cd -
 	cd "${shipname}-${shipversion}"
 	
@@ -74,33 +75,35 @@ build() {
 	msg "Preparing math library..."
 	mkdir -p fixedlibs
 	cd fixedlibs
-	if [ ! -h libm.a ]; then
+	if [ -h libm.a ]; then
+		rm libm.a
 		ln -s $HSCT_LIB_DIR/libfdm.a libm.a 
+		#ln -s $HSCT_LIB_DIR/lib
 	fi
 	cd -
-	
-	ldflags_math="-Wl,-L$HSCT_LIB_DIR -Wl,-L$PWD/fixedlibs -Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
-	echo $ldflags_math
-	#ldflags_math="-Wl,--whole-archive -Wl,-L$HSCT_LIB_DIR -Wl,-lfdm, -Wl,--no-whole-archive"
+	ldflags_math="-Wl,-L$PWD/fixedlibs -Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
+
+	#Apparently is not necessary to set this flags when running the configure script
+	#--disable-shared\
+	#--build="$self_target"\
+	#--host="$HSCT_GNU_TARGET" \
+	#--target="$HSCT_GNU_TARGET"\
+	#--with-zlib-prefix="../../dist/zlib"\
+	#CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags"\
+	#LDFLAGS=""\
+	#RANLIB="$HSCT_RANLIB" \
+	#AR="$HSCT_AR" \
+	#CFLAGS="$HSCT_CFLAGS -fno-stack-protector -I$HSCT_INCLUDE_DIR $HSCT_LDFLAGS_FOR_CC -L$HSCT_LIB_DIR -lz $ldflags_math -Wl,--undefined=longjmp" \
 
 	echo "self: "$self_target	
 	run ./configure \
 		--disable-shared\
-		--build="$self_target"\
-		--host="$HSCT_GNU_TARGET" \
-		--target="$HSCT_GNU_TARGET"\
 		CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS -I$HSCT_INCLUDE_DIR $HSCT_LDFLAGS_FOR_CC $ldflags_math" \
-		LD="$HSCT_LD" \
-		CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags"\
-		LDFLAGS=""\
-		#RANLIB="$HSCT_RANLIB" \
-		#AR="$HSCT_AR" \
-	#cd contrib/tools/
-	#sed 's/fpos_t/_posix_fpos/' -i pngfix.c 
-	#cd -	
+		CFLAGS="$HSCT_CFLAGS -fno-stack-protector -I$HSCT_INCLUDE_DIR $HSCT_LDFLAGS_FOR_CC -L$HSCT_LIB_DIR -lz $ldflags_math -Wl,--undefined=longjmp" \
+		LD="$HSCT_LD" 
+
 	run make all-am
-}
+	}
 
 #this is from zlib, I have to rewrite it for libpng
 package() {

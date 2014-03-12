@@ -2,3 +2,6 @@
 	current version of zlib.
 +	The modifications done to math.h through the patch may have to be applied to mainline
 	in the future.
++   If I don't set --disable-shared the linker complains saying that cannot find crtbeginS.o, 
+	but the file is actually present in the correspondent directory 
+
