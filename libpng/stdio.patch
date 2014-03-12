@@ -1,0 +1,10 @@
+--- ../helenos/include/posix/stdio.h	2014-03-12 10:37:50.993337135 -0300
++++ stdio.h	2014-03-12 10:35:30.489332821 -0300
+@@ -154,6 +154,7 @@
+ extern void __POSIX_DEF__(perror)(const char *s);
+ 
+ /* File Positioning */
++struct _posix_fpos { off64_t offset; };
+ typedef struct _posix_fpos __POSIX_DEF__(fpos_t);
+ extern int __POSIX_DEF__(fsetpos)(FILE *stream, const __POSIX_DEF__(fpos_t) *pos);
+ extern int __POSIX_DEF__(fgetpos)(FILE *restrict stream, __POSIX_DEF__(fpos_t) *restrict pos);
