@@ -1,0 +1,2 @@
+PNG_ZLIB_VERNUM should be changed to 0x1280 in pnglibconf.h so it matches the
+current version of zlib.
