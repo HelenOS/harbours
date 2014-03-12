@@ -124,5 +124,5 @@ package() {
 	
 	# Copy the executables
 	run mkdir -p "$HSCT_MY_DIR/app/"
-	run cp pngfix png-fix-itxt "$HSCT_MY_DIR/app/"
+	run cp pngfix png-fix-itxt pngtest "$HSCT_MY_DIR/app/"
 }
