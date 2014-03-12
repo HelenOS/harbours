@@ -1,0 +1,116 @@
+#
+# Copyright (c) 2013 Vojtech Horky
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# - The name of the author may not be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+shipname=libpng
+shipversion=1.6.10
+shipsources="ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/${shipname}-${shipversion}.tar.gz"
+shiptugs="fdlibm"
+shipfunnels=4
+
+
+build() {
+	run tar xzf "${shipname}-${shipversion}.tar.gz"
+	# FIXME - need to create patch replacing all write() with write_all()
+	# because apparently zlib expects that write() has to write() everything
+	# (see gzwrite.c:84).
+	cd /home/esteban/helenos/coastline/helenos/include/posix
+	cp ../../../libpng/math.patch .
+	patch -p0 <math.patch
+	cd -
+	cd "${shipname}-${shipversion}"
+	#self_target=`echo "$self_target" | set 's/686/386/'`
+	#fixing cross-compilation guesses..."
+	self_target=`../${shipname}-${shipversion}/config.guess`
+	if [ "$self_target" = "$HSCT_GNU_TARGET" ]; then
+	# Only works for building ia32 on i686
+		self_target=`echo "$self_target" | sed 's/686/386/'`
+	fi
+	find -name configure | while read fname; do
+		run sed 's/^cross_compiling=no/cross_compiling=yes/' -i "$fname"
+	done
+	
+	msg "Purging HelenOS config.h, declaring compiler flags..."
+	sed -e '/PLATFORM/d' -e '/PROCESSOR/d' -e '/COMPILER/d' "$HSCT_CACHE_DIR/include/system_config.h" >helenos_config.h
+	fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/system_config\.h#-imacros '$PWD'/helenos_config.h#'`"
+
+	# Extract preprocessor flags
+	ppflags=""
+	for flag in $fixed_cflags; do
+		if echo "$flag" | grep -q '^-I'; then
+			ppflags="$ppflags $flag";
+		fi
+		if echo "$flag" | grep -q '^-D'; then
+			ppflags="$ppflags $flag";
+		fi
+	done
+	
+	msg "Preparing math library..."
+	mkdir -p fixedlibs
+	( cd fixedlibs; ln -s $HSCT_LIB_DIR/libfdm.a libm.a )
+	ldflags_math="-Wl,-L$HSCT_LIB_DIR -Wl,-L$PWD/fixedlibs -Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
+	#ldflags_math="-Wl,--whole-archive -Wl,-L$HSCT_LIB_DIR -Wl,-lfdm, -Wl,--no-whole-archive"
+
+	echo "self: "$self_target	
+	run ./configure \
+		--disable-shared\
+		--build="$self_target"\
+		--host="$HSCT_GNU_TARGET" \
+		--target="$HSCT_GNU_TARGET"\
+		CC="$HSCT_CC" \
+		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC $ldflags_math" \
+		LD="$HSCT_LD" \
+		CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags"\
+		LDFLAGS=""\
+		#RANLIB="$HSCT_RANLIB" \
+		#AR="$HSCT_AR" \
+		#CPPFLAGS="-I/home/esteban/helenos/coastline/dist/zlib/inc/c"\
+		#./configure\
+	#cd contrib/tools/
+	#sed 's/fpos_t/_posix_fpos/' -i pngfix.c 
+	#cd -	
+	run make all-am
+}
+
+package() {
+	cd "${shipname}-${shipversion}"
+	run make install DESTDIR=$PWD/PKG
+	
+	# Copy the headers and static library
+	run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_INCLUDE_DIR/"
+	run cp PKG/usr/local/lib/libz.a "$HSCT_LIB_DIR/"
+	
+	run mkdir -p "$HSCT_MY_DIR/inc/c"
+	run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_MY_DIR/inc/c"
+	
+	run mkdir -p "$HSCT_MY_DIR/lib"
+	run cp PKG/usr/local/lib/libz.a "$HSCT_MY_DIR/lib"
+	
+	# Copy the executables
+	run mkdir -p "$HSCT_MY_DIR/app/"
+	run cp minigzip minigzip64 "$HSCT_MY_DIR/app/"
+}

@@ -1,0 +1,14 @@
+--- ../helenos/include/posix/math.h	2014-03-11 10:40:57.000000000 -0300
++++ math.h	2014-03-11 10:40:24.690336182 -0300
+@@ -36,7 +36,10 @@
+ #define POSIX_MATH_H_
+ 
+ #include "libc/math.h"
+-
++extern double modf(double x, double *ptr);
++extern double frexp(double x, int *exp);
++extern double floor(double x);
++extern double pow(double x, double y);
+ #endif /* POSIX_MATH_H_ */
+ 
+ /** @}
