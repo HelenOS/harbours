@@ -1,0 +1,13 @@
+--- ../helenos/include/posix/limits.h	2014-03-12 10:25:04.949313605 -0300
++++ limits.h	2014-03-12 10:35:16.453332389 -0300
+@@ -52,6 +52,10 @@
+ #undef CHAR_BIT
+ #define CHAR_BIT 8
+ 
++/* maximum length of a filename */
++#define FILENAME_MAX 4096
++
++
+ #endif /* POSIX_LIMITS_H_ */
+ 
+ /** @}
