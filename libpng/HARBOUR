@@ -29,7 +29,7 @@
 shipname=libpng
 shipversion=1.6.10
 shipsources="ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/${shipname}-${shipversion}.tar.gz"
-shiptugs="fdlibm"
+shiptugs="fdlibm zlib"
 shipfunnels=4
 
 
@@ -48,40 +48,42 @@ build() {
 	cd "${shipname}-${shipversion}"
 	
 	#fixing cross-compilation guesses..."
-	self_target=`../${shipname}-${shipversion}/config.guess`
-	if [ "$self_target" = "$HSCT_GNU_TARGET" ]; then
+	#self_target=`../${shipname}-${shipversion}/config.guess`
+	#if [ "$self_target" = "$HSCT_GNU_TARGET" ]; then
 	# Only works for building ia32 on i686
-		self_target=`echo "$self_target" | sed 's/686/386/'`
-	fi
+		#self_target=`echo "$self_target" | sed 's/686/386/'`
+	#fi
+
+	#We tell to the configure script that we are cross compiling
 	find -name configure | while read fname; do
 		run sed 's/^cross_compiling=no/cross_compiling=yes/' -i "$fname"
 	done
 	
-	msg "Purging HelenOS config.h, declaring compiler flags..."
-	sed -e '/PLATFORM/d' -e '/PROCESSOR/d' -e '/COMPILER/d' "$HSCT_CACHE_DIR/include/system_config.h" >helenos_config.h
-	fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/system_config\.h#-imacros '$PWD'/helenos_config.h#'`"
+	#msg "Purging HelenOS config.h, declaring compiler flags..."
+	#sed -e '/PLATFORM/d' -e '/PROCESSOR/d' -e '/COMPILER/d' "$HSCT_CACHE_DIR/include/system_config.h" >helenos_config.h
+	#fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/system_config\.h#-imacros '$PWD'/helenos_config.h#'`"
 
 	# Extract preprocessor flags
-	ppflags=""
-	for flag in $fixed_cflags; do
-		if echo "$flag" | grep -q '^-I'; then
-			ppflags="$ppflags $flag";
-		fi
-		if echo "$flag" | grep -q '^-D'; then
-			ppflags="$ppflags $flag";
-		fi
-	done
+	#ppflags=""
+	#for flag in $fixed_cflags; do
+	#	if echo "$flag" | grep -q '^-I'; then
+	#		ppflags="$ppflags $flag";
+	#	fi
+	#	if echo "$flag" | grep -q '^-D'; then
+	#		ppflags="$ppflags $flag";
+	#	fi
+	#done
 	
-	msg "Preparing math library..."
-	mkdir -p fixedlibs
-	cd fixedlibs
-	if [ -h libm.a ]; then
-		rm libm.a
-		ln -s $HSCT_LIB_DIR/libfdm.a libm.a 
-		#ln -s $HSCT_LIB_DIR/lib
-	fi
-	cd -
-	ldflags_math="-Wl,-L$PWD/fixedlibs -Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
+	#msg "Preparing math library..."
+	#mkdir -p fixedlibs
+	#cd fixedlibs
+	#if [ -h libm.a ]; then
+	#	rm libm.a
+	#	ln -s $HSCT_LIB_DIR/libfdm.a libm.a 
+	#fi
+	#cd -
+	#ldflags_math="-Wl,-L$PWD/fixedlibs -Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
+	ldflags_math="-Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
 
 	#Apparently is not necessary to set this flags when running the configure script
 	#--disable-shared\
@@ -95,11 +97,10 @@ build() {
 	#AR="$HSCT_AR" \
 	#CFLAGS="$HSCT_CFLAGS -fno-stack-protector -I$HSCT_INCLUDE_DIR $HSCT_LDFLAGS_FOR_CC -L$HSCT_LIB_DIR -lz $ldflags_math -Wl,--undefined=longjmp" \
 
-	echo "self: "$self_target	
 	run ./configure \
 		--disable-shared\
 		CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS -fno-stack-protector -I$HSCT_INCLUDE_DIR $HSCT_LDFLAGS_FOR_CC -L$HSCT_LIB_DIR -lz $ldflags_math -Wl,--undefined=longjmp" \
+		CFLAGS="$HSCT_CFLAGS -I$HSCT_INCLUDE_DIR $HSCT_LDFLAGS_FOR_CC -L$HSCT_LIB_DIR -lz $ldflags_math -Wl,--undefined=longjmp" \
 		LD="$HSCT_LD" 
 
 	run make all-am
