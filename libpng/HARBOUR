@@ -106,22 +106,23 @@ build() {
 	run make all-am
 	}
 
-#this is from zlib, I have to rewrite it for libpng
 package() {
 	cd "${shipname}-${shipversion}"
 	run make install DESTDIR=$PWD/PKG
 	
 	# Copy the headers and static library
-	run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_INCLUDE_DIR/"
-	run cp PKG/usr/local/lib/libz.a "$HSCT_LIB_DIR/"
+	run cp PKG/usr/local/include/libpng16/pngconf.h PKG/usr/local/include/libpng16/png.h PKG/usr/local/include/libpng16/pnglibconf.h "$HSCT_INCLUDE_DIR/"
+	run cp PKG/usr/local/lib/libpng16.a "$HSCT_LIB_DIR/"
+	run cp $HSCT_LIB_DIR/libpng16.a $HSCT_LIB_DIR/libpng.a
 	
 	run mkdir -p "$HSCT_MY_DIR/inc/c"
-	run cp PKG/usr/local/include/zlib.h PKG/usr/local/include/zconf.h "$HSCT_MY_DIR/inc/c"
+	run cp PKG/usr/local/include/libpng16/pngconf.h PKG/usr/local/include/libpng16/png.h PKG/usr/local/include/libpng16/pnglibconf.h "$HSCT_MY_DIR/inc/c"
 	
 	run mkdir -p "$HSCT_MY_DIR/lib"
-	run cp PKG/usr/local/lib/libz.a "$HSCT_MY_DIR/lib"
+	run cp PKG/usr/local/lib/libpng16.a "$HSCT_MY_DIR/lib"
+	run cp $HSCT_LIB_DIR/libpng16.a $HSCT_MY_DIR/lib/libpng.a
 	
 	# Copy the executables
 	run mkdir -p "$HSCT_MY_DIR/app/"
-	run cp minigzip minigzip64 "$HSCT_MY_DIR/app/"
+	run cp pngfix png-fix-itxt "$HSCT_MY_DIR/app/"
 }
