@@ -49,34 +49,33 @@ build() {
 	find -name configure | while read fname; do
 		run sed 's/^cross_compiling=no/cross_compiling=yes/' -i "$fname"
 	done
-	
-	#msg "Purging HelenOS config.h, declaring compiler flags..."
-	#sed -e '/PLATFORM/d' -e '/PROCESSOR/d' -e '/COMPILER/d' "$HSCT_CACHE_DIR/include/system_config.h" >helenos_config.h
-	#fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/system_config\.h#-imacros '$PWD'/helenos_config.h#'`"
+
+	msg "Purging HelenOS config.h, declaring compiler flags..."
+	sed -e '/PLATFORM/d' -e '/PROCESSOR/d' -e '/COMPILER/d' "$HSCT_CACHE_DIR/include/system_config.h" >helenos_config.h
+	fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/system_config\.h#-imacros '$PWD'/helenos_config.h#'`"
 
 	# Extract preprocessor flags
-	#ppflags=""
-	#for flag in $fixed_cflags; do
-	#	if echo "$flag" | grep -q '^-I'; then
-	#		ppflags="$ppflags $flag";
-	#	fi
-	#	if echo "$flag" | grep -q '^-D'; then
-	#		ppflags="$ppflags $flag";
-	#	fi
-	#done
-	
-	ldflags_math="-Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
+	ppflags=""
+	for flag in $fixed_cflags; do
+		if echo "$flag" | grep -q '^-I'; then
+			ppflags="$ppflags $flag";
+		fi
+		if echo "$flag" | grep -q '^-D'; then
+			ppflags="$ppflags $flag";
+		fi
+	done
 
-	#CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags"\
+	ldflags_math="-Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
 
 	run ./configure \
 		--disable-shared\
 		CC="$HSCT_CC" \
 		CFLAGS="$HSCT_CFLAGS -I$HSCT_INCLUDE_DIR $HSCT_LDFLAGS_FOR_CC -L$HSCT_LIB_DIR -lz $ldflags_math -Wl,--undefined=longjmp" \
-		LD="$HSCT_LD" 
+		LD="$HSCT_LD" \
+		CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags"
 
 	run make all-am
-	}
+}
 
 package() {
 	cd "${shipname}-${shipversion}"
@@ -101,3 +100,4 @@ package() {
 	#copy files needed for testing
 	run cp pngtest.png "$HSCT_HELENOS_ROOT/uspace/dist" 
 }
+
