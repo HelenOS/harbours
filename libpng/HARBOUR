@@ -28,7 +28,7 @@
 
 shipname=libpng
 shipversion=1.6.10
-shipsources="ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/${shipname}-${shipversion}.tar.gz"
+shipsources="ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/${shipname}-${shipversion}.tar.gz math.patch stdio.patch limits.patch pnglibconf.patch"
 shiptugs="fdlibm zlib"
 shipfunnels=4
 
@@ -36,23 +36,14 @@ shipfunnels=4
 build() {
 	run tar xzf "${shipname}-${shipversion}.tar.gz"
 
-	#patch some headers so they define functions used in the compilation
-	cd $HSCT_HOME"/helenos/include/posix"
-	cp ../../../libpng/math.patch .
-	patch -p0 <math.patch
-	cp ../../../libpng/stdio.patch .
-	patch -p0 <stdio.patch
-	cp ../../../libpng/limits.patch .
-	patch -p0 <limits.patch
+	#patch some headers and files from the library so they define functions used in the compilation
+	cd $HSCT_CACHE_INCLUDE"/posix/"
+	patch -p0 <$HSCT_BUILD_DIR/$shipname/math.patch
+	patch -p0 <$HSCT_BUILD_DIR/$shipname/stdio.patch
+	patch -p0 <$HSCT_BUILD_DIR/$shipname/limits.patch
 	cd -
 	cd "${shipname}-${shipversion}"
-	
-	#fixing cross-compilation guesses..."
-	#self_target=`../${shipname}-${shipversion}/config.guess`
-	#if [ "$self_target" = "$HSCT_GNU_TARGET" ]; then
-	# Only works for building ia32 on i686
-		#self_target=`echo "$self_target" | sed 's/686/386/'`
-	#fi
+	patch -p0<$HSCT_BUILD_DIR/$shipname/pnglibconf.patch
 
 	#We tell to the configure script that we are cross compiling
 	find -name configure | while read fname; do
@@ -74,28 +65,9 @@ build() {
 	#	fi
 	#done
 	
-	#msg "Preparing math library..."
-	#mkdir -p fixedlibs
-	#cd fixedlibs
-	#if [ -h libm.a ]; then
-	#	rm libm.a
-	#	ln -s $HSCT_LIB_DIR/libfdm.a libm.a 
-	#fi
-	#cd -
-	#ldflags_math="-Wl,-L$PWD/fixedlibs -Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
 	ldflags_math="-Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
 
-	#Apparently is not necessary to set this flags when running the configure script
-	#--disable-shared\
-	#--build="$self_target"\
-	#--host="$HSCT_GNU_TARGET" \
-	#--target="$HSCT_GNU_TARGET"\
-	#--with-zlib-prefix="../../dist/zlib"\
 	#CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags"\
-	#LDFLAGS=""\
-	#RANLIB="$HSCT_RANLIB" \
-	#AR="$HSCT_AR" \
-	#CFLAGS="$HSCT_CFLAGS -fno-stack-protector -I$HSCT_INCLUDE_DIR $HSCT_LDFLAGS_FOR_CC -L$HSCT_LIB_DIR -lz $ldflags_math -Wl,--undefined=longjmp" \
 
 	run ./configure \
 		--disable-shared\
@@ -125,4 +97,7 @@ package() {
 	# Copy the executables
 	run mkdir -p "$HSCT_MY_DIR/app/"
 	run cp pngfix png-fix-itxt pngtest "$HSCT_MY_DIR/app/"
+
+	#copy files needed for testing
+	run cp pngtest.png "$HSCT_HELENOS_ROOT/uspace/dist" 
 }
