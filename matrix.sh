@@ -66,6 +66,7 @@ arch_human_readable() {
 		mips32) echo "MIPS 32";;
 		mips64) echo "MIPS 64";;
 		ppc32) echo "PowerPC 32";;
+		sparc32) echo "SPARC 32";;
 		sparc64) echo "SPARC 64";;
 		*) echo "$_arch";;
 	esac
@@ -80,10 +81,12 @@ arch_human_readable() {
 		beaglebone) echo "BeagleBone";;
 		gta02) echo "GTA02";;
 		integratorcp) echo "Integrator/CP";;
+		raspberrypi) echo "Raspberry Pi";;
 		malta-be) echo "Malta (BE)";;
 		malta-le) echo "Malta (LE)";;
 		msim) echo "MSIM";;
 		i460gx) echo "i460GX";;
+		leon3) echo "LEON3";;
 		"") ;;
 		*) echo "$_machine";;
 	esac
@@ -106,7 +109,7 @@ if $BUILD; then
 	[ -z "$HARBOURS" ] && exit 1
 	
 	if [ "$ARCHITECTURES" == "all" ]; then
-		ARCHITECTURES="amd64 arm32/beagleboardxm arm32/beaglebone arm32/gta02 arm32/integratorcp ia32 ia64/i460GX ia64/ski mips32/malta-be mips32/malta-le mips32/msim mips64/msim ppc32 sparc64/niagara sparc64/ultra"
+		ARCHITECTURES="amd64 arm32/beagleboardxm arm32/beaglebone arm32/gta02 arm32/integratorcp arm32/raspberrypi ia32 ia64/i460GX ia64/ski mips32/malta-be mips32/malta-le mips32/msim mips64/msim ppc32 sparc32/leon3 sparc64/niagara sparc64/ultra"
 	fi
 	if [ "$HARBOURS" == "all" ]; then
 		HARBOURS="$ALL_HARBOURS"
