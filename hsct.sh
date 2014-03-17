@@ -297,6 +297,10 @@ hsct_cache_update() {
 			HSCT_GNU_TARGET="ppc64-linux-gnu"
 			HSCT_HELENOS_TARGET="ppc64-helenos"
 			;;
+		"sparc32")
+			HSCT_GNU_TARGET="sparc-leon3-linux-gnu"
+			HSCT_HELENOS_TARGET="sparc-leon3-helenos"
+			;;
 		"sparc64")
 			HSCT_GNU_TARGET="sparc64-linux-gnu"
 			HSCT_HELENOS_TARGET="sparc64-helenos"
