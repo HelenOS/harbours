@@ -72,7 +72,7 @@ build() {
 		CC="$HSCT_CC" \
 		CFLAGS="$HSCT_CFLAGS -I$HSCT_INCLUDE_DIR $HSCT_LDFLAGS_FOR_CC -L$HSCT_LIB_DIR -lz $ldflags_math -Wl,--undefined=longjmp" \
 		LD="$HSCT_LD" \
-		CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags"
+		CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags -I$HSCT_INCLUDE_DIR"
 
 	run make all-am
 }
