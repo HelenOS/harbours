@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #
 # Copyright (c) 2013 Vojtech Horky
@@ -55,7 +55,6 @@ HSCT_HOME=`which -- "$0" 2>/dev/null`
 # Maybe, we are running Bash
 [ -z "$HSCT_HOME" ] && HSCT_HOME=`which -- "$BASH_SOURCE" 2>/dev/null`
 HSCT_HOME=`dirname -- "$HSCT_HOME"`
-#just for the moment since I'm using it within its directory
 HSCT_HSCT="$HSCT_HOME/hsct.sh"
 
 HSCT_CONFIG=hsct.conf
