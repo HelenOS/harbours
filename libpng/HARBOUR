@@ -28,7 +28,7 @@
 
 shipname=libpng
 shipversion=1.6.10
-shipsources="ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/${shipname}-${shipversion}.tar.gz math.patch stdio.patch limits.patch pnglibconf.patch"
+shipsources="ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/${shipname}-${shipversion}.tar.gz"
 shiptugs="fdlibm zlib"
 shipfunnels=4
 
@@ -36,14 +36,7 @@ shipfunnels=4
 build() {
 	run tar xzf "${shipname}-${shipversion}.tar.gz"
 
-	#patch some headers and files from the library so they define functions used in the compilation
-	cd $HSCT_CACHE_INCLUDE"/posix/"
-	patch -p0 <$HSCT_BUILD_DIR/$shipname/math.patch
-	patch -p0 <$HSCT_BUILD_DIR/$shipname/stdio.patch
-	patch -p0 <$HSCT_BUILD_DIR/$shipname/limits.patch
-	cd -
 	cd "${shipname}-${shipversion}"
-	patch -p0<$HSCT_BUILD_DIR/$shipname/pnglibconf.patch
 
 	#We tell to the configure script that we are cross compiling
 	find -name configure | while read fname; do
