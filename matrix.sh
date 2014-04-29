@@ -102,7 +102,7 @@ else
 fi
 
 # Dependency-correct ordering
-ALL_HARBOURS="zlib fdlibm libgmp libmpfr libisl libmpc gcc binutils msim python2"
+ALL_HARBOURS="zlib fdlibm libpng libgmp libmpfr libisl libmpc gcc binutils msim python2 jainja"
 
 if $BUILD; then
 	[ -z "$ARCHITECTURES" ] && exit 1
