@@ -93,6 +93,55 @@ arch_human_readable() {
 	[ -z "$_machine" ] || echo "</span>"
 }
 
+#
+# Resolve correct ordering of all harbours
+#
+
+# Allow hide harbours temporarily by prefixing them with e.g. _underscore
+ALL_HARBOURS=`ls $HSCT_HOME/[a-zA-Z]*/HARBOUR | sed 's#.*/\([^/]*\)/HARBOUR$#\1#'`
+
+# Export dependencies to HARBOUR_DEPS_{harbour_name}
+for harbour in $ALL_HARBOURS; do
+	deps=`cd $HSCT_HOME/$harbour/; . ./HARBOUR ; echo $shiptugs`
+	eval HARBOUR_DEPS_$harbour="\"$deps\""
+done
+
+
+# Determine the correct ordering
+ALL_HARBOURS_CORRECT_ORDER=""
+HARBOURS_NOT_RESOLVED="$ALL_HARBOURS"
+
+while [ -n "$HARBOURS_NOT_RESOLVED" ]; do
+	not_resolved_yet=""
+	sed_remove="-e s:x:x:"
+	found_one=false
+	for harbour in $HARBOURS_NOT_RESOLVED; do
+		deps=`eval echo \\$HARBOUR_DEPS_$harbour`
+		if [ -z "$deps" ]; then
+			ALL_HARBOURS_CORRECT_ORDER="$ALL_HARBOURS_CORRECT_ORDER $harbour";
+			sed_remove="$sed_remove -e s:$harbour::g"
+			found_one=true
+		else
+			not_resolved_yet="$not_resolved_yet $harbour";
+		fi
+	done
+	for harbour in $ALL_HARBOURS; do
+		deps=`eval echo \\$HARBOUR_DEPS_$harbour | sed $sed_remove`
+		eval HARBOUR_DEPS_$harbour="\"$deps\""
+	done
+	HARBOURS_NOT_RESOLVED="$not_resolved_yet"
+	if ! $found_one; then
+		echo "There is circular dependency!"
+		exit 1
+	fi
+done
+
+ALL_HARBOURS="$ALL_HARBOURS_CORRECT_ORDER"
+
+# -- End of correct ordering resolving
+
+
+
 if [ -z "$HELENOS_ROOT" ]; then
 	RESULTS=true
 	BUILD=false
@@ -101,8 +150,6 @@ else
 	BUILD=true
 fi
 
-# Dependency-correct ordering
-ALL_HARBOURS="zlib fdlibm libpng libgmp libmpfr libisl libmpc gcc binutils pcc msim python2 jainja"
 
 if $BUILD; then
 	[ -z "$ARCHITECTURES" ] && exit 1
