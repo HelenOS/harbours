@@ -59,7 +59,6 @@ HSCT_HSCT="$HSCT_HOME/hsct.sh"
 
 HSCT_CONFIG=hsct.conf
 
-HSCT_SOURCES_DIR=`pwd`/sources
 HSCT_BUILD_DIR=`pwd`/build
 HSCT_INCLUDE_DIR=`pwd`/include
 HSCT_LIB_DIR=`pwd`/libs
@@ -887,6 +886,23 @@ if ! [ -r "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR" ]; then
 	hsct_error "HARBOUR file missing." >&2
 	leave_script_err
 fi
+
+
+# Determine path to directory with downloaded tarballs
+# The user can specify this directory with sources = path/to/dir
+# in $HSCT_CONFIG or default - $PWD/sources - is used.
+HSCT_SOURCES_DIR=`hsct_get_config "$HSCT_CONFIG" sources`
+if [ -n "$HSCT_SOURCES_DIR" ]; then
+	HSCT_SOURCES_DIR=`cd $HSCT_SOURCES_DIR 2>/dev/null && pwd`
+	if [ -z "$HSCT_SOURCES_DIR" ]; then
+		hsct_error "Wrong value of 'sources' option in $HSCT_CONFIG (no such directory)."
+		leave_script_err
+	fi 
+fi
+if [ -z "$HSCT_SOURCES_DIR" ]; then
+	HSCT_SOURCES_DIR=`pwd`/sources
+fi
+
 
 HSCT_OVERLAY="$HSCT_HELENOS_ROOT/uspace/overlay"
 HSCT_MY_DIR="$HSCT_DIST_DIR/$HSCT_HARBOUR_NAME"
