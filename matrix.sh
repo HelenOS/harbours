@@ -175,6 +175,7 @@ if $BUILD; then
 
 	rm -rf matrix
 	mkdir -p matrix
+	mkdir -p mirror
 		
 	for ARCH in $ARCHITECTURES; do
 		ARCH_FILENAME="`echo $ARCH | tr '/' '-'`"
@@ -194,6 +195,7 @@ if $BUILD; then
 					msg2 "Preparing for first build..."
 					$HSCT init "$HELENOS_ROOT" "$ARCH" build &>init.log
 					echo "parallel = $PARALLELISM" >>hsct.conf
+					echo "sources = ../mirror/" >>hsct.conf
 				)
 				if [ $? -ne 0 ]; then
 					log_tail init.log
