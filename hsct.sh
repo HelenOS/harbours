@@ -189,7 +189,7 @@ hsct_fetch() {
 			fi
 			
 			hsct_info2 "Fetching $_filename..."
-			if ! wget "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
+			if ! wget $HSCT_WGET_OPTS "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
 				rm -f "$HSCT_SOURCES_DIR/$_filename"
 				hsct_error "Failed to fetch $_url."
 				return 1
@@ -870,6 +870,7 @@ if $HSCT_LOAD_CONFIG; then
 	HSCT_HELENOS_ARCH=`hsct_get_config "$HSCT_CONFIG" arch`
 	HSCT_HELENOS_MACHINE=`hsct_get_config "$HSCT_CONFIG" machine`
 	HSCT_PARALLELISM=`hsct_get_config "$HSCT_CONFIG" parallel`
+	HSCT_WGET_OPTS=`hsct_get_config "$HSCT_CONFIG" wget_opts`
 	
 	if [ -z "$HSCT_HELENOS_ARCH" ]; then
 		hsct_error "I don't know for which architecture you want to build."

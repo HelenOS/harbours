@@ -191,6 +191,9 @@ if $BUILD; then
 		echo "root = $HELENOS_ROOT" >hsct.conf
 		echo "arch = ia32" >>hsct.conf
 		echo "sources = ../mirror/" >>hsct.conf
+		# We can expect we build matrix on a machine with a
+		# reasonable network connection.
+		echo "wget_opts = -T 30 -t 3" >>hsct.conf
 		
 		msg "Downloading all the sources..."
 		
