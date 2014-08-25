@@ -182,6 +182,23 @@ if $BUILD; then
 	rm -rf matrix
 	mkdir -p matrix
 	mkdir -p mirror
+	
+	mkdir -p build-fetch
+	echo $ARCHITECTURES | (
+		read ARCH OTHERS_IGNORED_XXX
+		
+		cd build-fetch
+		echo "root = $HELENOS_ROOT" >hsct.conf
+		echo "arch = ia32" >>hsct.conf
+		echo "sources = ../mirror/" >>hsct.conf
+		
+		msg "Downloading all the sources..."
+		
+		for HARBOUR in $HARBOURS; do
+			msg2 "Fetching for $HARBOUR..."
+			$HSCT fetch $HARBOUR >>$HARBOUR.fetch.log 2>&1
+		done
+	)
 		
 	for ARCH in $ARCHITECTURES; do
 		ARCH_FILENAME="`echo $ARCH | tr '/' '-'`"
@@ -216,7 +233,7 @@ if $BUILD; then
 					echo -n "" >build/$HARBOUR.log
 					
 					msg2 "Building $HARBOUR..."
-					$HSCT build $BUILD_OPTS $HARBOUR >build/$HARBOUR.log 2>&1
+					$HSCT build --no-fetch $BUILD_OPTS $HARBOUR >build/$HARBOUR.log 2>&1
 					
 					msg3 "Packaging..."
 					$HSCT package $HARBOUR >>build/$HARBOUR.log 2>&1

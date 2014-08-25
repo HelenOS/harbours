@@ -74,6 +74,7 @@ hsct_usage() {
 	echo " $1 action [package]"
 	echo "    Action can be one of following:"
 	echo "       clean     Clean built directory."
+	echo "       fetch     Fetch sources (e.g. download from homepage)."
 	echo "       build     Build given package."
 	echo "       package   Save installable files to allow cleaning."
 	echo "       install   Install to uspace/dist of HelenOS."
@@ -139,12 +140,16 @@ hsct_is_helenos_configured() {
 
 hsct_process_harbour_opts() {
 	HSCT_OPTS_NO_DEPENDENCY_BUILDING=false
+	HSCT_OPTS_NO_FILE_DOWNLOADING=false
 	HSCT_HARBOUR_NAME=""
 	
 	while echo "$1" | grep -q '^--'; do
 		case "$1" in
 			--no-deps)
 				HSCT_OPTS_NO_DEPENDENCY_BUILDING=true
+				;;
+			--no-fetch)
+				HSCT_OPTS_NO_FILE_DOWNLOADING=true
 				;;
 			*)
 				hsct_error "Unknown option $1."
@@ -177,6 +182,12 @@ hsct_fetch() {
 			continue
 		fi
 		if ! [ -r "$HSCT_SOURCES_DIR/$_filename" ]; then
+			if $HSCT_OPTS_NO_FILE_DOWNLOADING; then
+				hsct_error "File $_filename missing, cannot continue."
+				hsct_error2 "Build without --no-fetch."
+				return 1
+			fi
+			
 			hsct_info2 "Fetching $_filename..."
 			if ! wget "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
 				rm -f "$HSCT_SOURCES_DIR/$_filename"
@@ -840,7 +851,7 @@ case "$1" in
 		HSCT_HELENOS_ROOT="$2"
 		HSCT_LOAD_CONFIG=false
 		;;
-	update|clean|build|package|install|archive)
+	update|clean|fetch|build|package|install|archive)
 		HSCT_LOAD_CONFIG=true
 		;;
 	*)
@@ -884,7 +895,7 @@ fi
 HSCT_ACTION="$1"
 
 case "$HSCT_ACTION" in
-	clean|build|package|install|archive)
+	clean|fetch|build|package|install|archive)
 		shift
 		if ! hsct_process_harbour_opts "$@"; then
 			leave_script_err
@@ -945,6 +956,9 @@ HSCT_MY_DIR="$HSCT_DIST_DIR/$HSCT_HARBOUR_NAME"
 case "$HSCT_ACTION" in
 	clean)
 		hsct_clean
+		;;
+	fetch)
+		hsct_fetch
 		;;
 	build)
 		hsct_build
