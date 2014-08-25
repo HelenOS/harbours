@@ -878,7 +878,7 @@ esac
 
 
 if ! [ -d "$HSCT_HOME/$HSCT_HARBOUR_NAME" ]; then
-	hsct_error "Unknown package $2"
+	hsct_error "Unknown package $HSCT_HARBOUR_NAME."
 	leave_script_err
 fi
 
