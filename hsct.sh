@@ -189,11 +189,14 @@ hsct_fetch() {
 			fi
 			
 			hsct_info2 "Fetching $_filename..."
+			# Remove the file even on Ctrl-C when fetching
+			trap "rm -f \"$HSCT_SOURCES_DIR/$_filename\"; echo" SIGINT SIGQUIT
 			if ! wget $HSCT_WGET_OPTS "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
 				rm -f "$HSCT_SOURCES_DIR/$_filename"
 				hsct_error "Failed to fetch $_url."
 				return 1
 			fi
+			trap - SIGINT SIGQUIT
 		fi
 		# TODO - check MD5
 	done
