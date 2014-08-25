@@ -137,6 +137,28 @@ hsct_is_helenos_configured() {
 	return $?
 }
 
+hsct_process_harbour_opts() {
+	HSCT_OPTS_NO_DEPENDENCY_BUILDING=false
+	HSCT_HARBOUR_NAME=""
+	
+	while echo "$1" | grep -q '^--'; do
+		case "$1" in
+			--no-deps)
+				HSCT_OPTS_NO_DEPENDENCY_BUILDING=true
+				;;
+			*)
+				hsct_error "Unknown option $1."
+				return 1
+				;;
+		esac
+		shift
+	done
+	
+	HSCT_HARBOUR_NAME="$1"
+	
+	return 0
+}
+
 # hsct_get_config CONFIG_FILE variable
 hsct_get_config() {
 	grep '^[ \t]*'"$2" "$1" \
@@ -594,6 +616,11 @@ hsct_build() {
 	# Check for prerequisities
 	for tug in $shiptugs; do
 		if ! [ -e "$HSCT_BUILD_DIR/${tug}.packaged" ]; then
+			if $HSCT_OPTS_NO_DEPENDENCY_BUILDING; then
+				hsct_error "Dependency $tug not built, cannot continue."
+				hsct_error2 "Build $tug first or run without --no-deps."
+				return 1
+			fi
 			hsct_info "Need to build $tug first."
 			hsct_info2 "Running $HSCT_HSCT package $tug"
 			(
@@ -854,9 +881,14 @@ if [ -z "$HSCT_HELENOS_ROOT" ]; then
 	leave_script_err
 fi
 
-case "$1" in
+HSCT_ACTION="$1"
+
+case "$HSCT_ACTION" in
 	clean|build|package|install|archive)
-		HSCT_HARBOUR_NAME="$2"
+		shift
+		if ! hsct_process_harbour_opts "$@"; then
+			leave_script_err
+		fi
 		if [ -z "$HSCT_HARBOUR_NAME" ]; then
 			hsct_usage "$0"
 			leave_script_err
@@ -910,7 +942,7 @@ HSCT_MY_DIR="$HSCT_DIST_DIR/$HSCT_HARBOUR_NAME"
 # Source the harbour to get access to the variables and functions
 . "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR"
 
-case "$1" in
+case "$HSCT_ACTION" in
 	clean)
 		hsct_clean
 		;;

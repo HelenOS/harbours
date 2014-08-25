@@ -160,6 +160,12 @@ if $BUILD; then
 	fi
 	if [ "$HARBOURS" == "all" ]; then
 		HARBOURS="$ALL_HARBOURS"
+		# We know that the ordering is correct, i.e. we build dependent
+		# packages first.
+		# This speeds-up the build if a dependent package fails as we
+		# do not try to rebuild it with each package that depends on
+		# it.
+		BUILD_OPTS="--no-deps"
 	fi
 fi
 
@@ -210,7 +216,7 @@ if $BUILD; then
 					echo -n "" >build/$HARBOUR.log
 					
 					msg2 "Building $HARBOUR..."
-					$HSCT build $HARBOUR >build/$HARBOUR.log 2>&1
+					$HSCT build $BUILD_OPTS $HARBOUR >build/$HARBOUR.log 2>&1
 					
 					msg3 "Packaging..."
 					$HSCT package $HARBOUR >>build/$HARBOUR.log 2>&1
