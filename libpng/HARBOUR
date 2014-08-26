@@ -27,8 +27,8 @@
 #
 
 shipname=libpng
-shipversion=1.6.10
-shipsources="ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/${shipname}-${shipversion}.tar.gz"
+shipversion=1.6.12
+shipsources=" http://prdownloads.sourceforge.net/${shipname}/${shipname}-${shipversion}.tar.gz"
 shiptugs="fdlibm zlib"
 shipfunnels=4
 
@@ -90,7 +90,7 @@ package() {
 	run mkdir -p "$HSCT_MY_DIR/app/"
 	run cp pngfix png-fix-itxt pngtest "$HSCT_MY_DIR/app/"
 
-	#copy files needed for testing
-	run cp pngtest.png "$HSCT_HELENOS_ROOT/uspace/dist" 
+	# Copy files needed for testing
+	run cp pngtest.png "$HSCT_MY_DIR/"
 }
 
