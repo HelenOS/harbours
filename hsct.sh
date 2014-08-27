@@ -910,8 +910,11 @@ case "$HSCT_ACTION" in
 		fi
 		;;
 	init)
-		hsct_init "$2" "$3" "$4"
-		leave_script_ok
+		if hsct_init "$2" "$3" "$4"; then
+			leave_script_ok
+		else
+			leave_script_err
+		fi
 		;;
 	update)
 		hsct_update "$2"
