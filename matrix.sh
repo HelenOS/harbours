@@ -53,6 +53,45 @@ log_tail() {
 	tail -n 5 "$1" | sed 's#.*#       !!! &#'
 }
 
+tap_init() {
+	TAP_FILENAME="$1"
+	TAP_COUNTER=1
+	echo "1..$2" >"$TAP_FILENAME"
+}
+
+tap_ok() {
+	echo "ok $TAP_COUNTER $1" >>"$TAP_FILENAME"
+	TAP_COUNTER=$(( $TAP_COUNTER + 1 ))
+}
+
+tap_fail() {
+	echo "not ok $TAP_COUNTER $1" >>"$TAP_FILENAME"
+	if [ -n "$2$3" ]; then
+		(
+			echo "  ---"
+			if [ -n "$2" ]; then
+				echo "  message: |+"
+				echo "    ------ Last 10 lines of $2 -------"
+				tail -n 10 "$2" \
+					| sed 's#^.*#    &#' \
+					| sed 's/^\([\t ]*\)#/\1\\#/'
+			else
+				echo "  message: $3"
+			fi
+			echo "  ..."
+		) >>"$TAP_FILENAME"
+	fi
+	TAP_COUNTER=$(( $TAP_COUNTER + 1 ))
+}
+
+tap_test() {
+	if [ "$1" -eq 0 ]; then
+		tap_ok "$2"
+	else
+		tap_fail "$2" "$3"
+	fi
+}
+
 arch_human_readable() {
 	_arch=`echo "$1" | cut '-d-' -f 1`
 	_machine=`echo "$1" | cut '-d-' -f 2-`
@@ -183,6 +222,15 @@ if $BUILD; then
 	mkdir -p matrix
 	mkdir -p mirror
 	
+	rm -rf tap
+	mkdir -p tap
+	
+	# Count number of harbours to produce correct TAP plans
+	HARBOUR_COUNT=0
+	for HARBOUR in $HARBOURS; do
+		HARBOUR_COUNT=$(( $HARBOUR_COUNT + 1 ))
+	done
+	
 	mkdir -p build-fetch
 	echo $ARCHITECTURES | (
 		read ARCH OTHERS_IGNORED_XXX
@@ -196,10 +244,11 @@ if $BUILD; then
 		echo "wget_opts = -T 30 -t 3" >>hsct.conf
 		
 		msg "Downloading all the sources..."
-		
+		tap_init ../tap/00-fetch.tap $HARBOUR_COUNT
 		for HARBOUR in $HARBOURS; do
 			msg2 "Fetching for $HARBOUR..."
 			$HSCT fetch $HARBOUR >>$HARBOUR.fetch.log 2>&1
+			tap_test "$?" "$HARBOUR (fetch)" "$HARBOUR.fetch.log"
 		done
 	)
 		
@@ -215,6 +264,8 @@ if $BUILD; then
 		(
 			cd $ARCH_DIR
 			
+			tap_init ../tap/$ARCH_FILENAME.tap $(( $HARBOUR_COUNT + 1 ))
+			
 			if ! [ -r hsct.conf ]; then
 				(
 					set -o errexit
@@ -223,8 +274,13 @@ if $BUILD; then
 					echo "parallel = $PARALLELISM" >>hsct.conf
 					echo "sources = ../mirror/" >>hsct.conf
 				)
-				if [ $? -ne 0 ]; then
+				RC=$?
+				tap_test $RC "initialization ($ARCH)" "init.log"
+				if [ $RC -ne 0 ]; then
 					log_tail init.log
+					for HARBOUR in $HARBOURS; do
+						tap_fail "$HARBOUR ($ARCH)" "" "Initialization failed."
+					done
 					exit 1
 				fi
 			fi
@@ -246,7 +302,9 @@ if $BUILD; then
 					
 					cp archives/$HARBOUR.tar.xz ../$TARBALL_DIR/$ARCH_FILENAME-$HARBOUR.tar.xz
 				)
-				if [ $? -ne 0 ]; then
+				RC=$?
+				tap_test $RC "$HARBOUR ($ARCH)" "build/$HARBOUR.log"
+				if [ $RC -ne 0 ]; then
 					log_tail build/$HARBOUR.log
 				fi
 				msg3 "Cleaning the build directory..."
