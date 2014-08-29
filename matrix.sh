@@ -195,7 +195,7 @@ if $BUILD; then
 	[ -z "$HARBOURS" ] && exit 1
 	
 	if [ "$ARCHITECTURES" == "all" ]; then
-		ARCHITECTURES="amd64 arm32/beagleboardxm arm32/beaglebone arm32/gta02 arm32/integratorcp arm32/raspberrypi ia32 ia64/i460GX ia64/ski mips32/malta-be mips32/malta-le mips32/msim mips64/msim ppc32 sparc32/leon3 sparc64/niagara sparc64/ultra"
+		ARCHITECTURES="amd64 arm32/beagleboardxm arm32/beaglebone arm32/gta02 arm32/integratorcp arm32/raspberrypi ia32 ia64/i460GX ia64/ski mips32/malta-be mips32/malta-le mips32/msim ppc32 sparc32/leon3 sparc64/niagara sparc64/ultra"
 	fi
 	if [ "$HARBOURS" == "all" ]; then
 		HARBOURS="$ALL_HARBOURS"
