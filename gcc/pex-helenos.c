@@ -35,11 +35,24 @@
 #include "pex-common.h"
 
 #include <libc/task.h>
+#include <assert.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
+
+struct pex_task_wait {
+	task_wait_t task_wait;
+	task_id_t task_id;
+};
+
+/* Helen-OS specific information stored in each pex_obj. */
+struct pex_helenos {
+	struct pex_task_wait *tasks;
+	size_t task_count;
+};
 
 /*
  * Implementation of the individual operations.
@@ -62,7 +75,7 @@ static int pex_helenos_close(struct pex_obj *obj ATTRIBUTE_UNUSED, int fd)
 	return close(fd);
 }
 
-static pid_t pex_helenos_exec_child(struct pex_obj *obj ATTRIBUTE_UNUSED,
+static pid_t pex_helenos_exec_child(struct pex_obj *obj,
     int flags ATTRIBUTE_UNUSED,
     const char *executable, char * const * argv,
     char * const * env ATTRIBUTE_UNUSED,
@@ -76,32 +89,64 @@ static pid_t pex_helenos_exec_child(struct pex_obj *obj ATTRIBUTE_UNUSED,
 	files[2] = &errdes;
 	files[3] = NULL;
 	
-	task_id_t task_id = 0;
-	char  full_path[1024];
+	struct pex_helenos *pex_helenos = (struct pex_helenos *) obj->sysdep;
+
+	/* Prepare space for the task_wait structure. */
+	pex_helenos->tasks = XRESIZEVEC(struct pex_task_wait,
+		pex_helenos->tasks, pex_helenos->task_count + 1);
+
+
+	struct pex_task_wait *this_task = &pex_helenos->tasks[pex_helenos->task_count];
+
+	char full_path[1024];
 	// FIXME: decide on paths
 	snprintf(full_path, 1023, "/app/%s", executable);
-	int rc = task_spawnvf(&task_id, full_path, argv, files);
+	int rc = task_spawnvf(&this_task->task_id, &this_task->task_wait,
+		full_path, argv, files);
 	
 	if (rc != 0) {
 		*err = rc;
 		*errmsg = "task_spawnvf";
+		pex_helenos->tasks = XRESIZEVEC(struct pex_task_wait,
+			pex_helenos->tasks, pex_helenos->task_count);
 		return (pid_t) -1;
 	}
 	
-	return (pid_t) task_id;
+	pex_helenos->task_count++;
+
+	return (pid_t) this_task->task_id;
 }
 
-static int pex_helenos_wait(struct pex_obj *obj ATTRIBUTE_UNUSED,
+static int pex_helenos_wait(struct pex_obj *obj,
     pid_t pid, int *status,
     struct pex_time *time, int done,
     const char **errmsg, int *err)
 {
+	struct pex_helenos *pex_helenos = (struct pex_helenos *) obj->sysdep;
+	task_id_t task_id = (task_id_t) pid;
+
+	/* Find the task in the list of known ones. */
+	struct pex_task_wait *this_task = NULL;
+	for (size_t i = 0; i < pex_helenos->task_count; i++) {
+		if (pex_helenos->tasks[i].task_id == task_id) {
+			this_task = &pex_helenos->tasks[i];
+			break;
+		}
+	}
+
+	if (this_task == NULL) {
+		*err = -ENOENT;
+		*errmsg = "no such task registered";
+		*status = *err;
+		return -1;
+	}
+
 	/*
 	 * If @c done is set, we are cleaning-up. Kill the process
 	 * mercilessly.
 	 */
 	if (done) {
-		task_kill( (task_id_t) pid);
+		task_kill(this_task->task_id);
 	}
 	
 	if (time != NULL) {
@@ -110,7 +155,8 @@ static int pex_helenos_wait(struct pex_obj *obj ATTRIBUTE_UNUSED,
 	
 	task_exit_t task_exit;
 	int task_retval;
-	int rc = task_wait((task_id_t) pid, &task_exit, &task_retval);
+	int rc = task_wait(&this_task->task_wait, &task_exit, &task_retval);
+
 	if (rc != 0) {
 		*err = -rc;
 		*errmsg = "task_wait";
@@ -127,6 +173,16 @@ static int pex_helenos_wait(struct pex_obj *obj ATTRIBUTE_UNUSED,
 	}
 }
 
+static void pex_helenos_cleanup(struct pex_obj  *obj)
+{
+	struct pex_helenos *pex_helenos = (struct pex_helenos *) obj->sysdep;
+
+	free(pex_helenos->tasks);
+	free(pex_helenos);
+
+	obj->sysdep = NULL;
+}
+
 
 /*
  * PEX initialization.
@@ -141,12 +197,22 @@ const struct pex_funcs funcs = {
 	NULL,
 	NULL,
 	NULL,
-	NULL
+	pex_helenos_cleanup
 };
 
 struct pex_obj *pex_init(int flags, const char *pname, const char *tempbase)
 {
-	return pex_init_common(flags, pname, tempbase, &funcs);
+	/* Common initialization. */
+	struct pex_obj *obj = pex_init_common(flags, pname, tempbase, &funcs);
+
+	/* Prepare the HelenOS specific data. */
+	struct pex_helenos *pex_helenos = XNEW(struct pex_helenos);
+	pex_helenos->tasks = NULL;
+	pex_helenos->task_count = 0;
+
+	obj->sysdep = pex_helenos;
+
+	return obj;
 }
 
 #endif
