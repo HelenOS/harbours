@@ -402,7 +402,7 @@ hsct_cache_update() {
 		set -o errexit
 		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/posix/include/posix/" "$HSCT_CACHE_DIR/include/"
 		mkdir -p "$HSCT_CACHE_DIR/include/libc"
-		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/include/"* "$HSCT_CACHE_DIR/include/libc"
+		cp -R "$HSTC_HELENOS_ROOT/uspace/lib/c/include/"* "$HSCT_CACHE_DIR/include/libc"
 		cp -L -R "$HSTC_HELENOS_ROOT/abi/include/abi/" "$HSCT_CACHE_DIR/include/"
 		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/arch/$HSCT_UARCH/include/libarch/" "$HSCT_CACHE_DIR/include/"
 		# We intentionally merge libc and libmath again (as per C standard)
