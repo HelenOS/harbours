@@ -422,6 +422,7 @@ hsct_cache_update() {
 		-e 's:#include <libc/abi/:#include <abi/:' \
 		-e 's:#include <libc/libc/:#include <libc/:' \
 		-i {} \;
+	sed -e 's:#include "../../../common.h":#include <libarch/common.h>:' -i "$HSCT_CACHE_DIR/include/abi/fourcc.h"
 	
 	# Remember the configuration
 	hsct_info2 "Saving config files"
