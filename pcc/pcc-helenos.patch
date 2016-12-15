@@ -2627,3 +2627,39 @@ diff -ur --unidirectional-new-file pcc-1.0.0/os/helenos/ccconfig.h pcc/os/heleno
 +#ifndef ELFABI
 +#define ELFABI
 +#endif
+diff -Naur pcc-1.0.0/cc/ccom/Makefile pcc/cc/ccom/Makefile
+--- pcc-1.0.0/cc/ccom/Makefile	2016-12-14 14:14:22.427024340 +0100
++++ pcc/cc/ccom/Makefile	2016-12-14 14:15:12.813843815 +0100
+@@ -78,7 +78,7 @@
+ 	mv y.tab.h cgram.h
+ 
+ scan.c: scan.l cgram.c
+-	$(LEX) $(LFLAGS) $<
++	$(LEX) $(LEXFLAGS) $<
+ 	mv lex.yy.c scan.c
+ 
+ compat.c: $(MIPDIR)/compat.c
+diff -Naur pcc-1.0.0/cc/ccom/Makefile.in pcc/cc/ccom/Makefile.in
+--- pcc-1.0.0/cc/ccom/Makefile.in	2010-04-11 17:01:04.000000000 +0200
++++ pcc/cc/ccom/Makefile.in	2016-12-14 14:06:37.739244406 +0100
+@@ -115,7 +115,7 @@
+ 	mv y.tab.h cgram.h
+ 
+ scan.c: scan.l cgram.c
+-	$(LEX) $(LFLAGS) $<
++	$(LEX) $(LEXFLAGS) $<
+ 	mv lex.yy.c scan.c
+ 
+ optim2.o reader.o optim.o : external.h
+diff -Naur pcc-1.0.0/cc/cpp/Makefile.in pcc/cc/cpp/Makefile.in
+--- pcc-1.0.0/cc/cpp/Makefile.in	2011-01-16 12:59:37.000000000 +0100
++++ pcc/cc/cpp/Makefile.in	2016-12-14 14:06:44.090473749 +0100
+@@ -44,7 +44,7 @@
+ 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $<
+ 
+ .l.o:
+-	$(LEX) $(LFLAGS) $<
++	$(LEX) $(LEXFLAGS) $<
+ 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ lex.yy.c
+ 
+ .y.o:
