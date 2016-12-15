@@ -53,6 +53,7 @@ build() {
 	for app in ${shipapps}; do
 		dir=`dirname $app`
 		run make -C ${shipname}-${shipversion}/$dir \
+			STATIC_ONLY=y \
 			USPACE_PREFIX=$HSTC_HELENOS_ROOT/uspace \
 			PLATFORM=$HSCT_UARCH \
 			-j$shipfunnels \

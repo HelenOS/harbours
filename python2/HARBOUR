@@ -121,7 +121,11 @@ build() {
 			ac_cv_have_long_long_format=yes \
 			ac_cv_sizeof_pid_t=4
 		
+		# Workaround shared linking
+		sed -e '/^LINKFORSHARED=/d' -i Makefile
+		
 		run make -j$shipfunnels \
+			STATIC_ONLY=y \
 			HOSTPGEN=../python-native/Parser/pgen \
 			HOSTPYTHON=../python-native/python
 	)

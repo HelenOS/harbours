@@ -70,7 +70,7 @@ build() {
 	# preloadable_libiconv.so file. So let's create one.
 	run sed 's#cp .libs/libiconv.so preloadable_libiconv.so#touch preloadable_libiconv.so#' -i preload/Makefile
 	
-	run make
+	run make STATIC_ONLY=y
 }
 
 package() {

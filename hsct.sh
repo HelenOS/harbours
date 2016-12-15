@@ -213,8 +213,10 @@ hsct_get_var_from_makefile() {
 		echo "$5"
 		echo "__genesis__:"
 		echo
+		echo "STATIC_ONLY=y"
 		echo "CONFIG_DEBUG=n"
 		echo include `basename "$2"`
+		echo "STATIC_ONLY=y"
 		echo "CONFIG_DEBUG=n"
 		echo
 		echo "__armagedon__:"

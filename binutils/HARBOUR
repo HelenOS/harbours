@@ -128,7 +128,7 @@ build() {
 		STRIP="$HSCT_STRIP" \
 		OBJDUMP="$HSCT_OBJDUMP"
 	
-	run make all-gas all-ld -j$shipfunnels
+	run make all-gas all-ld -j$shipfunnels STATIC_ONLY=y
 }
 
 package() {

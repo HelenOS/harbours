@@ -170,7 +170,7 @@ build() {
 		CXX="$cxx" \
 		CC_FOR_TARGET="$cc"
 
-	run make all-gcc -j$shipfunnels
+	run make all-gcc -j$shipfunnels STATIC_ONLY=y
 }
 
 package() {

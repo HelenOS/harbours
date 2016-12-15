@@ -44,7 +44,7 @@ build() {
 		RANLIB="$HSCT_RANLIB" \
 		cross_compiling=yes
 	
-	run make -j${shipfunnels}
+	run make -j${shipfunnels} STATIC_ONLY=y
 }
 
 package() {

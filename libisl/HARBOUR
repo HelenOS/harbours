@@ -51,7 +51,7 @@ build() {
 		NM="$HSCT_NM" \
 		RANLIB="$HSCT_RANLIB"
 	
-	run make -j$shipfunnels
+	run make -j$shipfunnels STATIC_ONLY=y
 }
 
 package() {

@@ -67,7 +67,7 @@ build() {
 		LD="$HSCT_LD" \
 		CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags -I$HSCT_INCLUDE_DIR"
 
-	run make all-am
+	run make all-am STATIC_ONLY=y
 }
 
 package() {
