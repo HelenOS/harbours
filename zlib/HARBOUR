@@ -27,7 +27,7 @@
 #
 
 shipname=zlib
-shipversion=1.2.8
+shipversion=1.2.11
 shipsources="http://zlib.net/${shipname}-${shipversion}.tar.gz"
 shipfunnels=4
 
