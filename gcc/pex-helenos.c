@@ -83,12 +83,6 @@ static pid_t pex_helenos_exec_child(struct pex_obj *obj,
     int toclose ATTRIBUTE_UNUSED,
     const char **errmsg, int *err)
 {
-	int *files[4];
-	files[0] = &in;
-	files[1] = &out;
-	files[2] = &errdes;
-	files[3] = NULL;
-	
 	struct pex_helenos *pex_helenos = (struct pex_helenos *) obj->sysdep;
 
 	/* Prepare space for the task_wait structure. */
@@ -102,7 +96,7 @@ static pid_t pex_helenos_exec_child(struct pex_obj *obj,
 	// FIXME: decide on paths
 	snprintf(full_path, 1023, "/app/%s", executable);
 	int rc = task_spawnvf(&this_task->task_id, &this_task->task_wait,
-		full_path, argv, files);
+		full_path, argv, in, out, errdes);
 	
 	if (rc != 0) {
 		*err = rc;
