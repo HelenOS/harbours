@@ -29,7 +29,7 @@
 shipname=libgmp
 shipname_=gmp
 shipversion=5.1.0
-shipsources="ftp://ftp.gmplib.org/pub/${shipname_}-${shipversion}/${shipname_}-${shipversion}.tar.bz2 gmp-h.patch"
+shipsources="https://gmplib.org/download/gmp/${shipname_}-${shipversion}.tar.bz2 gmp-h.patch"
 shipfunnels=4
 
 build() {
