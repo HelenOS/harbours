@@ -49,7 +49,9 @@ build() {
 
 package() {
 	run cp "${shipname}53/libfdm.a" "$HSCT_LIB_DIR/"
+	run cp "${shipname}53/libfdm.a" "$HSCT_LIB_DIR/libm.a"
 	
 	run mkdir -p "$HSCT_MY_DIR/lib"
 	run cp "${shipname}53/libfdm.a" "$HSCT_MY_DIR/lib/"
+	run cp "${shipname}53/libfdm.a" "$HSCT_MY_DIR/lib/libm.a"
 }
