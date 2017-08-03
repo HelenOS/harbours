@@ -110,11 +110,11 @@ build() {
 			--libdir=/lib \
 			--bindir=/app \
 			CC="$HSCT_CC" \
-			CFLAGS="$fixed_cflags" \
-			LD="$HSCT_LD" \
-			LDFLAGS="$HSCT_LDFLAGS_FOR_CC -nostdlib $ldflags_math" \
+			CFLAGS="$HSCT_CFLAGS" \
+			LD="$HSCT_CC" \
+			LDFLAGS="$HSCT_LDFLAGS_FOR_CC $ldflags_math" \
 			CPP="$HSCT_CC -E" \
-			CPPFLAGS="-imacros $PWD/helenos_config.h $ppflags" \
+			CPPFLAGS="$HSCT_CPPFLAGS -I$HSCT_INCLUDE_DIR" \
 			cross_compiling=yes \
 			ac_cv_file__dev_ptmx=no \
 			ac_cv_file__dev_ptc=no \
