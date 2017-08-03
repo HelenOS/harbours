@@ -54,7 +54,8 @@ build() {
 	run env \
 		CC="$HSCT_CC" \
 		CFLAGS="$HSCT_CFLAGS" \
-		CPPFLAGS="-imacros $HSCT_CACHE_INCLUDE/system_config.h $ppflags" \
+		CPP="$HSCT_CC -E" \
+		CPPFLAGS="$HSCT_CPPFLAGS" \
 		LD="$HSCT_LD" \
 		LDFLAGS="$HSCT_LDFLAGS_FOR_CC" \
 		AR="$HSCT_AR" \

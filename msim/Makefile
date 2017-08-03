@@ -36,7 +36,6 @@ LDFLAGS = \
 
 CFLAGS = \
 	$(HSCT_CFLAGS) \
-	-I$(HSCT_CACHE_INCLUDE)/libc/ \
 	-Wno-error
 
 CFLAGS_HELENOS = \

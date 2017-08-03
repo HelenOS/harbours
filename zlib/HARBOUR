@@ -39,7 +39,7 @@ build() {
 	cd "${shipname}-${shipversion}"
 	run env \
 		CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC" \
+		CFLAGS="$HSCT_CFLAGS" \
 		LD="$HSCT_LD" \
 		AR="$HSCT_AR" \
 		RANLIB="$HSCT_RANLIB" \

@@ -39,7 +39,6 @@ build() {
 		CC="$HSCT_CC" \
 		CFLAGS="$HSCT_CFLAGS" \
 		LD="$HSCT_LD" \
-		LDFLAGS="$HSCT_LDFLAGS_FOR_CC -nostdlib $ldflags_math" \
 		AR="$HSCT_AR" \
 		RANLIB="$HSCT_RANLIB" \
 		cross_compiling=yes
