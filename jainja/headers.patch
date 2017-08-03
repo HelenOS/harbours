@@ -1,0 +1,38 @@
+--- jainja-0.8/platforms/c/src/native/jcgofile.h	2014-04-26 14:21:10.000000000 +0200
++++ jainja-0.8/platforms/c/src/native/jcgofile.h	2014-04-19 17:14:28.000000000 +0200
+@@ -1116,7 +1116,8 @@
+ #endif
+ 
+ #define JCGO_BIGFSTAT_T struct stat64
++/*#define JCGO_BIGF_TSTAT(pathname, pst) JCGO_JNUTCHAR_E(stat64(JCGO_JNUTCHAR_C(pathname), pst), _wstat64(pathname, pst))*/
++#define JCGO_BIGF_TSTAT(pathname, pst) JCGO_JNUTCHAR_E(stat64(JCGO_JNUTCHAR_C(pathname), pst), stat64(pathname, pst))
+-#define JCGO_BIGF_TSTAT(pathname, pst) JCGO_JNUTCHAR_E(stat64(JCGO_JNUTCHAR_C(pathname), pst), _wstat64(pathname, pst))
+ 
+ #ifndef JCGO_BIGFLSEEK_T
+ #ifdef _OFF64_T_DEFINED
+@@ -1315,9 +1314,9 @@
+ {
+  long handle;
+ #ifdef JCGO_SYSWCHAR
++/* struct _wfinddata_t data; */
+- struct _wfinddata_t data;
+ #else
++/* struct _finddata_t data; */
+- struct _finddata_t data;
+ #endif
+ };
+ 
+--- jainja-0.8/platforms/c/src/native/jcgoprop.h	2014-04-26 14:21:10.000000000 +0200
++++ jainja-0.8/platforms/c/src/native/jcgoprop.h	2014-04-19 17:14:28.000000000 +0200
+@@ -91,6 +91,11 @@
+ #define JCGO_OSNAME_GETNAME(pdata) (*(pdata) = "", *(pdata))
+ #define JCGO_OSNAME_GETRELEASE(pdata) (*(pdata) = "", *(pdata))
+ 
++#define JCGO_OSVER_T int
++#define JCGO_OSVER_GET(pdata) (void)(*(pdata) = -1)
++#define JCGO_OSVER_MAJOR(pdata) (*(pdata))
++#define JCGO_OSVER_MINOR(pdata) 0
++
+ #else /* JCGO_NOSYSNAME */
+ 
+ #ifdef JCGO_UNIX

@@ -28,31 +28,32 @@
 
 shipname=jainja
 shipversion=0.8
-shipsources="http://sourceforge.net/projects/${shipname}/files/${shipname}-${shipversion}/${shipname}-${shipversion}-helenos.tar.gz Makefile jainja.batch"
+shipsources="http://sourceforge.net/projects/${shipname}/files/${shipname}-${shipversion}/${shipname}-${shipversion}.tar.gz jainja.batch Makefile.patch headers.patch"
 shipfunnels=0
 
 build() {
-	run tar xzf "${shipname}-${shipversion}-helenos.tar.gz"
-	run cp Makefile "${shipname}-${shipversion}-helenos/jainja/"
-	run cp jainja.batch "${shipname}-${shipversion}-helenos/"
+	run tar xzf "${shipname}-${shipversion}.tar.gz"
 	
-	cd "${shipname}-${shipversion}-helenos"
+	patch -p0 <Makefile.patch
+	patch -p0 <headers.patch
 	
-	run make -C jainja -j$shipfunnels \
+	cd "${shipname}-${shipversion}/platforms/c"
+	
+	run make -j$shipfunnels \
+		OS=HelenOS \
 		STATIC_ONLY=y \
 		CC="$HSCT_CC" \
-		HSCT_CFLAGS="$HSCT_CFLAGS" \
-		LD="$HSCT_LD" \
-		HSCT_LDFLAGS="$HSCT_LDFLAGS" \
-		HSCT_CACHE_INCLUDE="$HSCT_CACHE_INCLUDE" \
-		HSCT_CACHE_LIB="$HSCT_CACHE_LIB"
+		CUSTOM_CFLAGS="$HSCT_CFLAGS -L$HSCT_LIB_DIR"
 }
 
 package() {
-	cd "${shipname}-${shipversion}-helenos"
-	
 	run mkdir -p "$HSCT_MY_DIR/app/"
-	run cp "jainja/${shipname}" "$HSCT_MY_DIR/app/"
-	run cp "rt.jar" "$HSCT_MY_DIR/app/"
-	run cp "jainja.batch" "$HSCT_MY_DIR/app/"
+	run mkdir -p "$HSCT_MY_DIR/lib/"
+	run mkdir -p "$HSCT_MY_DIR/tests/"
+	
+	run cp "jainja.batch" "$HSCT_MY_DIR/tests/"
+	
+	cd "${shipname}-${shipversion}/platforms/c"
+	run cp "jainja" "$HSCT_MY_DIR/app/" || exit 1
+	run cp "rt.jar" "$HSCT_MY_DIR/lib/"
 }

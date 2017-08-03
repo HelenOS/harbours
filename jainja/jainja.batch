@@ -1,1 +1,1 @@
-jainja -cp /app/rt.jar test.javase.TigerTest
+/app/jainja -cp /lib/rt.jar test.javase.TigerTest
