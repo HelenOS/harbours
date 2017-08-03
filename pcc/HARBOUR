@@ -1,5 +1,6 @@
 #
-# Copyright (c) 2014 Jakub Jermar 
+# Copyright (c) 2014 Jakub Jermar
+# Copyright (c) 2017 Vojtech Horky
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,42 +30,55 @@
 shipname=pcc
 shipversion=1.0.0
 mirror_="ftp://pcc.ludd.ltu.se/pub/pcc-releases"
-shipsources="$mirror_/$shipname-$shipversion.tgz pcc-helenos.patch"
+shipsources="$mirror_/$shipname-$shipversion.tgz pcc-helenos.patch ccconfig.h"
 shiptugs=""
 shipfunnels=1
-
-shipapps="cc/cc/cc cc/ccom/ccom cc/ccom/mkext/cc_mkext cc/cpp/cpp"
 
 build() {
 	run tar xzf ${shipname}-${shipversion}.tgz
 	
 	msg "Patching sources..."
-	# Apply the single pcc HelenOS patch  
 	patch -p0 <pcc-helenos.patch
-
-	# Rename directories in arch/ to match HelenOS names
-	run mv ${shipname}-${shipversion}/arch/arm ${shipname}-${shipversion}/arch/arm32
-	run mv ${shipname}-${shipversion}/arch/i386 ${shipname}-${shipversion}/arch/ia32
-	run mv ${shipname}-${shipversion}/arch/mips ${shipname}-${shipversion}/arch/mips32
-	run mv ${shipname}-${shipversion}/arch/powerpc ${shipname}-${shipversion}/arch/ppc32
+	
+	msg "Providing HelenOS configuration..."
+	run mkdir ${shipname}-${shipversion}/os/helenos
+	run cp ccconfig.h ${shipname}-${shipversion}/os/helenos
+		
+	cd ${shipname}-${shipversion}
+	
+	msg "Configuring..."
+	run ./configure \
+		--host="$HSCT_GNU_TARGET" \
+		--bindir=/app \
+		--libexecdir=/app \
+		--with-incdir=/inc/c \
+		--with-libdir=/lib/ \
+		--with-assembler=/app/as \
+		--with-linker=/app/ld \
+		"CC=$HSCT_CC" \
+		"CFLAGS=$HSCT_CFLAGS" \
+		"CPP=$HSCT_CC -E" \
+		"CPPFLAGS=$HSCT_CFLAGS" \
+		"LD=$HSCT_CC" \
+		|| return 1
+	
+	msg "Setting PCC version manually..."
+	run sed "s:#define VERSSTR.*:#define VERSSTR \"$shipname $shipversion for HelenOS, built at \" __DATE__ \", \" __TIME__:" -i config.h
+	
+	msg "Fixing in-build CC invocation..."
+	run sed '/CC_FOR_BUILD/s/[$](CFLAGS)//g' -i cc/ccom/Makefile
 
 	msg "Building..."
-	
-	for app in ${shipapps}; do
-		dir=`dirname $app`
-		run make -C ${shipname}-${shipversion}/$dir \
-			STATIC_ONLY=y \
-			USPACE_PREFIX=$HSTC_HELENOS_ROOT/uspace \
-			PLATFORM=$HSCT_UARCH \
-			-j$shipfunnels \
-			|| return 1
-	done
+	make -j$shipfunnels
 }
 
 package() {
+	cd "${shipname}-${shipversion}"
+	
+	run make install "DESTDIR=$PWD/PKG"
+
 	mkdir -p "$HSCT_MY_DIR/app"
-	for app in ${shipapps}; do
-		run cp ${shipname}-${shipversion}/$app "$HSCT_MY_DIR/app/" \
-			|| return 1
+	for app in pcc cpp ccom; do
+		run cp "PKG/app/$app" "$HSCT_MY_DIR/app/" || return 1
 	done
 }
