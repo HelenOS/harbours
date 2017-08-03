@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright (c) 2013 Vojtech Horky
+# Copyright (c) 2013-2017 Vojtech Horky
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -460,6 +460,10 @@ hsct_cache_update() {
 	# Get the flags
 	_CFLAGS=`hsct_get_var_from_uspace CFLAGS`
 	_LDFLAGS=`hsct_get_var_from_uspace LFLAGS`
+	_AFLAGS=`hsct_get_var_from_uspace AFLAGS`
+	
+	_CFLAGS_ORIGINAL=`hsct_get_var_from_uspace CFLAGS`
+	_LDFLAGS_ORIGINAL=`hsct_get_var_from_uspace LFLAGS`
 	
 	# CC flags clean-up
 	#_CFLAGS=`echo "$_CFLAGS" | sed 's#-imacros[ \t]*\([^ \t]*/config.h\)#-imacros '"$HSCT_CACHE_DIR"'/include/system_config.h#'`
@@ -563,6 +567,25 @@ hsct_cache_update() {
 	hsct_cache_variable HSCT_LDFLAGS "$_LDFLAGS"
 	hsct_cache_variable HSCT_LDFLAGS_FOR_CC "$_LDFLAGS_FOR_CC"
 	hsct_cache_variable HSCT_CFLAGS "$_CFLAGS"
+	
+	hsct_cache_variable HSCT_LDFLAGS_ORIGINAL "$_LDFLAGS_ORIGINAL $_POSIX_LINK_LFLAGS"
+	hsct_cache_variable HSCT_CFLAGS_ORIGINAL "$_CFLAGS_ORIGINAL"
+	hsct_cache_variable HSCT_LINKER_SCRIPT "$_LINKER_SCRIPT"
+	
+	hsct_cache_variable HSCT_LDFLAGS "-specs=$HSCT_CACHE_DIR/coastline.specs"
+	hsct_cache_variable HSCT_LDFLAGS_FOR_CC "-specs=$HSCT_CACHE_DIR/coastline.specs"
+	hsct_cache_variable HSCT_CFLAGS "-specs=$HSCT_CACHE_DIR/coastline.specs"
+	hsct_cache_variable HSCT_CPPFLAGS "-specs=$HSCT_CACHE_DIR/coastline.specs"
+	
+	hsct_info2 "Building specs file for GCC"
+	$HSCT_HOME/hsct-create-specs-file.py \
+		"$HSCT_CACHE_DIR" \
+		$_CFLAGS_ORIGINAL -I$HSCT_CACHE_DIR/include/posix -I$HSCT_CACHE_DIR/include/ \
+		-- \
+		$_AFLAGS \
+		-- \
+		$_LDFLAGS_ORIGINAL $_POSIX_LINK_LFLAGS -L$HSCT_CACHE_DIR/lib -n -T $_LINKER_SCRIPT \
+		>helenos/coastline.specs
 }
 
 # Source the env.sh if present otherwise exit with failure.
