@@ -29,7 +29,7 @@
 shipname=gcc
 shipversion=4.6.3
 mirror_="ftp://ftp.fu-berlin.de/unix/languages/gcc"
-shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 gcc.template includes.patch libiberty.patch pex-helenos.c"
+shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 gcc.template includes.patch libiberty.patch pex-helenos.c helenos.specs"
 shiptugs="libgmp libmpfr libmpc libisl zlib"
 shipfunnels=4
 
@@ -182,5 +182,9 @@ package() {
 	for app in gcc cpp gcov; do
 		run cp PKG/usr/local/bin/$app "$HSCT_MY_DIR/app/"
 	done
-	run cp PKG/usr/local/libexec/gcc/*/4.6.3/cc1 "$HSCT_MY_DIR/app/"
+	run cp PKG/usr/local/libexec/gcc/*/$shipversion/cc1 "$HSCT_MY_DIR/app/"
+	
+	# Create default SPECS file to drive the compilation
+	run mkdir -p "$HSCT_MY_DIR/lib/gcc/$HSCT_GNU_TARGET/$shipversion/"
+	run cp ../helenos.specs "$HSCT_MY_DIR/lib/gcc/$HSCT_GNU_TARGET/$shipversion/specs"
 }
