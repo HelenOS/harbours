@@ -166,7 +166,7 @@ hsct_process_harbour_opts() {
 
 # hsct_get_config CONFIG_FILE variable
 hsct_get_config() {
-	grep '^[ \t]*'"$2" "$1" \
+	grep '^[ \t]*'"$2"'[ \t]*=' "$1" \
 		| tail -n 1 \
 		| cut '-d=' -f 2 \
 		| sed -e 's/^[ \t]*//' -e 's/[ \t]*$//'
