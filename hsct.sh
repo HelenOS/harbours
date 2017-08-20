@@ -759,12 +759,25 @@ hsct_install() {
 hsct_archive() {
 	hsct_package || return 1
 	
-	hsct_info "Creating the tarball..."
+	hsct_info "Creating the archive..."
 	mkdir -p "$HSCT_ARCHIVE_DIR"
 	(
 		set -o errexit
+		FORMAT="`hsct_get_config \"$HSCT_CONFIG\" archive_format`"
+		[ -z "$FORMAT" ] && FORMAT="tar.xz"
 		cd "$HSCT_DIST_DIR/$shipname"
-		tar cJf "$HSCT_ARCHIVE_DIR/$shipname.tar.xz" .
+		case "$FORMAT" in
+			tar.gz)
+				tar czf "$HSCT_ARCHIVE_DIR/$shipname.tar.gz" .
+				;;
+			tar.xz)
+				tar cJf "$HSCT_ARCHIVE_DIR/$shipname.tar.xz" .
+				;;
+			*)
+				hsct_info "Unknown archive_format $FORMAT."
+				exit 1
+				;;
+		esac
 	)
 	if [ $? -ne 0 ]; then
 		hsct_error "Archiving failed!"
