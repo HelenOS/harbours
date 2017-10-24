@@ -406,6 +406,7 @@ hsct_cache_update() {
 		mkdir -p "$HSCT_CACHE_DIR/include/libc"
 		cp -R "$HSTC_HELENOS_ROOT/uspace/lib/c/include/"* "$HSCT_CACHE_DIR/include/libc"
 		cp -L -R "$HSTC_HELENOS_ROOT/abi/include/abi/" "$HSCT_CACHE_DIR/include/"
+		cp -L -R "$HSTC_HELENOS_ROOT/abi/include/_bits/" "$HSCT_CACHE_DIR/include/"
 		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/arch/$HSCT_UARCH/include/libarch/" "$HSCT_CACHE_DIR/include/"
 		# We intentionally merge libc and libmath again (as per C standard)
 		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/math/include/"* "$HSCT_CACHE_DIR/include/libc"
@@ -422,9 +423,9 @@ hsct_cache_update() {
 		-e 's:#include <:#include <libc/:' \
 		-e 's:#include <libc/libarch/:#include <libarch/:' \
 		-e 's:#include <libc/abi/:#include <abi/:' \
+		-e 's:#include <libc/_bits/:#include <_bits/:' \
 		-e 's:#include <libc/libc/:#include <libc/:' \
 		-i {} \;
-	sed -e 's:#include "../../../common.h":#include <libarch/common.h>:' -i "$HSCT_CACHE_DIR/include/abi/fourcc.h"
 	
 	# Remember the configuration
 	hsct_info2 "Saving config files"
