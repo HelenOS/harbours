@@ -299,7 +299,7 @@ hsct_cache_update() {
 	HSCT_TARGET=""
 	case $HSCT_UARCH in
 		"amd64")
-			HSCT_GNU_TARGET="amd64-linux-gnu"
+			HSCT_GNU_TARGET="amd64-unknown-elf"
 			HSCT_HELENOS_TARGET="amd64-helenos"
 			;;
 		"arm32")
@@ -334,9 +334,9 @@ hsct_cache_update() {
 			HSCT_GNU_TARGET="ppc64-linux-gnu"
 			HSCT_HELENOS_TARGET="ppc64-helenos"
 			;;
-		"sparc32")
-			HSCT_GNU_TARGET="sparc-leon3-linux-gnu"
-			HSCT_HELENOS_TARGET="sparc-leon3-helenos"
+		"riscv64")
+			LINUX_TARGET="riscv64-unknown-linux-gnu"
+			HELENOS_TARGET="riscv64-helenos"
 			;;
 		"sparc64")
 			HSCT_GNU_TARGET="sparc64-linux-gnu"
