@@ -60,12 +60,8 @@ build() {
 	sed -e '/REVISION/d' -e '/PROCESSOR/d' "$HSCT_CACHE_DIR/include/system_config.h" >include/helenos_config.h
 	fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/system_config\.h#-imacros '$PWD'/include/helenos_config.h#'`"
 	
-	# We shall define this macro somewhere, this is not the first
-	# harbour we are defining this macro in
-	extra_ppflags="-DCHAR_BIT=8"
-	
 	# Other preprocessor flags due to bad guesses by configure
-	extra_ppflags="$extra_ppflags -DHAVE_SYS_STAT_H -Dinhibit_libc"
+	extra_ppflags="-DHAVE_SYS_STAT_H -Dinhibit_libc"
 	extra_ppflags="$extra_ppflags -I$HSCT_INCLUDE_DIR -I`pwd`/include"
 	
 	extra_cflags=""

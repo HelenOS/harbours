@@ -37,12 +37,11 @@ build() {
 	run tar xzf ${shipname_}-${shipversion}.tar.gz
 	cd ${shipname_}-${shipversion}
 	
-	# We shall define this macro somewhere, this is not the first
-	# harbour we are defining this macro in
-	extra_cflags="-DCHAR_BIT=8"
-	
 	# Use the not-that-precise constants from float.h
-	extra_cflags="$extra_cflags -DFLOAT_H_YES_I_REALLY_WANT_LIMITS"
+	extra_cflags="-DFLOAT_H_YES_I_REALLY_WANT_LIMITS"
+
+	# Temporarily work around a build failure by disabling u/intmax_t.
+	extra_cflags="$extra_cflags -D__HELENOS_DISABLE_INTMAX__"
 	
 	# Where libgmp and libmpfr is supposed to be residing
 	extra_cflags="$extra_cflags -I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"

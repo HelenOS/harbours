@@ -79,7 +79,7 @@ ldflags = args_to_dict(ldflags_args)
 spec_directives = {
     '*asm': [ "+ " ],
     '*helenos_flags_charset': [],
-    '*cpp_unique_options': [ "+ ", "-D__helenos__", "-D__HELENOS__" ],
+    '*cpp_unique_options': [ "+ ", "-D__helenos__", "-D__HELENOS__", "-imacros _bits/macros.h" ],
     '*cpp': [ "+ %(helenos_flags_charset)" ],
     '*libgcc': [],
     '*startfile': [],

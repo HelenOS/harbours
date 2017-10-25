@@ -38,11 +38,14 @@ build() {
 	cd "${shipname_}-${shipversion}"
 	
 	# Pretend we have something we really do not have
-	extra_cflags="-DCHAR_BIT=8 -D_MPFR_H_HAVE_FILE -D_MPFR_H_HAVE_INTMAX_T"
+	extra_cflags="-D_MPFR_H_HAVE_FILE -D_MPFR_H_HAVE_INTMAX_T"
 	
 	# Use the not-that-precise constants from float.h
 	extra_cflags="$extra_cflags -DFLOAT_H_YES_I_REALLY_WANT_LIMITS"
 	
+	# Avoid tons of unnecessary warnings.
+	extra_cflags="$extra_cflags -USIZE_MAX -include stdint.h"
+
 	# Where libgmp is supposed to be residing
 	extra_cflags="$extra_cflags -I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"
 	ldflags_math="-Wl,--whole-archive -Wl,-L$HSCT_LIB_DIR -Wl,-lfdm -Wl,--no-whole-archive -Wl,--undefined=trunc -Wl,-lmath"
