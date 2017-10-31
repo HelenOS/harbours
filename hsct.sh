@@ -64,7 +64,8 @@ HSCT_INCLUDE_DIR=`pwd`/include
 HSCT_LIB_DIR=`pwd`/libs
 HSCT_DIST_DIR="`pwd`/dist/"
 HSCT_ARCHIVE_DIR="`pwd`/archives/"
-HSCT_DISABLED_CFLAGS="-Werror -Werror-implicit-function-declaration"
+HSCT_DISABLED_CFLAGS="-Werror -Werror-implicit-function-declaration -fno-common"
+HSCT_DISABLED_LDFLAGS="--fatal-warnings"
 HSCT_CACHE_DIR=`pwd`/helenos
 
 # Print short help.
@@ -523,6 +524,14 @@ hsct_cache_update() {
 		if echo "$_flag" | grep -q '^-[L]'; then
 			_disabled=true
 		fi
+		
+		for _disabled_flag in $HSCT_DISABLED_LDFLAGS; do
+			if [ "$_disabled_flag" = "$_flag" ]; then
+				_disabled=true
+				break
+			fi
+		done
+		
 		if ! $_disabled; then
 			_LDFLAGS="$_LDFLAGS $_flag"
 		fi
@@ -581,11 +590,11 @@ hsct_cache_update() {
 	hsct_info2 "Building specs file for GCC"
 	$HSCT_HOME/hsct-create-specs-file.py \
 		"$HSCT_CACHE_DIR" \
-		$_CFLAGS_ORIGINAL -I$HSCT_CACHE_DIR/include/posix -I$HSCT_CACHE_DIR/include/ \
+		$_CFLAGS -I$HSCT_CACHE_DIR/include/posix -I$HSCT_CACHE_DIR/include/ \
 		-- \
 		$_AFLAGS \
 		-- \
-		$_LDFLAGS_ORIGINAL $_POSIX_LINK_LFLAGS -L$HSCT_CACHE_DIR/lib -n -T $_LINKER_SCRIPT \
+		$_LDFLAGS $_POSIX_LINK_LFLAGS -L$HSCT_CACHE_DIR/lib -n -T $_LINKER_SCRIPT \
 		>helenos/coastline.specs
 }
 
