@@ -23,5 +23,4 @@
 -nostdlib \
 -T /inc/_link.ld \
 -L/lib \
--lc \
--lsoftint
+-lc

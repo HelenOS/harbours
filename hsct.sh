@@ -387,17 +387,14 @@ hsct_cache_update() {
 	# Libraries
 	hsct_info2 "Copying libraries"
 	cp \
-		"$HSTC_HELENOS_ROOT/uspace/lib/c/libc.a" \
+		"$HSTC_HELENOS_ROOT/uspace/lib/posix/libc.a" \
 		"$HSTC_HELENOS_ROOT/uspace/lib/math/libmath.a" \
-		"$HSTC_HELENOS_ROOT/uspace/lib/softint/libsoftint.a" \
-		"$HSTC_HELENOS_ROOT/uspace/lib/softfloat/libsoftfloat.a" \
-		"$HSTC_HELENOS_ROOT/uspace/lib/posix/libc4posix.a" \
-		"$HSTC_HELENOS_ROOT/uspace/lib/posix/libposixaslibc.a" \
 		"$HSCT_CACHE_DIR/lib/"
 	if [ $? -ne 0 ]; then
 		hsct_error "Failed copying libraries to cache."
 		return 1
 	fi
+	ln -s -r -f "$HSCT_CACHE_DIR/lib/libc.a" "$HSCT_CACHE_DIR/lib/libg.a"
 	
 	# Headers
 	hsct_info2 "Copying headers"
@@ -546,7 +543,7 @@ hsct_cache_update() {
 	# (otherwise, the ordering is crucial and we usally cannot change that in the
 	# application Makefiles).
 	_BASE_LIBS=`hsct_get_var_from_uspace BASE_LIBS |  sed 's#[ \t]\+#\n#g' | sed 's#.*/lib\(.*\).a$#\1#' | paste '-sd '`
-	_POSIX_LINK_LFLAGS="--whole-archive --start-group -lposixaslibc -lsoftint -lsoftfloat --end-group --no-whole-archive -lc4posix"
+	_POSIX_LINK_LFLAGS="--whole-archive -lc -lmath --no-whole-archive"
 	
 	_LDFLAGS="$_LDFLAGS $_POSIX_LINK_LFLAGS"
 	

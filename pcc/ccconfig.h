@@ -37,7 +37,7 @@
 #undef CRT0FILE
 #undef CRT0FILE_PROFILE
 
-#define LIBCLIBS { "/lib/libc.a", "/lib/libsoftfloat.a", "/lib/libsoftint.a", NULL }
+#define LIBCLIBS { "/lib/libc.a", NULL }
 #define LIBCLIBS_PROFILE LIBCLIBS
 
 #define STARTFILES { NULL }
