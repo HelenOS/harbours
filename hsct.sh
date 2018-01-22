@@ -570,11 +570,11 @@ hsct_cache_update() {
 	hsct_info2 "Building specs file for GCC"
 	$HSCT_HOME/hsct-create-specs-file.py \
 		"$HSCT_CACHE_DIR" \
-		$_CFLAGS -I$HSCT_CACHE_DIR/include/posix -I$HSCT_CACHE_DIR/include/ \
+		$_CFLAGS \
 		-- \
 		$_AFLAGS \
 		-- \
-		$_LDFLAGS $_POSIX_LINK_LFLAGS -L$HSCT_CACHE_DIR/lib -n -T $_LINKER_SCRIPT \
+		$_LDFLAGS \
 		>helenos/coastline.specs
 }
 
