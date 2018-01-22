@@ -155,6 +155,7 @@ build() {
 		--with-gnu-as \
 		--with-gnu-ld \
 		CC="$cc" \
+		CPP="$cc -E" \
 		LD="$cc" \
 		AR="$HSCT_AR" \
 		AS="$HSCT_AS" \
@@ -164,6 +165,7 @@ build() {
 		STRIP="$HSCT_STRIP" \
 		OBJDUMP="$HSCT_OBJDUMP" \
 		CXX="$cxx" \
+		CXXCPP="$cxx -E" \
 		CC_FOR_TARGET="$cc"
 
 	run make all-gcc -j$shipfunnels STATIC_ONLY=y
