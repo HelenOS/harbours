@@ -38,14 +38,17 @@ import re
 def args_to_dict(args):
     i = 0
     result = {}
+    ordering = []
     while i < len(args):
         if args[i] in [ '-I', '-imacros', '-T' ]:
+            ordering.append(args[i])
             result[ args[i] ] = args[i + 1]
             i = i + 2
         else:
+            ordering.append(args[i])
             result[ args[i] ] = None
             i = i + 1
-    return result
+    return ( ordering, result )
 
 base_path = sys.argv[1]
 cflags_args = []
@@ -72,9 +75,9 @@ while i < len(sys.argv):
     i = i + 1
 
 
-cflags = args_to_dict(cflags_args)
-asmflags = args_to_dict(asmflags_args)
-ldflags = args_to_dict(ldflags_args)
+( cflags_ordering, cflags ) = args_to_dict(cflags_args)
+( asmflags_ordering, asmflags ) = args_to_dict(asmflags_args)
+( ldflags_ordering, ldflags ) = args_to_dict(ldflags_args)
 
 spec_directives = {
     '*asm': [ "+ " ],
@@ -94,7 +97,7 @@ optim_flag = re.compile('^-O[0123s]$')
 
 extra_asm_flags = [ '-march=4kc', '-march=r4000' ]
 
-for flag in cflags:
+for flag in cflags_ordering:
     if (flag == '-pipe') or (optim_flag.match(flag) is not None) or flag.startswith("-W"):
         pass
     elif charset_flags.match(flag) is not None:
@@ -122,20 +125,20 @@ for flag in cflags:
             spec_directives['*asm'].append(full_flag)
 
 
-for flag in asmflags:
+for flag in asmflags_ordering:
     if flag == '--fatal-warnings':
         continue
     full_flag = flag if asmflags[flag] is None else flag + " " + asmflags[flag]
     spec_directives['*asm'].append(full_flag)
 
 
-for flag in ldflags:
+for flag in ldflags_ordering:
     if flag == '--fatal-warnings':
         continue
     full_flag = flag if ldflags[flag] is None else flag + " " + ldflags[flag]
     spec_directives['*link'].append(full_flag)
 
 
-for spec_name in spec_directives:
+for spec_name in sorted(spec_directives):
     print("{}:\n{}\n".format(spec_name, " \\\n".join(spec_directives[spec_name])))
 
