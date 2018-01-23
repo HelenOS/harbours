@@ -54,7 +54,7 @@ build() {
 	(
 		cd src;
 		echo 'all__:'; \
-		echo -e '\t@echo SOURCES = $(SOURCES)'; cat Makefile.in \
+		/bin/echo -e '\t@echo SOURCES = $(SOURCES)'; cat Makefile.in \
 	) | make -f - | grep 'SOURCES' \
 	| sed \
 		-e 's:io/input.c:arch/helenos/input.c arch/helenos/misc.c:' \
