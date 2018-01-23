@@ -677,7 +677,7 @@ hsct_build() {
 		else
 			_origin="$HSCT_SOURCES_DIR/$_filename"
 		fi
-		ln -sf "$_origin" "$HSCT_BUILD_DIR/$shipname/$_filename"
+		ln -srf "$_origin" "$HSCT_BUILD_DIR/$shipname/$_filename"
 	done
 	
 	(
