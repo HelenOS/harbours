@@ -29,6 +29,7 @@
 shipname=jainja
 shipversion=0.8
 shipsources="http://sourceforge.net/projects/${shipname}/files/${shipname}-${shipversion}/${shipname}-${shipversion}.tar.gz jainja.batch Makefile.patch headers.patch"
+shiptugs="fdlibm"
 shipfunnels=0
 
 build() {
