@@ -1,0 +1,68 @@
+language: c
+sudo: required
+env:
+  global:
+    - CROSS_PREFIX=/usr/local/cross-static/
+  matrix:
+    - H_HARBOUR=fdlibm H_ARCH=amd64
+    - H_HARBOUR=fdlibm H_ARCH=arm32/beagleboardxm
+    - H_HARBOUR=fdlibm H_ARCH=arm32/beaglebone
+    - H_HARBOUR=fdlibm H_ARCH=arm32/gta02
+    - H_HARBOUR=fdlibm H_ARCH=arm32/integratorcp
+    - H_HARBOUR=fdlibm H_ARCH=arm32/raspberrypi
+    - H_HARBOUR=fdlibm H_ARCH=ia32
+    - H_HARBOUR=fdlibm H_ARCH=ia64/i460GX
+    - H_HARBOUR=fdlibm H_ARCH=ia64/ski
+    - H_HARBOUR=fdlibm H_ARCH=mips32/malta-be
+    - H_HARBOUR=fdlibm H_ARCH=mips32/malta-le
+    - H_HARBOUR=fdlibm H_ARCH=mips32/msim
+    - H_HARBOUR=fdlibm H_ARCH=ppc32
+    - H_HARBOUR=fdlibm H_ARCH=sparc64/niagara
+    - H_HARBOUR=fdlibm H_ARCH=sparc64/ultra
+    - H_HARBOUR=zlib H_ARCH=amd64
+    - H_HARBOUR=zlib H_ARCH=arm32/beagleboardxm
+    - H_HARBOUR=zlib H_ARCH=arm32/beaglebone
+    - H_HARBOUR=zlib H_ARCH=arm32/gta02
+    - H_HARBOUR=zlib H_ARCH=arm32/integratorcp
+    - H_HARBOUR=zlib H_ARCH=arm32/raspberrypi
+    - H_HARBOUR=zlib H_ARCH=ia32
+    - H_HARBOUR=zlib H_ARCH=ia64/i460GX
+    - H_HARBOUR=zlib H_ARCH=ia64/ski
+    - H_HARBOUR=zlib H_ARCH=mips32/malta-be
+    - H_HARBOUR=zlib H_ARCH=mips32/malta-le
+    - H_HARBOUR=zlib H_ARCH=mips32/msim
+    - H_HARBOUR=zlib H_ARCH=ppc32
+    - H_HARBOUR=zlib H_ARCH=sparc64/niagara
+    - H_HARBOUR=zlib H_ARCH=sparc64/ultra
+    - H_HARBOUR=msim H_ARCH=amd64
+    - H_HARBOUR=msim H_ARCH=arm32/beagleboardxm
+    - H_HARBOUR=msim H_ARCH=arm32/beaglebone
+    - H_HARBOUR=msim H_ARCH=arm32/gta02
+    - H_HARBOUR=msim H_ARCH=arm32/integratorcp
+    - H_HARBOUR=msim H_ARCH=arm32/raspberrypi
+    - H_HARBOUR=msim H_ARCH=ia32
+    - H_HARBOUR=msim H_ARCH=ia64/i460GX
+    - H_HARBOUR=msim H_ARCH=ia64/ski
+    - H_HARBOUR=msim H_ARCH=mips32/malta-be
+    - H_HARBOUR=msim H_ARCH=mips32/malta-le
+    - H_HARBOUR=msim H_ARCH=mips32/msim
+    - H_HARBOUR=msim H_ARCH=ppc32
+    - H_HARBOUR=msim H_ARCH=sparc64/niagara
+    - H_HARBOUR=msim H_ARCH=sparc64/ultra
+    - H_HARBOUR=binutils H_ARCH=ia32
+    - H_HARBOUR=gcc H_ARCH=ia32
+    - H_HARBOUR=jainja H_ARCH=ia32
+    - H_HARBOUR=libgmp H_ARCH=ia32
+    - H_HARBOUR=libiconv H_ARCH=ia32
+    - H_HARBOUR=libisl H_ARCH=ia32
+    - H_HARBOUR=libmpc H_ARCH=ia32
+    - H_HARBOUR=libmpfr H_ARCH=ia32
+    - H_HARBOUR=libpng H_ARCH=ia32
+    - H_HARBOUR=pcc H_ARCH=ia32
+    - H_HARBOUR=python2 H_ARCH=ia32
+before_install:
+ - ./travis.sh install
+script:
+ - ./travis.sh run
+os:
+ - linux
