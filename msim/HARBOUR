@@ -65,13 +65,7 @@ build() {
 	# Now we would use the HelenOS-style Makefile to actually build
 	# the binary.
 	run make -C src -j$shipfunnels \
-		STATIC_ONLY=y \
-		CC="$HSCT_CC" \
-		HSCT_CFLAGS="$HSCT_CFLAGS" \
-		LD="$HSCT_CC" \
-		HSCT_LDFLAGS="$HSCT_LDFLAGS" \
-		HSCT_CACHE_INCLUDE="$HSCT_CACHE_INCLUDE" \
-		HSCT_CACHE_LIB="$HSCT_CACHE_LIB"
+		CC="$HSCT_CC"
 }
 
 package() {

@@ -38,24 +38,16 @@ build() {
 	cd "${shipname_}-${shipversion}"
 	
 	# Pretend we have something we really do not have
-	extra_cflags="-D_MPFR_H_HAVE_FILE -D_MPFR_H_HAVE_INTMAX_T"
+	extra_cppflags="-D_MPFR_H_HAVE_FILE -D_MPFR_H_HAVE_INTMAX_T"
 	
 	# Use the not-that-precise constants from float.h
-	extra_cflags="$extra_cflags -DFLOAT_H_YES_I_REALLY_WANT_LIMITS"
+	extra_cppflags="$extra_cppflags -DFLOAT_H_YES_I_REALLY_WANT_LIMITS"
 	
-	# Avoid tons of unnecessary warnings.
-	extra_cflags="$extra_cflags -USIZE_MAX -include stdint.h"
-
-	# Where libgmp is supposed to be residing
-	extra_cflags="$extra_cflags -I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"
-	ldflags_math="-Wl,--whole-archive -Wl,-L$HSCT_LIB_DIR -Wl,-lfdm -Wl,--no-whole-archive -Wl,--undefined=trunc -Wl,-lmath"
-	
+	cp $HSCT_CONFIG_SUB .
 	run ./configure \
+		$HSCT_CONFIGURE_ARGS \
+		CPPFLAGS="$extra_cppflags" \
 		--disable-shared \
-		--host="$HSCT_GNU_TARGET" \
-            	CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC $extra_cflags $ldflags_math" \
-		LD="$HSCT_LD" \
 		|| return 1
 	
 	msg "Building the library..."

@@ -47,19 +47,21 @@ build() {
 	cd ${shipname}-${shipversion}
 	
 	msg "Configuring..."
+	cp $HSCT_CONFIG_SUB .
+
+	# FIXME: We pretend we are targeting Linux. PCC should be patched
+	# so that we don't need that.
+
 	run ./configure \
-		--host="$HSCT_GNU_TARGET" \
+		$HSCT_CONFIGURE_ARGS \
+		--target=$HELENOS_ARCH-linux-gnu \
+		--program-prefix="" \
 		--bindir=/app \
 		--libexecdir=/app \
 		--with-incdir=/inc/c \
 		--with-libdir=/lib/ \
 		--with-assembler=/app/as \
 		--with-linker=/app/ld \
-		"CC=$HSCT_CC" \
-		"CFLAGS=$HSCT_CFLAGS" \
-		"CPP=$HSCT_CC -E" \
-		"CPPFLAGS=$HSCT_CFLAGS" \
-		"LD=$HSCT_CC" \
 		|| return 1
 	
 	msg "Setting PCC version manually..."
@@ -79,6 +81,6 @@ package() {
 
 	mkdir -p "$HSCT_MY_DIR/app"
 	for app in pcc cpp ccom; do
-		run cp "PKG/app/$app" "$HSCT_MY_DIR/app/" || return 1
+		run cp "PKG/app/$HELENOS_ARCH-linux-gnu-$app" "$HSCT_MY_DIR/app/$app" || return 1
 	done
 }

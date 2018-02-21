@@ -39,6 +39,8 @@
 #include <errno.h>
 #include <stdlib.h>
 
+extern void mprintf(const char *);
+
 static tinput_t *input_prompt;
 
 /** Terminal and readline initialization
@@ -48,7 +50,8 @@ void input_init(void)
 {
 	input_prompt = tinput_new();
 	if (input_prompt == NULL) {
-		die(1, "Failed to intialize input.");
+		fprintf(stderr, "Failed to intialize input.");
+		abort();
 	}
 	helenos_dprinter_init();
 }

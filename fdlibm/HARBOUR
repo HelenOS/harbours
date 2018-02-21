@@ -35,13 +35,7 @@ build() {
 	run tar xzf "${shipname}53.tar.gz"
 	
 	run cd "${shipname}53"
-	run ./configure \
-		CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS" \
-		LD="$HSCT_LD" \
-		AR="$HSCT_AR" \
-		RANLIB="$HSCT_RANLIB" \
-		cross_compiling=yes
+	run ./configure $HSCT_CONFIGURE_ARGS
 	
 	run make -j${shipfunnels} STATIC_ONLY=y
 }

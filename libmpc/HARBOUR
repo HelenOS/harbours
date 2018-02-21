@@ -38,20 +38,16 @@ build() {
 	cd ${shipname_}-${shipversion}
 	
 	# Use the not-that-precise constants from float.h
-	extra_cflags="-DFLOAT_H_YES_I_REALLY_WANT_LIMITS"
-
+	extra_cppflags="-DFLOAT_H_YES_I_REALLY_WANT_LIMITS"
+	
 	# Temporarily work around a build failure by disabling u/intmax_t.
-	extra_cflags="$extra_cflags -D__HELENOS_DISABLE_INTMAX__"
+	extra_cppflags="$extra_cppflags -D__HELENOS_DISABLE_INTMAX__"
 	
-	# Where libgmp and libmpfr is supposed to be residing
-	extra_cflags="$extra_cflags -I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR"
-	
+	cp $HSCT_CONFIG_SUB .
 	run ./configure \
+		$HSCT_CONFIGURE_ARGS \
+		CPPFLAGS="$extra_cppflags" \
 		--disable-shared \
-		--host="$HSCT_GNU_TARGET" \
-		CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC $extra_cflags" \
-		LD="$HSCT_LD" \
 		|| return 1
 	
 	msg "Building the library..."

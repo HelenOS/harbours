@@ -57,15 +57,11 @@ HSCT_HOME=`which -- "$0" 2>/dev/null`
 HSCT_HOME=`dirname -- "$HSCT_HOME"`
 HSCT_HSCT="$HSCT_HOME/hsct.sh"
 
-HSCT_CONFIG=hsct.conf
-
 HSCT_BUILD_DIR=`pwd`/build
 HSCT_INCLUDE_DIR=`pwd`/include
 HSCT_LIB_DIR=`pwd`/libs
 HSCT_DIST_DIR="`pwd`/dist/"
 HSCT_ARCHIVE_DIR="`pwd`/archives/"
-HSCT_DISABLED_CFLAGS="-Werror -Werror-implicit-function-declaration -fno-common"
-HSCT_DISABLED_LDFLAGS="--fatal-warnings"
 HSCT_CACHE_DIR=`pwd`/helenos
 
 # Print short help.
@@ -80,15 +76,12 @@ hsct_usage() {
 	echo "       package   Save installable files to allow cleaning."
 	echo "       install   Install to uspace/dist of HelenOS."
 	echo "       archive   Create tarball instead of installing."
-	echo " $1 update [rebuild]"
-	echo "    Update the cached headers and libraries."
-	echo "    If 'rebuild' is specified, HelenOS is forcefully rebuild and"
-	echo "      cache is updated afterwards."
-	echo " $1 init /path/to/HelenOS [profile] [build]"
+	echo " $1 init [/path/to/HelenOS] [profile]"
 	echo "    Initialize current directory as coastline build directory".
 	echo "    Full path has to be provided to the HelenOS source tree."
-	echo "    If profile is specified, prepare for that configuration."
-	echo "    If 'build' is given, forcefully rebuild to specified profile."
+	echo "    If profile is specified, forcefully rebuild to specified profile."
+	echo "    If no argument is provided, path to HelenOS source tree is"
+	echo "    read from the HELENOS_ROOT environment variable."
 	echo " $1 help"
 	echo "    Display this help and exit."
 }
@@ -133,18 +126,12 @@ run() {
 	hsct_run_echo "$@"
 }
 
-# Tells whether HelenOS in $HSCT_HELENOS_ROOT is configured.
-hsct_is_helenos_configured() {
-	[ -e "$HSCT_HELENOS_ROOT/Makefile.config" ]
-	return $?
-}
-
 hsct_process_harbour_opts() {
 	HSCT_OPTS_NO_DEPENDENCY_BUILDING=false
 	HSCT_OPTS_NO_FILE_DOWNLOADING=false
 	HSCT_HARBOUR_NAME=""
 	
-	while echo "$1" | grep -q '^--'; do
+	while [ "$#" -ne 0 ]; do
 		case "$1" in
 			--no-deps)
 				HSCT_OPTS_NO_DEPENDENCY_BUILDING=true
@@ -152,25 +139,23 @@ hsct_process_harbour_opts() {
 			--no-fetch)
 				HSCT_OPTS_NO_FILE_DOWNLOADING=true
 				;;
-			*)
+			--*)
 				hsct_error "Unknown option $1."
 				return 1
+				;;
+			*)
+				if [ -z "$HSCT_HARBOUR_NAME" ]; then
+					HSCT_HARBOUR_NAME="$1"
+				else
+					hsct_error "Only one package name allowed."
+					return 1
+				fi
 				;;
 		esac
 		shift
 	done
 	
-	HSCT_HARBOUR_NAME="$1"
-	
 	return 0
-}
-
-# hsct_get_config CONFIG_FILE variable
-hsct_get_config() {
-	grep '^[ \t]*'"$2"'[ \t]*=' "$1" \
-		| tail -n 1 \
-		| cut '-d=' -f 2 \
-		| sed -e 's/^[ \t]*//' -e 's/[ \t]*$//'
 }
 
 # Fetch all the specified files in the HARBOUR
@@ -204,429 +189,10 @@ hsct_fetch() {
 	return 0
 }
 
-
-# get_var_from_makefile CC Makefile.common
-hsct_get_var_from_makefile() {
-	# echo "make -C `dirname "$2"` -f - -s __armagedon_" >&2
-	(
-		echo "$3"
-		echo "$4"
-		echo "$5"
-		echo "__genesis__:"
-		echo
-		echo "STATIC_ONLY=y"
-		echo "CONFIG_DEBUG=n"
-		echo include `basename "$2"`
-		echo "STATIC_ONLY=y"
-		echo "CONFIG_DEBUG=n"
-		echo
-		echo "__armagedon__:"
-		echo "	echo \$($1)"
-		echo
-	)  | make -C `dirname "$2"` -f - -s __armagedon__
-}
-
-# Retrieve variable from uspace/ Makefile.
-hsct_get_var_from_uspace() {
-	if [ -z "$2" ]; then
-		hsct_get_var_from_makefile "$1" "$HSCT_HELENOS_ROOT/uspace/Makefile.common" "USPACE_PREFIX=$HSCT_HELENOS_ROOT/uspace"
-	else
-		hsct_get_var_from_makefile "$1" "$HSCT_HELENOS_ROOT/uspace/$2" "USPACE_PREFIX=$HSCT_HELENOS_ROOT/uspace" "$3" "$4"
-	fi
-}
-
-# Cache and export a variable.
-# $1 variable name
-# $2 value to cache
-hsct_cache_variable() {
-	export "$1=$2"
-	(
-		if [ -n "$3" ]; then
-			echo "#" "$3"
-		fi
-		echo -n "export $1=\"";
-		echo -n "$2" | sed -e 's#"#\\"#g' -e 's#\\#\\\\#g'
-		echo "\""
-	) >>"$HSCT_CACHE_DIR/env.sh"
-}
-
-# Update the cache - copy headers, libraries etc to this directory.
-# Does not check that update is possible!
-hsct_cache_update() {
-	hsct_info "Caching headers, libraries and compile flags"
-	
-	mkdir -p "$HSCT_CACHE_DIR"
-	(
-		echo "#!/bin/sh"
-		echo
-		echo "# This is automatically generated file."
-		echo "# All changes will be LOST upon next invocation of hsct.sh"
-		echo
-	) >"$HSCT_CACHE_DIR/env.sh"
-	chmod +x "$HSCT_CACHE_DIR/env.sh"
-	
-	
-	#
-	# Start with binaries
-	#
-
-	hsct_cache_variable HSCT_CC `hsct_get_var_from_uspace CC`
-	hsct_cache_variable HSCT_AS `hsct_get_var_from_uspace AS`
-	hsct_cache_variable HSCT_LD `hsct_get_var_from_uspace LD`
-	hsct_cache_variable HSCT_AR `hsct_get_var_from_uspace AR`
-	hsct_cache_variable HSCT_STRIP `hsct_get_var_from_uspace STRIP`
-	hsct_cache_variable HSCT_OBJCOPY `hsct_get_var_from_uspace OBJCOPY`
-	hsct_cache_variable HSCT_OBJDUMP `hsct_get_var_from_uspace OBJDUMP`
-	# HelenOS do not use ranlib or nm but some applications require it
-	hsct_cache_variable HSCT_RANLIB `echo "$HSCT_AR" | sed 's/-ar$/-ranlib/'`
-	hsct_cache_variable HSCT_NM `echo "$HSCT_AR" | sed 's/-ar$/-nm/'`
-	
-	#
-	# Various paths
-	#
-	hsct_cache_variable HSTC_HELENOS_ROOT "$HSCT_HELENOS_ROOT"
-	hsct_cache_variable HSCT_INCLUDE_DIR "$HSCT_INCLUDE_DIR"
-	hsct_cache_variable HSCT_LIB_DIR "$HSCT_LIB_DIR"
-	hsct_cache_variable HSCT_MISC_DIR "$HSCT_MISC_DIR"
-	hsct_cache_variable HSCT_APPS_DIR "$HSCT_APPS_DIR"
-	hsct_cache_variable HSCT_CACHE_DIR "$HSCT_CACHE_DIR"
-	hsct_cache_variable HSCT_CACHE_INCLUDE "$HSCT_CACHE_DIR/include"
-	hsct_cache_variable HSCT_CACHE_LIB "$HSCT_CACHE_DIR/lib/other"
-	
-	#
-	# Get architecture, convert to target
-	#
-	hsct_cache_variable HSCT_UARCH `hsct_get_var_from_uspace UARCH`
-	HSCT_TARGET=""
-	case $HSCT_UARCH in
-		"amd64")
-			HSCT_GNU_TARGET="amd64-unknown-elf"
-			HSCT_HELENOS_TARGET="amd64-helenos"
-			;;
-		"arm32")
-			HSCT_GNU_TARGET="arm-linux-gnueabi"
-			HSCT_HELENOS_TARGET="arm-helenos-gnueabi"
-			;;
-		"ia32")
-			HSCT_GNU_TARGET="i686-pc-linux-gnu"
-			HSCT_HELENOS_TARGET="i686-pc-helenos"
-			;;
-		"ia64")
-			HSCT_GNU_TARGET="ia64-pc-linux-gnu"
-			HSCT_HELENOS_TARGET="ia64-pc-helenos"
-			;;
-		"mips32")
-			HSCT_GNU_TARGET="mipsel-linux-gnu"
-			HSCT_HELENOS_TARGET="mipsel-helenos"
-			;;
-		"mips32eb")
-			HSCT_GNU_TARGET="mips-linux-gnu"
-			HSCT_HELENOS_TARGET="mips-helenos"
-			;;
-		"mips64")
-			HSCT_GNU_TARGET="mips64el-linux-gnu"
-			HSCT_HELENOS_TARGET="mips64el-helenos"
-			;;
-		"ppc32")
-			HSCT_GNU_TARGET="ppc-linux-gnu"
-			HSCT_HELENOS_TARGET="ppc-helenos"
-			;;
-		"ppc64")
-			HSCT_GNU_TARGET="ppc64-linux-gnu"
-			HSCT_HELENOS_TARGET="ppc64-helenos"
-			;;
-		"riscv64")
-			LINUX_TARGET="riscv64-unknown-linux-gnu"
-			HELENOS_TARGET="riscv64-helenos"
-			;;
-		"sparc64")
-			HSCT_GNU_TARGET="sparc64-linux-gnu"
-			HSCT_HELENOS_TARGET="sparc64-helenos"
-			;;
-		*)
-			hsct_error 'Unsupported architecture: $(UARCH) =' "'$HSCT_UARCH'."
-			return 1
-			;;
-	esac
-	hsct_cache_variable HSCT_GNU_TARGET "$HSCT_GNU_TARGET"
-	hsct_cache_variable HSCT_HELENOS_TARGET "$HSCT_HELENOS_TARGET"
-	case `hsct_get_var_from_uspace COMPILER` in
-		gcc_helenos)
-			hsct_cache_variable HSCT_TARGET "$HSCT_HELENOS_TARGET"
-			;;
-		*)
-			hsct_cache_variable HSCT_TARGET "$HSCT_GNU_TARGET"
-			;;
-	esac
-	
-	
-	#
-	# Copy the files and update the flags accordingly
-	#
-	mkdir -p "$HSCT_CACHE_INCLUDE"
-	mkdir -p "$HSCT_CACHE_DIR/lib"
-	mkdir -p "$HSCT_CACHE_LIB"
-
-	# Linker script
-	hsct_info2 "Copying linker script and startup object file"
-	_LINKER_SCRIPT=`hsct_get_var_from_uspace LINKER_SCRIPT`
-	(
-		set -o errexit
-		_STARTUP_OBJECT=`sed -n 's#.*STARTUP(\([^)]*\)).*#\1#p' <"$_LINKER_SCRIPT" 2>/dev/null`
-		cp "$_STARTUP_OBJECT" "$HSCT_CACHE_DIR/lib/entry.o" || return 1 
-		sed "s#$_STARTUP_OBJECT#$HSCT_CACHE_DIR/lib/entry.o#" \
-			<"$_LINKER_SCRIPT" >"$HSCT_CACHE_DIR/link.ld"
-	)
-	if [ $? -ne 0 ]; then
-		hsct_error "Failed preparing linker script."
-		return 1
-	fi
-	
-	_LINKER_SCRIPT="$HSCT_CACHE_DIR/link.ld"
-	
-	# Libraries
-	hsct_info2 "Copying libraries"
-	cp \
-		"$HSTC_HELENOS_ROOT/uspace/lib/posix/libc.a" \
-		"$HSTC_HELENOS_ROOT/uspace/lib/math/libmath.a" \
-		"$HSCT_CACHE_DIR/lib/"
-	if [ $? -ne 0 ]; then
-		hsct_error "Failed copying libraries to cache."
-		return 1
-	fi
-	ln -s -r -f "$HSCT_CACHE_DIR/lib/libc.a" "$HSCT_CACHE_DIR/lib/libg.a"
-	
-	# Headers
-	hsct_info2 "Copying headers"
-	(
-		set -o errexit
-		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/posix/include/posix/" "$HSCT_CACHE_DIR/include/"
-		mkdir -p "$HSCT_CACHE_DIR/include/libc"
-		cp -R "$HSTC_HELENOS_ROOT/uspace/lib/c/include/"* "$HSCT_CACHE_DIR/include/libc"
-		cp -L -R "$HSTC_HELENOS_ROOT/abi/include/abi/" "$HSCT_CACHE_DIR/include/"
-		cp -L -R "$HSTC_HELENOS_ROOT/abi/include/_bits/" "$HSCT_CACHE_DIR/include/"
-		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/c/arch/$HSCT_UARCH/include/libarch/" "$HSCT_CACHE_DIR/include/"
-		ln -s -f "$HSCT_CACHE_DIR/include/libc/errno.h" "$HSCT_CACHE_DIR/include/posix/errno.h"
-		# We intentionally merge libc and libmath again (as per C standard)
-		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/math/include/"* "$HSCT_CACHE_DIR/include/libc"
-		cp -L -R "$HSTC_HELENOS_ROOT/uspace/lib/math/arch/$HSCT_UARCH/include/libarch/" "$HSCT_CACHE_DIR/include/"
-		ln -s -f -n "libc" "$HSCT_CACHE_DIR/include/libmath"
-	)
-	if [ $? -ne 0 ]; then
-		hsct_error "Failed copying headers to cache."
-		return 1
-	fi
-
-	hsct_info2 "Fixing includes in libc headers"
-	find "$HSCT_CACHE_DIR/include/libc" "$HSCT_CACHE_DIR/include/libarch" -name '*.h' -exec sed \
-		-e 's:#include <:#include <libc/:' \
-		-e 's:#include <libc/libarch/:#include <libarch/:' \
-		-e 's:#include <libc/abi/:#include <abi/:' \
-		-e 's:#include <libc/_bits/:#include <_bits/:' \
-		-e 's:#include <libc/libc/:#include <libc/:' \
-		-i {} \;
-	
-	# Remember the configuration
-	hsct_info2 "Saving config files"
-	(
-		set -o errexit
-		cp "$HSTC_HELENOS_ROOT/config.h" "$HSCT_CACHE_INCLUDE/system_config.h"
-		cp "$HSTC_HELENOS_ROOT/Makefile.config" "$HSCT_CACHE_DIR/Makefile.config"
-	)
-	if [ $? -ne 0 ]; then
-		hsct_error "Failed saving config files."
-		return 1
-	fi
-	
-	# Extra libraries and headers
-	hsct_info2 "Copying extra headers and libraries"
-	(
-		set -o errexit
-		# libclui
-		cp -L "$HSTC_HELENOS_ROOT/uspace/lib/clui/libclui.a" "$HSCT_CACHE_LIB"
-		mkdir -p "$HSCT_CACHE_INCLUDE/libclui/"
-		cp -L "$HSTC_HELENOS_ROOT/uspace/lib/clui/tinput.h" "$HSCT_CACHE_INCLUDE/libclui/"
-	)
-	if [ $? -ne 0 ]; then
-		hsct_error "Failed copying extra headers and libraries to cache."
-		return 1
-	fi
-	
-	#
-	# Fix the flags
-	#
-	hsct_info2 "Fixing compiler flags"
-	
-	# Get the flags
-	_CFLAGS=`hsct_get_var_from_uspace CFLAGS`
-	_LDFLAGS=`hsct_get_var_from_uspace LFLAGS`
-	_AFLAGS=`hsct_get_var_from_uspace AFLAGS`
-	
-	_CFLAGS_ORIGINAL=`hsct_get_var_from_uspace CFLAGS`
-	_LDFLAGS_ORIGINAL=`hsct_get_var_from_uspace LFLAGS`
-	
-	# CC flags clean-up
-	#_CFLAGS=`echo "$_CFLAGS" | sed 's#-imacros[ \t]*\([^ \t]*/config.h\)#-imacros '"$HSCT_CACHE_DIR"'/include/system_config.h#'`
-	_CFLAGS_OLD="$_CFLAGS"
-	_CFLAGS=""
-	_next_kind="none"
-	for _flag in $_CFLAGS_OLD; do
-		_disabled=false
-		case "$_next_kind" in
-			skip)
-				_disable=true
-				;;
-			imacro)
-				if echo "$_flag" | grep -q '/config.h$'; then
-					_flag="$HSCT_CACHE_DIR/include/system_config.h"
-				fi
-				;;
-			*)
-				;;
-		esac
-		_next_kind="none"
-		
-		for _disabled_flag in $HSCT_DISABLED_CFLAGS; do
-			if [ "$_disabled_flag" = "$_flag" ]; then
-				_disabled=true
-				break
-			fi
-		done
-		
-		if [ "$_flag" = "-L" ]; then
-			_next_kind="skip"
-			_disabled=true
-		fi
-		if [ "$_flag" = "-I" ]; then
-			_next_kind="skip"
-			_disabled=true
-		fi
-		if [ "$_flag" = "-imacros" ]; then
-			_next_kind="imacro"
-		fi
-		if echo "$_flag" | grep -q '^-[IL]'; then
-			_disabled=true
-		fi
-		
-		if ! $_disabled; then
-			_CFLAGS="$_CFLAGS $_flag"
-		fi
-	done
-	
-	# LD flags clean-up
-	_LDFLAGS_OLD="$_LDFLAGS"
-	_LDFLAGS=""
-	for _flag in $_LDFLAGS_OLD; do
-		_disabled=false
-		# Get rid of library paths, the files are stored locally
-		if echo "$_flag" | grep -q '^-[L]'; then
-			_disabled=true
-		fi
-		
-		for _disabled_flag in $HSCT_DISABLED_LDFLAGS; do
-			if [ "$_disabled_flag" = "$_flag" ]; then
-				_disabled=true
-				break
-			fi
-		done
-		
-		if ! $_disabled; then
-			_LDFLAGS="$_LDFLAGS $_flag"
-		fi
-	done
-	
-	# Add paths to cached headers and libraries
-	_LDFLAGS="$_LDFLAGS -L$HSCT_CACHE_DIR/lib -n -T $_LINKER_SCRIPT"
-	_CFLAGS="$_CFLAGS -I$HSCT_CACHE_DIR/include/posix -I$HSCT_CACHE_DIR/include/"
-	
-	# Actually used libraries
-	# The --whole-archive is used to allow correct linking of static libraries
-	# (otherwise, the ordering is crucial and we usally cannot change that in the
-	# application Makefiles).
-	_BASE_LIBS=`hsct_get_var_from_uspace BASE_LIBS |  sed 's#[ \t]\+#\n#g' | sed 's#.*/lib\(.*\).a$#\1#' | paste '-sd '`
-	_POSIX_LINK_LFLAGS="--whole-archive -lc -lmath --no-whole-archive"
-	
-	_LDFLAGS="$_LDFLAGS $_POSIX_LINK_LFLAGS"
-	
-	# The LDFLAGS might be used through CC, thus prefixing with -Wl is required
-	_LDFLAGS_FOR_CC=""
-	for _flag in $_LDFLAGS; do
-		_LDFLAGS_FOR_CC="$_LDFLAGS_FOR_CC -Wl,$_flag"
-	done
-	
-	hsct_cache_variable HSCT_LDFLAGS "$_LDFLAGS"
-	hsct_cache_variable HSCT_LDFLAGS_FOR_CC "$_LDFLAGS_FOR_CC"
-	hsct_cache_variable HSCT_CFLAGS "$_CFLAGS"
-	
-	hsct_cache_variable HSCT_LDFLAGS_ORIGINAL "$_LDFLAGS_ORIGINAL $_POSIX_LINK_LFLAGS"
-	hsct_cache_variable HSCT_CFLAGS_ORIGINAL "$_CFLAGS_ORIGINAL"
-	hsct_cache_variable HSCT_LINKER_SCRIPT "$_LINKER_SCRIPT"
-	
-	hsct_cache_variable HSCT_LDFLAGS "-specs=$HSCT_CACHE_DIR/coastline.specs"
-	hsct_cache_variable HSCT_LDFLAGS_FOR_CC "-specs=$HSCT_CACHE_DIR/coastline.specs"
-	hsct_cache_variable HSCT_CFLAGS "-specs=$HSCT_CACHE_DIR/coastline.specs"
-	hsct_cache_variable HSCT_CPPFLAGS "-specs=$HSCT_CACHE_DIR/coastline.specs"
-	
-	hsct_info2 "Building specs file for GCC"
-	$HSCT_HOME/hsct-create-specs-file.py \
-		"$HSCT_CACHE_DIR" \
-		$_CFLAGS \
-		-- \
-		$_AFLAGS \
-		-- \
-		$_LDFLAGS \
-		>helenos/coastline.specs
-}
-
-# Source the env.sh if present otherwise exit with failure.
-hsct_prepare_env() {
-	if ! [ -e "$HSCT_CACHE_DIR/env.sh" ]; then
-		hsct_error "Cache is not initialized. Maybe HelenOS is not configured?"
-		return 1
-	fi
-	
-	# Source env.sh to get HSCT_* variables 
-	. "$HSCT_CACHE_DIR/env.sh"
-	
-	if [ "$shipfunnels" -gt "$HSCT_PARALLELISM" ] 2>/dev/null; then
-		shipfunnels="$HSCT_PARALLELISM"
-	elif [ "$shipfunnels" -le "$HSCT_PARALLELISM" ] 2>/dev/null; then
-		if [ "$shipfunnels" -le "0" ]; then
-			shipfunnels="$HSCT_PARALLELISM"
-		fi
-	else
-		shipfunnels="1"
-	fi
-}
-
 # Remove the build directory of given package.
 hsct_clean() {
 	hsct_info "Cleaning build directory..."
 	rm -rf "$HSCT_BUILD_DIR/$shipname/"*
-}
-
-# Decide whether it is possible to update the cache.
-hsct_can_update_cache() {
-	# If HelenOS is configured, we want to update the cache.
-	# However, if architecture is specified only if the current
-	# configuration is the same.
-	_arch=`hsct_get_config "$HSCT_CONFIG" arch`
-	if [ -z "$_arch" ]; then
-		# Building for any architecture. We update the cache if
-		# HelenOS is configured.
-		hsct_is_helenos_configured
-		return $?
-	else
-		# Update the cache only if HelenOS is configured and the
-		# architecture matches
-		if hsct_is_helenos_configured; then
-			_uarch=`hsct_get_var_from_uspace UARCH`
-			[ "$_uarch" = "$_arch" ]
-			return $?
-		else
-			return 1
-		fi
-	fi
 }
 
 # Build the package.
@@ -635,12 +201,6 @@ hsct_build() {
 	if [ -e "$HSCT_BUILD_DIR/${shipname}.built" ]; then
 		hsct_info "No need to build $shipname."
 		return 0
-	fi
-	
-	if hsct_can_update_cache; then
-		if ! hsct_cache_update; then
-			return 1
-		fi
 	fi
 	
 	# Check for prerequisities
@@ -665,8 +225,6 @@ hsct_build() {
 			hsct_info2 "Back from building $tug."
 		fi
 	done
-	
-	hsct_prepare_env || return 1
 	
 	hsct_fetch || return 1
 	
@@ -708,8 +266,6 @@ hsct_package() {
 	
 	hsct_build || return 1
 	
-	hsct_prepare_env || return 1
-	
 	(	
 		cd "$HSCT_BUILD_DIR/$shipname/"
 		hsct_info "Packaging..."
@@ -729,14 +285,9 @@ hsct_package() {
 hsct_install() {
 	hsct_package || return 1
 
-	if ! hsct_can_update_cache; then
-		hsct_error "Installation cannot be performed."
-		hsct_error2 "HelenOS is not configured for the proper architecture."
-		return 1
-	fi
-
 	hsct_info "Installing..."
 	if ls "$HSCT_MY_DIR"/* &>/dev/null; then
+		mkdir -p "$HSCT_OVERLAY"
 		cp -v -r -L "$HSCT_MY_DIR"/* "$HSCT_OVERLAY" || return 1
 		hsct_info2 "Do not forget to rebuild the image."
 	else
@@ -753,10 +304,8 @@ hsct_archive() {
 	mkdir -p "$HSCT_ARCHIVE_DIR"
 	(
 		set -o errexit
-		FORMAT="`hsct_get_config \"$HSCT_CONFIG\" archive_format`"
-		[ -z "$FORMAT" ] && FORMAT="tar.xz"
 		cd "$HSCT_DIST_DIR/$shipname"
-		case "$FORMAT" in
+		case "$HSCT_FORMAT" in
 			tar.gz)
 				tar czf "$HSCT_ARCHIVE_DIR/$shipname.tar.gz" .
 				;;
@@ -764,7 +313,7 @@ hsct_archive() {
 				tar cJf "$HSCT_ARCHIVE_DIR/$shipname.tar.xz" .
 				;;
 			*)
-				hsct_info "Unknown archive_format $FORMAT."
+				hsct_info "Unknown archive_format $HSCT_FORMAT."
 				exit 1
 				;;
 		esac
@@ -777,153 +326,193 @@ hsct_archive() {
 	return 0
 }
 
+hsct_load_config() {
+	# Defaults
+	HSCT_CONFIG=config.sh
+	HSCT_WGET_OPTS=
+	HSCT_SOURCES_DIR=`pwd`/sources
+	HSCT_FORMAT="tar.xz"
+	HSCT_PARALLELISM=`nproc`
+	HELENOS_ROOT=
+
+	if [ -e "$HSCT_CONFIG" ]; then
+		. $HSCT_CONFIG
+	fi
+}
 
 # Initialize current directory for coastline building.
 hsct_init() {
-	if [ -e "$HSCT_CONFIG" ]; then
-		hsct_error "Directory is already initialized ($HSCT_CONFIG exists)."
-		return 1
-	fi
-	
-	hsct_info "Initializing this build directory."
-	_root_dir=`( cd "$1"; pwd ) 2>/dev/null`
-	if ! [ -e "$_root_dir/HelenOS.config" ]; then
-		hsct_error "$1 does not look like a valid HelenOS directory.";
-		return 1
-	fi
-	
-	# If no architecture is specified, we would read it from
-	# Makefile.config
-	_uarch=`hsct_get_var_from_uspace UARCH`
-	_machine=`hsct_get_var_from_uspace MACHINE`
-	if [ -z "$2" ]; then	
-		if [ -z "$_uarch" ]; then
-			hsct_error "HelenOS is not configured and you haven't specified the architecture";
-			return 1
-		fi
-	fi
-	if [ "$3" = "build" ]; then
-		(
-			set -o errexit
-			cd "$_root_dir"
-			hsct_info2 "Cleaning previous configuration in $PWD."
-			make distclean >/dev/null 2>&1
-			hsct_info2 "Configuring for $2."
-			make Makefile.config "PROFILE=$2" HANDS_OFF=y >/dev/null
-			hsct_info2 "Building (may take a while)."
-			make >/dev/null 2>&1
-		)
-		if [ $? -ne 0 ]; then
-			hsct_error "Failed to automatically configure HelenOS for $2."
-			return 1
-		fi
-		_uarch=`echo "$2" | cut '-d/' -f 1`
-		_machine=`echo "$2" | cut '-d/' -f 2`
-	else
-		if [ "$_uarch" != "$2" ]; then
-			hsct_error "HelenOS is configured for different architecture (maybe add 'build' parameter?)"
-			return 1
-		fi
-	fi
-	
-	hsct_info2 "Generating the configuration file."
-	cat >$HSCT_CONFIG <<EOF_CONFIG
-root = $_root_dir
-arch = $_uarch
-machine = $_machine
-parallel = 1
-EOF_CONFIG
-	hsct_cache_update
-	return $?
-}
+	hsct_load_config
 
-# Update the cache manually.
-hsct_update() {
-	if [ "$1" = "rebuild" ]; then
-		hsct_info "Rebuilding HelenOS to match local configuration"
-		(
-			set -o errexit
-			cd "$HSCT_HELENOS_ROOT"
-			hsct_info2 "Cleaning previous configuration in $PWD."
-			make distclean >/dev/null 2>&1
-			hsct_info2 "Configuring for $HSCT_HELENOS_PROFILE."
-			make Makefile.config \
-				"PROFILE=$HSCT_HELENOS_PROFILE" HANDS_OFF=y \
-				2>&1 >/dev/null | sed '/^Fetching current.*ok$/d'
-			hsct_info2 "Overriding configuration with the stored one."
-			cp "$HSCT_CACHE_DIR/Makefile.config" Makefile.config
-			cp "$HSCT_CACHE_DIR/include/system_config.h" config.h
-			hsct_info2 "Building (may take a while)."
-			make >/dev/null 2>&1
-		)
-		if [ $? -ne 0 ]; then
-			hsct_error "Failed to automatically rebuild HelenOS."
-			return 1
-		fi
-	else
-		if ! hsct_can_update_cache; then
-			return 1
-		fi	
+	_root_dir=$1
+	profile=$2
+
+	if [ -z "$_root_dir" ]; then
+		# Try to get HELENOS_ROOT from the environment if not specified.
+		_root_dir="$HELENOS_ROOT"
+	fi
+
+	if [ -z "$_root_dir" ]; then
+		hsct_error "HELENOS_ROOT is not set. Either set the environment variable, or specify it on the command line.";
+		return 1
 	fi
 	
-	hsct_cache_update
-	return $?
+	_root_dir=`( cd "$_root_dir"; pwd ) 2>/dev/null`
+	if ! [ -e "$_root_dir/HelenOS.config" ]; then
+		hsct_error "$_root_dir does not look like a valid HelenOS directory.";
+		return 1
+	fi
+	
+	HELENOS_ROOT="$_root_dir"
+
+	hsct_info "Initializing this build directory."
+	(
+		EXPORT_DIR=`pwd`/helenos
+		set -o errexit
+		cd "$HELENOS_ROOT"
+		if [ -z $profile ]; then
+			hsct_info2 "Reusing existing configuration."
+			make -j`nproc` export-posix "EXPORT_DIR=$EXPORT_DIR" HANDS_OFF=y >/dev/null 2>&1
+		else
+			hsct_info2 "Cleaning previous configuration in $PWD."
+			make distclean >/dev/null 2>&1
+			hsct_info2 "Configuring for $profile."
+			make -j`nproc` export-posix "EXPORT_DIR=$EXPORT_DIR" "PROFILE=$profile" HANDS_OFF=y >/dev/null 2>&1
+		fi
+	)
+	if [ $? -ne 0 ]; then
+		hsct_error "Failed to automatically configure HelenOS for profile '$profile'."
+		return 1
+	fi
+	
+	hsct_info "Creating facade toolchain."
+	mkdir -p facade
+	facade_path=`realpath facade`
+
+	(
+		. helenos/config.rc
+
+		if [ -z "$HSCT_TARGET" ]; then
+			hsct_error "HSCT_TARGET undefined."
+		fi
+
+		cd $HSCT_HOME/facade
+		for x in *; do
+			install -m 755 "$x" "$facade_path/$HSCT_TARGET-$x"
+		done
+	)
+	
+	return 0
 }
 
 alias leave_script_ok='return 0 2>/dev/null || exit 0'
 alias leave_script_err='return 1 2>/dev/null || exit 1'
 
+hsct_print_vars() {
+	# This is separate from the rest, so that the user can run
+	# eval `path/to/hsct.sh vars` to get these vars in interactive shell.
 
-case "$1" in
-	help|--help|-h|-?)
-		hsct_usage "$0"
-		leave_script_ok
-		;;
-	init)
-		HSCT_HELENOS_ROOT="$2"
-		HSCT_LOAD_CONFIG=false
-		;;
-	update|clean|fetch|build|package|install|archive)
-		HSCT_LOAD_CONFIG=true
-		;;
-	*)
-		hsct_usage "$0"
-		leave_script_err
-		;;
-esac
+	hsct_load_config
+	HELENOS_EXPORT_ROOT="$HSCT_CACHE_DIR"
+	HELENOS_CONFIG="$HSCT_CACHE_DIR/config.rc"
 
+	if ! [ -e "$HELENOS_CONFIG" ]; then
+		hsct_error "Configuration not found. Maybe you need to run init first?"
+	fi
 
-if $HSCT_LOAD_CONFIG; then
-	if ! [ -e "$HSCT_CONFIG" ]; then
-		hsct_error "Configuration file $HSCT_CONFIG missing."
-		leave_script_err
-	fi
-	HSCT_HELENOS_ROOT=`hsct_get_config "$HSCT_CONFIG" root`
-	HSCT_HELENOS_ARCH=`hsct_get_config "$HSCT_CONFIG" arch`
-	HSCT_HELENOS_MACHINE=`hsct_get_config "$HSCT_CONFIG" machine`
-	HSCT_PARALLELISM=`hsct_get_config "$HSCT_CONFIG" parallel`
-	HSCT_WGET_OPTS=`hsct_get_config "$HSCT_CONFIG" wget_opts`
+	. $HELENOS_CONFIG
+
+	echo "export HELENOS_EXPORT_ROOT='$HSCT_CACHE_DIR'"
+	echo "export HSCT_REAL_CC='$HELENOS_TARGET-gcc'"
+	echo "export HSCT_REAL_CXX='$HELENOS_TARGET-g++'"
+
+	echo "export HSCT_ARFLAGS='$HELENOS_ARFLAGS'"
+	echo "export HSCT_CPPFLAGS='-isystem $HSCT_INCLUDE_DIR $HELENOS_CPPFLAGS'"
+	echo "export HSCT_CFLAGS='$HELENOS_CFLAGS'"
+	echo "export HSCT_CXXFLAGS='$HELENOS_CXXFLAGS'"
+	echo "export HSCT_ASFLAGS='$HELENOS_ASFLAGS'"
+	echo "export HSCT_LDFLAGS='-L $HSCT_LIB_DIR $HELENOS_LDFLAGS'"
+	echo "export HSCT_LDLIBS='$HELENOS_LDLIBS'"
+
+	target="$HELENOS_ARCH-helenos"
+	cvars="CC=$target-cc CXX=$target-cxx AR=$target-ar AS=$target-as CPP=$target-cpp NM=$target-nm OBJDUMP=$target-objdump OBJCOPY=$target-objcopy STRIP=$target-strip RANLIB=$target-ranlib"
 	
-	if [ -z "$HSCT_HELENOS_ARCH" ]; then
-		hsct_error "I don't know for which architecture you want to build."
-		leave_script_err
-	fi
+	echo "export HSCT_CC='$target-cc'"
+	echo "export HSCT_CXX='$target-cxx'"
+	echo "export HSCT_TARGET='$target'"
+	echo "export HSCT_REAL_TARGET='$HELENOS_TARGET'"
+	echo "export HSCT_CONFIGURE_VARS='$cvars'"
+	echo "export HSCT_CONFIGURE_ARGS='--host=$target $cvars'"
+
+	facade_path=`realpath facade`
+	echo "export PATH='$facade_path:$HELENOS_CROSS_PATH:$PATH'"
+}
+
+hsct_pkg() {
+	eval `hsct_print_vars`
 	
-	if [ -z "$HSCT_HELENOS_MACHINE" ]; then
-		HSCT_HELENOS_PROFILE="$HSCT_HELENOS_ARCH"
-	else
-		HSCT_HELENOS_PROFILE="$HSCT_HELENOS_ARCH/$HSCT_HELENOS_MACHINE"
+	hsct_load_config
+
+	HELENOS_CONFIG="$HSCT_CACHE_DIR/config.rc"
+
+	if ! [ -e "$HELENOS_CONFIG" ]; then
+		hsct_error "Configuration not found. Maybe you need to run init first?"
 	fi
-	
+
+	. $HELENOS_CONFIG
+
+	HSCT_MY_DIR="$HSCT_DIST_DIR/$HSCT_HARBOUR_NAME"
+	HSCT_OVERLAY="$HELENOS_ROOT/uspace/overlay"
+	HSCT_CONFIG_SUB="$HSCT_HOME/config.sub"
+
 	if ! [ "$HSCT_PARALLELISM" -ge 0 ] 2>/dev/null; then
 		HSCT_PARALLELISM="1"
 	fi
-fi
 
-if [ -z "$HSCT_HELENOS_ROOT" ]; then
-	hsct_error "I don't know where is the HelenOS source root."
-	leave_script_err
-fi
+	if ! [ -d "$HSCT_HOME/$HSCT_HARBOUR_NAME" ]; then
+		hsct_error "Unknown package $HSCT_HARBOUR_NAME."
+		leave_script_err
+	fi
+
+	if ! [ -r "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR" ]; then
+		hsct_error "HARBOUR file missing." >&2
+		leave_script_err
+	fi
+
+	# Source the harbour to get access to the variables and functions
+	. "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR"
+
+	if [ "$shipfunnels" -ne "1" ] 2>/dev/null; then
+		shipfunnels="$HSCT_PARALLELISM"
+	fi
+
+	case "$HSCT_ACTION" in
+		clean)
+			hsct_clean
+			;;
+		fetch)
+			hsct_fetch
+			;;
+		build)
+			hsct_build
+			;;
+		package)
+			hsct_package
+			;;
+		install)
+			hsct_install
+			;;
+		archive)
+			hsct_archive
+			;;
+		*)
+			hsct_error "Internal error, we shall not get to this point!"
+			leave_script_err
+			;;
+	esac
+
+	return $?
+}
 
 HSCT_ACTION="$1"
 
@@ -937,85 +526,24 @@ case "$HSCT_ACTION" in
 			hsct_usage "$0"
 			leave_script_err
 		fi
+		hsct_pkg
+		exit $?
+		;;
+	vars)
+		hsct_print_vars
+		exit $?
 		;;
 	init)
-		if hsct_init "$2" "$3" "$4"; then
-			leave_script_ok
-		else
-			leave_script_err
-		fi
+		hsct_init "$2" "$3" "$4"
+		exit $?
 		;;
-	update)
-		hsct_update "$2"
+	help|--help|-h|-?)
+		hsct_usage "$0"
 		leave_script_ok
 		;;
 	*)
-		hsct_error "Internal error, we shall not get to this point!"
+		hsct_usage "$0"
 		leave_script_err
 		;;
 esac
 
-
-if ! [ -d "$HSCT_HOME/$HSCT_HARBOUR_NAME" ]; then
-	hsct_error "Unknown package $HSCT_HARBOUR_NAME."
-	leave_script_err
-fi
-
-if ! [ -r "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR" ]; then
-	hsct_error "HARBOUR file missing." >&2
-	leave_script_err
-fi
-
-
-# Determine path to directory with downloaded tarballs
-# The user can specify this directory with sources = path/to/dir
-# in $HSCT_CONFIG or default - $PWD/sources - is used.
-HSCT_SOURCES_DIR=`hsct_get_config "$HSCT_CONFIG" sources`
-if [ -n "$HSCT_SOURCES_DIR" ]; then
-	HSCT_SOURCES_DIR=`cd $HSCT_SOURCES_DIR 2>/dev/null && pwd`
-	if [ -z "$HSCT_SOURCES_DIR" ]; then
-		hsct_error "Wrong value of 'sources' option in $HSCT_CONFIG (no such directory)."
-		leave_script_err
-	fi 
-fi
-if [ -z "$HSCT_SOURCES_DIR" ]; then
-	HSCT_SOURCES_DIR=`pwd`/sources
-fi
-
-
-HSCT_OVERLAY="$HSCT_HELENOS_ROOT/uspace/overlay"
-HSCT_MY_DIR="$HSCT_DIST_DIR/$HSCT_HARBOUR_NAME"
-
-# Source the harbour to get access to the variables and functions
-. "$HSCT_HOME/$HSCT_HARBOUR_NAME/HARBOUR"
-
-case "$HSCT_ACTION" in
-	clean)
-		hsct_clean
-		;;
-	fetch)
-		hsct_fetch
-		;;
-	build)
-		hsct_build
-		;;
-	package)
-		hsct_package
-		;;
-	install)
-		hsct_install
-		;;
-	archive)
-		hsct_archive
-		;;
-	*)
-		hsct_error "Internal error, we shall not get to this point!"
-		leave_script_err
-		;;
-esac
-
-if [ $? -eq 0 ]; then
-	leave_script_ok
-else
-	leave_script_err
-fi

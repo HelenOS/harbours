@@ -37,12 +37,12 @@ build() {
 	msg "Patching gmp.h..."
 	patch -p0 <gmp-h.patch
 	cd "${shipname_}-${shipversion}"
+	cp "$HSCT_CONFIG_SUB" .
 	run ./configure \
+		--build=`./config.guess` \
+		$HSCT_CONFIGURE_ARGS \
 		--disable-shared \
-		--host="$HSCT_GNU_TARGET" \
-		CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS $HSCT_LDFLAGS_FOR_CC -D_STDIO_H -DHAVE_STRCHR -Wl,--undefined=longjmp" \
-		LD="$HSCT_LD" \
+		CPPFLAGS=-D_STDIO_H \
 		|| return 1
 	
 	msg "Building the library..."

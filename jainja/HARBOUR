@@ -43,8 +43,7 @@ build() {
 	run make -j$shipfunnels \
 		OS=HelenOS \
 		STATIC_ONLY=y \
-		CC="$HSCT_CC" \
-		CUSTOM_CFLAGS="$HSCT_CFLAGS -L$HSCT_LIB_DIR"
+		CC="$HSCT_CC"
 }
 
 package() {

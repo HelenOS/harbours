@@ -40,29 +40,13 @@ build() {
 		-e 's#enable_static=no#enable_static=yes#' \
 		-i preload/configure
 	
-	# Extract preprocessor flags
-	ppflags=""
-	for flag in $HSCT_CFLAGS; do
-		if echo "$flag" | grep -q '^-I'; then
-			ppflags="$ppflags $flag";
-		fi
-		if echo "$flag" | grep -q '^-D'; then
-			ppflags="$ppflags $flag";
-		fi
-	done
+	cp $HSCT_CONFIG_SUB build-aux/config.sub
+	cp $HSCT_CONFIG_SUB libcharset/build-aux/config.sub
 	
 	run env \
-		CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS" \
-		CPP="$HSCT_CC -E" \
-		CPPFLAGS="$HSCT_CPPFLAGS" \
-		LD="$HSCT_LD" \
-		LDFLAGS="$HSCT_LDFLAGS_FOR_CC" \
-		AR="$HSCT_AR" \
-		RANLIB="$HSCT_RANLIB" \
 		gl_cv_header_signal_h_SIGPIPE=yes \
 		./configure \
-			--host="$HSCT_GNU_TARGET" \
+			$HSCT_CONFIGURE_ARGS \
 			--enable-static \
 			--disable-nls \
 			--disable-shared

@@ -39,7 +39,6 @@
 #include "../../fault.h"
 #include "../../device/machine.h"
 #include "helenos.h"
-#include <str.h>
 #include <malloc.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -74,7 +73,7 @@ void interactive_control(void)
 		}
 
 		/* Check for empty input. */
-		if (str_cmp(commline, "") == 0) {
+		if (commline[0] == '\0') {
 			interpret("step");
 		} else {
 			interpret(commline);

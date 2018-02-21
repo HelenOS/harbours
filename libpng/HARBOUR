@@ -37,18 +37,10 @@ build() {
 	run tar xzf "${shipname}-${shipversion}.tar.gz"
 
 	cd "${shipname}-${shipversion}"
-
-	#We tell to the configure script that we are cross compiling
-	find -name configure | while read fname; do
-		run sed 's/^cross_compiling=no/cross_compiling=yes/' -i "$fname"
-	done
-
+	cp "$HSCT_CONFIG_SUB" .
 	run ./configure \
 		--disable-shared\
-		CC="$HSCT_CC" \
-		CFLAGS="$HSCT_CFLAGS -I$HSCT_INCLUDE_DIR -L$HSCT_LIB_DIR -Wl,--undefined=longjmp" \
-		LD="$HSCT_LD" \
-		CPPFLAGS="-specs=$HSCT_CACHE_DIR/coastline.specs -I$HSCT_INCLUDE_DIR"
+		$HSCT_CONFIGURE_ARGS
 
 	run make all-am STATIC_ONLY=y
 }
