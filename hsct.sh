@@ -392,13 +392,13 @@ hsct_init() {
 	(
 		. helenos/config.rc
 
-		if [ -z "$HSCT_TARGET" ]; then
-			hsct_error "HSCT_TARGET undefined."
+		if [ -z "$HELENOS_ARCH" ]; then
+			hsct_error "HELENOS_ARCH undefined."
 		fi
 
 		cd $HSCT_HOME/facade
 		for x in *; do
-			install -m 755 "$x" "$facade_path/$HSCT_TARGET-$x"
+			install -m 755 "$x" "$facade_path/$HELENOS_ARCH-helenos-$x"
 		done
 	)
 	
