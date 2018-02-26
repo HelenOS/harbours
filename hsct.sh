@@ -387,7 +387,7 @@ hsct_init() {
 	
 	hsct_info "Creating facade toolchain."
 	mkdir -p facade
-	facade_path=`realpath facade`
+	facade_path="$PWD/facade"
 
 	(
 		. helenos/config.rc
@@ -444,8 +444,7 @@ hsct_print_vars() {
 	echo "export HSCT_CONFIGURE_VARS='$cvars'"
 	echo "export HSCT_CONFIGURE_ARGS='--host=$target $cvars'"
 
-	facade_path=`realpath facade`
-	echo "export PATH='$facade_path:$HELENOS_CROSS_PATH:$PATH'"
+	echo "export PATH='$PWD/facade:$HELENOS_CROSS_PATH:$PATH'"
 }
 
 hsct_pkg() {
