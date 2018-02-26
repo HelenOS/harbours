@@ -126,5 +126,7 @@ package() {
 	run cp PKG/usr/local/libexec/gcc/*/$shipversion/cc1 "$HSCT_MY_DIR/app/"
 	
 	# Create default SPECS file to drive the compilation
-	# TODO
+	run mkdir -p "$HSCT_MY_DIR/lib/gcc/$HSCT_REAL_TARGET/$shipversion/"
+	# FIXME: This is a temporary hack. The HARBOUR should not depend on the specs file existing.
+	run cp "$HSCT_CACHE_DIR/lib/gcc.specs" "$HSCT_MY_DIR/lib/gcc/$HSCT_REAL_TARGET/$shipversion/specs"
 }
