@@ -39,7 +39,6 @@ build() {
 	cd "${shipname_}-${shipversion}"
 	cp "$HSCT_CONFIG_SUB" .
 	run ./configure \
-		--build=`./config.guess` \
 		$HSCT_CONFIGURE_ARGS \
 		--disable-shared \
 		CPPFLAGS=-D_STDIO_H \

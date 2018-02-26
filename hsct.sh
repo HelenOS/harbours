@@ -442,7 +442,7 @@ hsct_print_vars() {
 	echo "export HSCT_TARGET='$target'"
 	echo "export HSCT_REAL_TARGET='$HELENOS_TARGET'"
 	echo "export HSCT_CONFIGURE_VARS='$cvars'"
-	echo "export HSCT_CONFIGURE_ARGS='--host=$target $cvars'"
+	echo "export HSCT_CONFIGURE_ARGS='--build=`sh $HSCT_HOME/config.guess` --host=$target $cvars'"
 
 	echo "export PATH='$PWD/facade:$HELENOS_CROSS_PATH:$PATH'"
 }

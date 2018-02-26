@@ -83,7 +83,6 @@ build() {
 	
 	# This is extremely crippled version but it at least compiles
 	run ../${shipname}-${shipversion}/configure \
-		--build=`../${shipname}-${shipversion}/config.guess` \
 		$HSCT_CONFIGURE_ARGS \
 		--target=$HSCT_REAL_TARGET \
 		--program-prefix="" \

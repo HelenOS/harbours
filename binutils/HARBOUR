@@ -75,7 +75,6 @@ build() {
 	cp "$HSCT_CONFIG_SUB" .
 
 	run ./configure \
-		--build=`./config.guess` \
 		$HSCT_CONFIGURE_ARGS \
 		--target="$HSCT_REAL_TARGET" \
 		--program-prefix="" \
