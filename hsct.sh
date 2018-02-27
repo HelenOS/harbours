@@ -328,7 +328,7 @@ hsct_archive() {
 
 hsct_load_config() {
 	# Defaults
-	HSCT_CONFIG=config.sh
+	HSCT_CONFIG="./config.sh"
 	HSCT_WGET_OPTS=
 	HSCT_SOURCES_DIR=`pwd`/sources
 	HSCT_FORMAT="tar.xz"
@@ -338,6 +338,15 @@ hsct_load_config() {
 	if [ -e "$HSCT_CONFIG" ]; then
 		. $HSCT_CONFIG
 	fi
+}
+
+hsct_save_config() {
+	echo "HSCT_WGET_OPTS=\"${HSCT_WGET_OPTS}\"" >> "${HSCT_CONFIG}.new"
+	echo "HSCT_SOURCES_DIR=\"${HSCT_SOURCES_DIR}\"" >> "${HSCT_CONFIG}.new"
+	echo "HSCT_FORMAT=\"${HSCT_FORMAT}\"" >> "${HSCT_CONFIG}.new"
+	echo "HSCT_PARALLELISM=\"${HSCT_PARALLELISM}\"" >> "${HSCT_CONFIG}.new"
+	echo "HELENOS_ROOT=\"${HELENOS_ROOT}\"" >> "${HSCT_CONFIG}.new"
+	mv "${HSCT_CONFIG}.new" "${HSCT_CONFIG}"
 }
 
 # Initialize current directory for coastline building.
@@ -402,6 +411,8 @@ hsct_init() {
 		done
 	)
 	
+	hsct_save_config
+
 	return 0
 }
 
