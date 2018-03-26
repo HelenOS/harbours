@@ -160,13 +160,7 @@ elif [ "$1" = "run" ]; then
 	mkdir build || exit 1
 	cd build || exit 1
 	
-	(
-	   echo "root = $HOME/build-$TRAVIS_BUILD_ID/helenos"
-	   echo "arch =" `echo "$H_ARCH" | sed 's#mips32/malta-be#mips32eb/malta-be#' | cut -d/ -f 1`
-	   echo "machine =" `echo "$H_ARCH" | cut -d/ -f 2`
-	) >hsct.conf || exit 1
-	    
-    "$H_HARBOURS_HOME/hsct.sh" update || exit 1
+	"$H_HARBOURS_HOME/hsct.sh" init "$HOME/build-$TRAVIS_BUILD_ID/helenos" || exit 1
 
     # We cannot flood the output as Travis has limit of maximum output size
     # (reason is to prevent endless stacktraces going forever). But also Travis

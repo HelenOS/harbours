@@ -37,7 +37,7 @@
 shipname=python2
 shipversion=2.7.6
 shipsources="http://www.python.org/ftp/python/${shipversion}/Python-${shipversion}.tar.xz \
-	cross-tools.patch modules.patch posixmodule.patch posixpath.patch"
+	cross-tools.patch modules.patch posixmodule.patch posixpath.patch configure"
 shiptugs="fdlibm"
 shipfunnels=16
 
@@ -70,52 +70,22 @@ build() {
 		# We are not fully POSIX-compliant
 		patch -p1 <../posixmodule.patch
 		
-		# There is a name clash on several macros in config.h
-		# Luckily, we do not need the one from HelenOS and thus simply
-		# removing it from the original config.h shall be okay
-		msg "Purging HelenOS config.h, declaring compiler flags..."
-		sed -e '/PLATFORM/d' -e '/PROCESSOR/d' -e '/COMPILER/d' "$HSCT_CACHE_DIR/include/system_config.h" >helenos_config.h
-		fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/system_config\.h#-imacros '$PWD'/helenos_config.h#'`"
-		
-		# Extract preprocessor flags
-		ppflags=""
-		for flag in $fixed_cflags; do
-			if echo "$flag" | grep -q '^-I'; then
-				ppflags="$ppflags $flag";
-			fi
-			if echo "$flag" | grep -q '^-D'; then
-				ppflags="$ppflags $flag";
-			fi
-		done
-
-		# During compilation of the math module, the linker
-		# wants to -lm. Thus we provide the copy of fdlibm as libm.
-		msg "Preparing math library..."
-		mkdir fixedlibs
-		( cd fixedlibs; ln -s $HSCT_LIB_DIR/libfdm.a libm.a )
-		ldflags_math="-Wl,-L$HSCT_LIB_DIR -Wl,-L$PWD/fixedlibs -Wl,--whole-archive -Wl,-lfdm -Wl,--no-whole-archive"
-
 		# TODO: enable more static modules
 		msg "Setting static build for modules..."
 		sed -e '1i*static*' -e 's:^#math:math:' -i Modules/Setup.dist
 
+		cp $HSCT_CONFIG_SUB .
+		cp $HSCT_CONFIG_SUB Modules/_ctypes/libffi
+		cp ../configure .
+
 		msg "Building..."
 		run ./configure \
-			--build=`./config.guess` \
-			--host="$HSCT_GNU_TARGET" \
-			--without-libm \
+			$HSCT_CONFIGURE_ARGS \
 			--without-threads \
 			--disable-shared \
 			--prefix=/ \
 			--libdir=/lib \
 			--bindir=/app \
-			CC="$HSCT_CC" \
-			CFLAGS="$HSCT_CFLAGS" \
-			LD="$HSCT_CC" \
-			LDFLAGS="$HSCT_LDFLAGS_FOR_CC $ldflags_math" \
-			CPP="$HSCT_CC -E" \
-			CPPFLAGS="$HSCT_CPPFLAGS -I$HSCT_INCLUDE_DIR" \
-			cross_compiling=yes \
 			ac_cv_file__dev_ptmx=no \
 			ac_cv_file__dev_ptc=no \
 			ac_cv_have_long_long_format=yes \

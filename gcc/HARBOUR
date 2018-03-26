@@ -29,7 +29,7 @@
 shipname=gcc
 shipversion=4.6.3
 mirror_="ftp://ftp.fu-berlin.de/unix/languages/gcc"
-shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 gcc.template includes.patch libiberty.patch pex-helenos.c helenos.specs"
+shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 includes.patch libiberty.patch pex-helenos.c"
 shiptugs="libgmp libmpfr libmpc libisl zlib"
 shipfunnels=4
 
@@ -43,6 +43,8 @@ build() {
 	# Prevent name clashes in getopt.c and fnmatch.c
 	patch -p0 <libiberty.patch
 
+	cp $HSCT_CONFIG_SUB "${shipname}-${shipversion}/config.sub"
+
 	run sed 's/\(static search_line_fast_type search_line_fast\);/\1 = search_line_acc_char;/' \
 		-i "${shipname}-${shipversion}/libcpp/lex.c"
 	run sed '/fopen/s#w+b#wb+#' -i "${shipname}-${shipversion}/gcc/toplev.c"
@@ -52,41 +54,6 @@ build() {
 	msg "Fixing unwind.h..."
 	run mkdir -p include
 	run cp ${shipname}-${shipversion}/gcc/unwind-generic.h include/unwind.h
-	
-	# There is a name clash on the REVISION macro from config.h
-	# Luckily, we do not need the one from HelenOS and thus simply removing
-	# it from the original config.h shall be okay
-	msg "Purging HelenOS config.h, declaring compiler flags..."
-	sed -e '/REVISION/d' -e '/PROCESSOR/d' "$HSCT_CACHE_DIR/include/system_config.h" >include/helenos_config.h
-	fixed_cflags="`echo $HSCT_CFLAGS | sed 's#-imacros[ \t]\+[^ \t]*/system_config\.h#-imacros '$PWD'/include/helenos_config.h#'`"
-	
-	# Other preprocessor flags due to bad guesses by configure
-	extra_ppflags="-DHAVE_SYS_STAT_H -Dinhibit_libc"
-	extra_ppflags="$extra_ppflags -I$HSCT_INCLUDE_DIR -I`pwd`/include"
-	
-	extra_cflags=""
-	# Do not use HelenOS libc due to file names clashes
-	extra_ldflags="-L$HSCT_LIB_DIR"
-	
-	msg "Creating GCC wrapper..."
-	run mkdir -p bin
-	# This is kind of stupid because we do not have separate
-	# preprocessor flags in HelenOS. That is why C flags are empty		
-	m4 \
-		-DCROSS_CC="$HSCT_CC" \
-		-DPPFLAGS="$extra_ppflags $extra_cflags $fixed_cflags" \
-		-DCFLAGS="" \
-		-DLDFLAGS="$extra_ldflags $HSCT_LDFLAGS_FOR_CC" \
-		gcc.template >bin/patched-gcc
-	cc="`pwd`/bin/patched-gcc"
-	run chmod +x "$cc"
-	
-	# We need to trick configure into thinking that we are actually
-	# cross-compiling even if it does not think so.
-	msg "Fixing cross-compilation guesses..."
-	find -name configure | while read fname; do
-		run sed 's/^cross_compiling=no/cross_compiling=yes/' -i "$fname"
-	done
 
 	# We really do not need to fix any includes
 	run sed 's/STMP_FIXINC=stmp-fixinc/STMP_FIXINC=/' -i "${shipname}-${shipversion}/gcc/configure"
@@ -104,9 +71,6 @@ build() {
 		-e 's/pex-msdos/pex-helenos/g' \
 		-i "${shipname}-${shipversion}/libiberty/Makefile.in"
 	
-	# Somewhere during the compilation C++ compiler is required
-	cxx=`echo "$HSCT_CC" | sed 's/gcc$/g++/'`
-	
 	# Prevent building documentation
 	# (there is a problem with newer version of texinfo?)
 	sed 's/^BUILD_INFO[ \t]*=.*/BUILD_INFO = /g' -i ${shipname}-${shipversion}/gcc/Makefile.in
@@ -117,20 +81,12 @@ build() {
 	run mkdir -p build
 	cd build
 	
-	# Although we are forcing the cross-compilation, sometimes
-	# it is apparently not enough. This is an ungly hack until we
-	# patch the sources with some *-helenos-* target.
-	self_target=`../${shipname}-${shipversion}/config.guess`
-	if [ "$self_target" = "$HSCT_GNU_TARGET" ]; then
-		# Only works for building ia32 on i686
-		self_target=`echo "$self_target" | sed 's/686/386/'`
-	fi
-	
 	# This is extremely crippled version but it at least compiles
 	run ../${shipname}-${shipversion}/configure \
-		--build=$self_target \
-		--host=$HSCT_GNU_TARGET \
-		--target=$HSCT_GNU_TARGET \
+		$HSCT_CONFIGURE_ARGS \
+		--target=$HSCT_REAL_TARGET \
+		--program-prefix="" \
+		--disable-werror \
 		--without-ppl \
 		--without-cloog \
 		--disable-mudflap \
@@ -153,20 +109,7 @@ build() {
 		--disable-libstdcxx-pch \
 		--disable-libunwind-exceptions \
 		--with-gnu-as \
-		--with-gnu-ld \
-		CC="$cc" \
-		CPP="$cc -E" \
-		LD="$cc" \
-		AR="$HSCT_AR" \
-		AS="$HSCT_AS" \
-		NM="$HSCT_NM" \
-		OBJCOPY="$HSCT_OBJCOPY" \
-		RANLIB="$HSCT_RANLIB" \
-		STRIP="$HSCT_STRIP" \
-		OBJDUMP="$HSCT_OBJDUMP" \
-		CXX="$cxx" \
-		CXXCPP="$cxx -E" \
-		CC_FOR_TARGET="$cc"
+		--with-gnu-ld
 
 	run make all-gcc -j$shipfunnels STATIC_ONLY=y
 }
@@ -183,6 +126,7 @@ package() {
 	run cp PKG/usr/local/libexec/gcc/*/$shipversion/cc1 "$HSCT_MY_DIR/app/"
 	
 	# Create default SPECS file to drive the compilation
-	run mkdir -p "$HSCT_MY_DIR/lib/gcc/$HSCT_GNU_TARGET/$shipversion/"
-	run cp ../helenos.specs "$HSCT_MY_DIR/lib/gcc/$HSCT_GNU_TARGET/$shipversion/specs"
+	run mkdir -p "$HSCT_MY_DIR/lib/gcc/$HSCT_REAL_TARGET/$shipversion/"
+	# FIXME: This is a temporary hack. The HARBOUR should not depend on the specs file existing.
+	run cp "$HSCT_CACHE_DIR/lib/gcc.specs" "$HSCT_MY_DIR/lib/gcc/$HSCT_REAL_TARGET/$shipversion/specs"
 }

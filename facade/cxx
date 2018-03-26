@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# CXX is a compilation driver, so we should check which stage of compilation
+# is actually running and select which flags to provide. This makes no
+# difference for GCC, but e.g. clang warns when a flag is provided that is
+# unused 
+
+run_it() {
+	# echo "[CXX $PWD]:" "$@"
+	exec "$@"
+}
+
+running_pp=false
+running_cc=false
+
+# Guess what is actually running...
+for flag in "$@"; do
+	case "$flag" in
+		-E) running_pp=true ;;
+		-c|-S) running_cc=true ;;
+		*) ;;
+	esac
+done
+
+# ...and pass the correct flags
+if $running_pp; then
+	run_it $HSCT_REAL_CXX $HSCT_CPPFLAGS "$@"
+elif $running_cc; then
+	run_it $HSCT_REAL_CXX $HSCT_CPPFLAGS $HSCT_CXXFLAGS "$@"
+else
+	run_it $HSCT_REAL_CXX $HSCT_CPPFLAGS $HSCT_CXXFLAGS $HSCT_LDFLAGS "$@" $HSCT_LDLIBS
+fi

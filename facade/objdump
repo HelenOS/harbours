@@ -1,0 +1,8 @@
+#!/bin/sh
+
+run_it() {
+	# echo "[OBJDUMP $PWD]:" "$@"
+	exec "$@"
+}
+
+run_it $HSCT_REAL_TARGET-objdump "$@"
