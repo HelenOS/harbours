@@ -453,6 +453,7 @@ hsct_print_vars() {
 	echo "export HSCT_LDLIBS='$HELENOS_LDLIBS'"
 
 	target="$HELENOS_ARCH-helenos"
+	cctarget="$HELENOS_ARCH-linux-gnu"
 	cvars="CC=$target-cc CXX=$target-cxx AR=$target-ar AS=$target-as CPP=$target-cpp NM=$target-nm OBJDUMP=$target-objdump OBJCOPY=$target-objcopy STRIP=$target-strip RANLIB=$target-ranlib"
 	
 	echo "export HSCT_CC='$target-cc'"
@@ -460,7 +461,7 @@ hsct_print_vars() {
 	echo "export HSCT_TARGET='$target'"
 	echo "export HSCT_REAL_TARGET='$HELENOS_TARGET'"
 	# Target to set for cross-compiled cross-compilers.
-	echo "export HSCT_CCROSS_TARGET='$HELENOS_ARCH-linux-gnu'"
+	echo "export HSCT_CCROSS_TARGET='$cctarget'"
 	echo "export HSCT_CONFIGURE_VARS='$cvars'"
 	echo "export HSCT_CONFIGURE_ARGS='--build=`sh $HSCT_HOME/config.guess` --host=$target $cvars'"
 
