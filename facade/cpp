@@ -5,4 +5,4 @@ run_it() {
 	exec "$@"
 }
 
-run_it $HSCT_REAL_CC -E $HSCT_CPPFLAGS "$@"
+run_it $HELENOS_CROSS_PATH/$HSCT_REAL_CC -E $HSCT_CPPFLAGS "$@"

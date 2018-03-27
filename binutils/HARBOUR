@@ -76,7 +76,7 @@ build() {
 
 	run ./configure \
 		$HSCT_CONFIGURE_ARGS \
-		--target="$HSCT_REAL_TARGET" \
+		--target="$HSCT_CCROSS_TARGET" \
 		--program-prefix="" \
 		--disable-werror \
 		--disable-nls \

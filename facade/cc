@@ -24,9 +24,9 @@ done
 
 # ...and pass the correct flags
 if $running_pp; then
-	run_it $HSCT_REAL_CC $HSCT_CPPFLAGS "$@"
+	run_it $HELENOS_CROSS_PATH/$HSCT_REAL_CC $HSCT_CPPFLAGS "$@"
 elif $running_cc; then
-	run_it $HSCT_REAL_CC $HSCT_CPPFLAGS $HSCT_CFLAGS "$@"
+	run_it $HELENOS_CROSS_PATH/$HSCT_REAL_CC $HSCT_CPPFLAGS $HSCT_CFLAGS "$@"
 else
-	run_it $HSCT_REAL_CC $HSCT_CPPFLAGS $HSCT_CFLAGS $HSCT_LDFLAGS "$@" $HSCT_LDLIBS
+	run_it $HELENOS_CROSS_PATH/$HSCT_REAL_CC $HSCT_CPPFLAGS $HSCT_CFLAGS $HSCT_LDFLAGS "$@" $HSCT_LDLIBS
 fi

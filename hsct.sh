@@ -403,6 +403,7 @@ hsct_init() {
 
 		if [ -z "$HELENOS_ARCH" ]; then
 			hsct_error "HELENOS_ARCH undefined."
+			return 1
 		fi
 
 		cd $HSCT_HOME/facade
@@ -410,7 +411,12 @@ hsct_init() {
 			install -m 755 "$x" "$facade_path/$HELENOS_ARCH-helenos-$x"
 		done
 	)
-	
+
+	if [ $? -ne 0 ]; then
+		hsct_error "Failed to create toolchain facade for profile '$profile'."
+		return 1
+	fi
+
 	hsct_save_config
 
 	return 0
@@ -429,6 +435,7 @@ hsct_print_vars() {
 
 	if ! [ -e "$HELENOS_CONFIG" ]; then
 		hsct_error "Configuration not found. Maybe you need to run init first?"
+		return 1
 	fi
 
 	. $HELENOS_CONFIG
@@ -452,24 +459,28 @@ hsct_print_vars() {
 	echo "export HSCT_CXX='$target-cxx'"
 	echo "export HSCT_TARGET='$target'"
 	echo "export HSCT_REAL_TARGET='$HELENOS_TARGET'"
+	# Target to set for cross-compiled cross-compilers.
+	echo "export HSCT_CCROSS_TARGET='$HELENOS_ARCH-linux-gnu'"
 	echo "export HSCT_CONFIGURE_VARS='$cvars'"
 	echo "export HSCT_CONFIGURE_ARGS='--build=`sh $HSCT_HOME/config.guess` --host=$target $cvars'"
 
+	echo "export HELENOS_CROSS_PATH=$HELENOS_CROSS_PATH"
 	echo "export PATH='$PWD/facade:$HELENOS_CROSS_PATH:$PATH'"
 }
 
 hsct_pkg() {
-	eval `hsct_print_vars`
-	
 	hsct_load_config
+	eval `hsct_print_vars`
 
-	HELENOS_CONFIG="$HSCT_CACHE_DIR/config.rc"
-
-	if ! [ -e "$HELENOS_CONFIG" ]; then
-		hsct_error "Configuration not found. Maybe you need to run init first?"
+	if [ -z "$HELENOS_EXPORT_ROOT" ]; then
+		case "$HSCT_ACTION" in
+		clean|fetch)
+			;;
+		*)
+			return 1
+			;;
+		esac
 	fi
-
-	. $HELENOS_CONFIG
 
 	HSCT_MY_DIR="$HSCT_DIST_DIR/$HSCT_HARBOUR_NAME"
 	HSCT_OVERLAY="$HELENOS_ROOT/uspace/overlay"

@@ -5,4 +5,4 @@ run_it() {
 	exec "$@"
 }
 
-run_it $HSCT_REAL_TARGET-nm "$@"
+run_it $HELENOS_CROSS_PATH/$HSCT_REAL_TARGET-nm "$@"
