@@ -83,17 +83,6 @@ build() {
 	
 	# This is extremely crippled version but it at least compiles
 
-	CC_FOR_TARGET="$HSCT_TARGET-cc" \
-	CXX_FOR_TARGET="$HSCT_TARGET-cxx" \
-	GCC_FOR_TARGET="$HSCT_TARGET-cc" \
-	AR_FOR_TARGET="$HSCT_TARGET-ar" \
-	AS_FOR_TARGET="$HSCT_TARGET-as" \
-	LD_FOR_TARGET="$HSCT_TARGET-ld" \
-	NM_FOR_TARGET="$HSCT_TARGET-nm" \
-	OBJDUMP_FOR_TARGET="$HSCT_TARGET-objdump" \
-	RANLIB_FOR_TARGET="$HSCT_TARGET-ranlib" \
-	STRIP_FOR_TARGET="$HSCT_TARGET-strip" \
-	\
 	run ../${shipname}-${shipversion}/configure \
 		$HSCT_CONFIGURE_ARGS \
 		--target="$HSCT_CCROSS_TARGET" \
@@ -121,7 +110,17 @@ build() {
 		--disable-libstdcxx-pch \
 		--disable-libunwind-exceptions \
 		--with-gnu-as \
-		--with-gnu-ld
+		--with-gnu-ld \
+		CC_FOR_TARGET="$HSCT_TARGET-cc" \
+		CXX_FOR_TARGET="$HSCT_TARGET-cxx" \
+		GCC_FOR_TARGET="$HSCT_TARGET-cc" \
+		AR_FOR_TARGET="$HSCT_TARGET-ar" \
+		AS_FOR_TARGET="$HSCT_TARGET-as" \
+		LD_FOR_TARGET="$HSCT_TARGET-ld" \
+		NM_FOR_TARGET="$HSCT_TARGET-nm" \
+		OBJDUMP_FOR_TARGET="$HSCT_TARGET-objdump" \
+		RANLIB_FOR_TARGET="$HSCT_TARGET-ranlib" \
+		STRIP_FOR_TARGET="$HSCT_TARGET-strip"
 
 	run make all-gcc -j$shipfunnels STATIC_ONLY=y
 }
