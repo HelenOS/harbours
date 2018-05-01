@@ -170,7 +170,7 @@ elif [ "$1" = "run" ]; then
     # As pipe tends to hide errors we check the success by checking that archive
     # exists.
     #
-    "$H_HARBOURS_HOME/hsct.sh" archive "$H_HARBOUR" 2>&1 | tee build.log | awk '!(NR%10)'
+    "$H_HARBOURS_HOME/hsct.sh" archive "$H_HARBOUR" 2>&1 | tee build.log | awk '// {printf "."}'
     
     tail -n 1000 build.log
     
