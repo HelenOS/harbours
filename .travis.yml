@@ -60,6 +60,21 @@ env:
     - H_HARBOUR=libpng H_ARCH=ia32
     - H_HARBOUR=pcc H_ARCH=ia32
     - H_HARBOUR=python2 H_ARCH=ia32
+    - H_HARBOUR=lua H_ARCH=amd64
+    - H_HARBOUR=lua H_ARCH=arm32/beagleboardxm
+    - H_HARBOUR=lua H_ARCH=arm32/beaglebone
+    - H_HARBOUR=lua H_ARCH=arm32/gta02
+    - H_HARBOUR=lua H_ARCH=arm32/integratorcp
+    - H_HARBOUR=lua H_ARCH=arm32/raspberrypi
+    - H_HARBOUR=lua H_ARCH=ia32
+    - H_HARBOUR=lua H_ARCH=ia64/i460GX
+    - H_HARBOUR=lua H_ARCH=ia64/ski
+    - H_HARBOUR=lua H_ARCH=mips32/malta-be
+    - H_HARBOUR=lua H_ARCH=mips32/malta-le
+    - H_HARBOUR=lua H_ARCH=mips32/msim
+    - H_HARBOUR=lua H_ARCH=ppc32
+    - H_HARBOUR=lua H_ARCH=sparc64/niagara
+    - H_HARBOUR=lua H_ARCH=sparc64/ultra
 before_install:
  - ./travis.sh install
 script:
