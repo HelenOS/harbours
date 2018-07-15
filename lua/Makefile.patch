@@ -1,0 +1,15 @@
+--- lua-5.3.5/Makefile
++++ lua-5.3.5/Makefile
+@@ -52,6 +52,12 @@ R= $V.4
+ all:	$(PLAT)
+ 
+ $(PLATS) clean:
++	export CC
++	export CFLAGS
++	export LDFLAGS
++	export LIBS
++	export AR
++	export RANLIB
+ 	cd src && $(MAKE) $@
+ 
+ test:	dummy

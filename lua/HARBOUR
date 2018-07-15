@@ -1,0 +1,86 @@
+#
+# Copyright (c) 2018 Jaroslav Jindrak
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# - Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# - The name of the author may not be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+shipname=lua
+shipversion=5.3.5
+shipsources="http://www.lua.org/ftp/${shipname}-${shipversion}.tar.gz log2.patch Makefile.patch setvbuf.patch"
+shiptugs="fdlibm"
+shipfunnels=4
+
+build() {
+	run tar xf ${shipname}-${shipversion}.tar.gz
+
+	msg "Patching sources..."
+
+	patch -p0 <log2.patch
+	patch -p0 <Makefile.patch
+	patch -p0 <setvbuf.patch
+
+	msg "Building..."
+
+	cd ${shipname}-${shipversion}
+
+	run make -j$shipfunnels \
+		PLAT="posix" \
+		CC=$HSCT_CC \
+		CFLAGS="$HSCT_CFLAGS -DLUA_COMPAT_5_2 -O2" \
+		LDFLAGS="" \
+		LIBS="-Wl,--start-group -lm -lposix -lc -lsoftfloat -lsoftint -Wl,--end-group" \
+		AR="$HSCT_TARGET-ar rcu" \
+		RANLIB="$HSCT_TARGET-ranlib"
+}
+
+package() {
+	run mkdir -p "$PWD/PKG"
+	cd "${shipname}-${shipversion}"
+
+	run make install \
+		PLAT="posix" \
+		INSTALL_TOP="$PWD/PKG" \
+		INSTALL="cp -p" \
+		INSTALL_EXEC="cp -p" \
+		INSTALL_DATA="cp -p"
+
+	# Copy the executables
+	run mkdir -p "$HSCT_MY_DIR/app"
+	run cp PKG/bin/lua "$HSCT_MY_DIR/app/"
+	run cp PKG/bin/luac "$HSCT_MY_DIR/app/"
+
+	# Copy the headers
+	run mkdir -p "$HSCT_MY_DIR/inc"
+	HEADERS = lua.h luaconf.h lualib.h lauxlib.h lua.hpp
+	for header in lua.h luaconf.h lualib.h lauxlib.h lua.hpp; do
+		run cp PKG/include/$header "$HSCT_INCLUDE_DIR/"
+		run cp PKG/include/$header "$HSCT_MY_DIR/inc"
+	done
+
+	# Copy the static library
+	run mkdir -p "$HSCT_MY_DIR/lib"
+	run cp PKG/lib/liblua.a "$HSCT_LIB_DIR/"
+	run cp PKG/lib/liblua.a "$HSCT_MY_DIR/lib"
+}

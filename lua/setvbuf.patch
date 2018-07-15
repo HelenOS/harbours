@@ -1,0 +1,11 @@
+--- lua-5.3.5/src/liolib.c
++++ lua-5.3.5/src/liolib.c
+@@ -678,8 +678,8 @@
+   FILE *f = tofile(L);
+   int op = luaL_checkoption(L, 2, NULL, modenames);
+   lua_Integer sz = luaL_optinteger(L, 3, LUAL_BUFFERSIZE);
+-  int res = setvbuf(f, NULL, mode[op], (size_t)sz);
+-  return luaL_fileresult(L, res == 0, NULL);
++  setvbuf(f, NULL, mode[op], (size_t)sz);
++  return luaL_fileresult(L, 1, NULL);
+ }
