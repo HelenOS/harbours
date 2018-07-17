@@ -1,0 +1,24 @@
+--- lua-5.3.5/src/lmathlib.c
++++ lua-5.3.5/src/lmathlib.c
+@@ -176,6 +176,21 @@
+   return 1;
+ }
+ 
++static double log2(double x)
++{
++  return log(x) / log(2.0);
++}
++
++static float log2f(float x)
++{
++  return log(x) / log(2.0f);
++}
++
++static long double log2l(long double x)
++{
++  return log(x) / log(2.0l);
++}
++
+ static int math_log (lua_State *L) {
+   lua_Number x = luaL_checknumber(L, 1);
+   lua_Number res;
