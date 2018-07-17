@@ -28,7 +28,7 @@
 
 shipname=lua
 shipversion=5.3.5
-shipsources="http://www.lua.org/ftp/${shipname}-${shipversion}.tar.gz log2.patch"
+shipsources="http://www.lua.org/ftp/${shipname}-${shipversion}.tar.gz log2.patch conf.patch"
 shiptugs="fdlibm"
 shipfunnels=4
 
@@ -37,6 +37,7 @@ build() {
 
 	msg "Patching sources..."
 
+	patch -p0 <conf.patch
 	patch -p0 <log2.patch
 
 	msg "Building..."
