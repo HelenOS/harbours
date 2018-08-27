@@ -35,7 +35,9 @@
 /* Because of asprintf. */
 #define _GNU_SOURCE
 #include "helenos.h"
+#define _HELENOS_SOURCE
 #include <libclui/tinput.h>
+#undef _HELENOS_SOURCE
 #include <errno.h>
 #include <stdlib.h>
 
