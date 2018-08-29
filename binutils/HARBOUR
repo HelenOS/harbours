@@ -71,8 +71,8 @@ build() {
 		-e 's/pex-msdos/pex-helenos/g' \
 		-i "${shipname}-${shipversion}/libiberty/Makefile.in"
 	
-	cd ${shipname}-${shipversion}
-	cp "$HSCT_CONFIG_SUB" .
+	run cd ${shipname}-${shipversion}
+	run cp "$HSCT_CONFIG_SUB" .
 
 	run ./configure \
 		$HSCT_CONFIGURE_ARGS \

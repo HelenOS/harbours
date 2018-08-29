@@ -55,6 +55,7 @@ HSCT_HOME=`which -- "$0" 2>/dev/null`
 # Maybe, we are running Bash
 [ -z "$HSCT_HOME" ] && HSCT_HOME=`which -- "$BASH_SOURCE" 2>/dev/null`
 HSCT_HOME=`dirname -- "$HSCT_HOME"`
+HSCT_HOME=`cd $HSCT_HOME && echo $PWD`
 HSCT_HSCT="$HSCT_HOME/hsct.sh"
 
 HSCT_BUILD_DIR=`pwd`/build
