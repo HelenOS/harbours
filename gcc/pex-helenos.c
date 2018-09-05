@@ -30,6 +30,8 @@
 #include "pex-unix.c"
 #else
 
+#define _HELENOS_SOURCE
+
 #include "config.h"
 #include "libiberty.h"
 #include "pex-common.h"
@@ -97,7 +99,7 @@ static pid_t pex_helenos_exec_child(struct pex_obj *obj,
 	snprintf(full_path, 1023, "/app/%s", executable);
 	int rc = task_spawnvf(&this_task->task_id, &this_task->task_wait,
 		full_path, argv, in, out, errdes);
-	
+
 	if (rc != 0) {
 		*err = rc;
 		*errmsg = "task_spawnvf";
@@ -105,7 +107,7 @@ static pid_t pex_helenos_exec_child(struct pex_obj *obj,
 			pex_helenos->tasks, pex_helenos->task_count);
 		return (pid_t) -1;
 	}
-	
+
 	pex_helenos->task_count++;
 
 	return (pid_t) this_task->task_id;
@@ -142,11 +144,11 @@ static int pex_helenos_wait(struct pex_obj *obj,
 	if (done) {
 		task_kill(this_task->task_id);
 	}
-	
+
 	if (time != NULL) {
 		memset(time, 0, sizeof(*time));
 	}
-	
+
 	task_exit_t task_exit;
 	int task_retval;
 	int rc = task_wait(&this_task->task_wait, &task_exit, &task_retval);
