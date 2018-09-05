@@ -38,6 +38,7 @@
 
 #include <libc/task.h>
 #include <assert.h>
+#include <errno.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
