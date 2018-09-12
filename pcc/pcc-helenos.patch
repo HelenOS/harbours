@@ -28,7 +28,7 @@
  }
  
 +#elif defined(__helenos__)
-+
++#define _HELENOS_SOURCE
 +#include <libc/task.h>
 +
 +int callsys(char *f, char *v[])
