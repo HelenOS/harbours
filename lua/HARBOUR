@@ -47,9 +47,9 @@ build() {
 	run make -j$shipfunnels \
 		PLAT="posix" \
 		CC=$HSCT_CC \
-		CFLAGS="$HSCT_CFLAGS -DLUA_COMPAT_5_2 -O2" \
+		CFLAGS="-DLUA_COMPAT_5_2 -O2" \
 		LDFLAGS="" \
-		LIBS="-Wl,--start-group -lm -lposix -lc -lsoftfloat -lsoftint -Wl,--end-group" \
+		LIBS="-lm" \
 		AR="$HSCT_TARGET-ar rcu" \
 		RANLIB="$HSCT_TARGET-ranlib"
 }
