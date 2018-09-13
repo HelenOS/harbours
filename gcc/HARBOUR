@@ -138,6 +138,6 @@ package() {
 	
 	# Create default SPECS file to drive the compilation
 	run mkdir -p "$HSCT_MY_DIR/lib/gcc/$HSCT_CCROSS_TARGET/$shipversion/"
-	# FIXME: This is a temporary hack. The HARBOUR should not depend on the specs file existing.
-	run cp "$HSCT_CACHE_DIR/lib/gcc.specs" "$HSCT_MY_DIR/lib/gcc/$HSCT_CCROSS_TARGET/$shipversion/specs"
+	# FIXME: This is a temporary hack. We should be building the helenos target.
+	$HSCT_TARGET-cc -dumpspecs > "$HSCT_MY_DIR/lib/gcc/$HSCT_CCROSS_TARGET/$shipversion/specs"
 }
