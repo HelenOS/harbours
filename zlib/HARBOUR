@@ -61,5 +61,8 @@ package() {
 	
 	# Copy the executables
 	run mkdir -p "$HSCT_MY_DIR/app/"
-	run cp minigzip minigzip64 "$HSCT_MY_DIR/app/"
+	run cp minigzip "$HSCT_MY_DIR/app/"
+	if [ -x minigzip64 ]; then
+		run cp minigzip64 "$HSCT_MY_DIR/app/"
+	fi
 }
