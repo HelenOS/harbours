@@ -31,6 +31,7 @@ shipname=pcc
 shipversion=1.0.0
 mirror_="ftp://pcc.ludd.ltu.se/pub/pcc-releases"
 shipsources="$mirror_/$shipname-$shipversion.tgz pcc-helenos.patch ccconfig.h"
+shipprofiles="amd64 ia32 mips32/malta-be mips32/malta-le mips32/msim ppc32"
 shiptugs=""
 shipfunnels=1
 
