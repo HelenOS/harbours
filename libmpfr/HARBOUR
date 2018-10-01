@@ -38,10 +38,7 @@ build() {
 	cd "${shipname_}-${shipversion}"
 	
 	# Pretend we have something we really do not have
-	extra_cppflags="-D_MPFR_H_HAVE_FILE -D_MPFR_H_HAVE_INTMAX_T"
-	
-	# Use the not-that-precise constants from float.h
-	extra_cppflags="$extra_cppflags -DFLOAT_H_YES_I_REALLY_WANT_LIMITS"
+	extra_cppflags="-D_MPFR_H_HAVE_FILE"
 	
 	cp $HSCT_CONFIG_SUB .
 	run ./configure \

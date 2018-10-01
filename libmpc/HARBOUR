@@ -37,16 +37,9 @@ build() {
 	run tar xzf ${shipname_}-${shipversion}.tar.gz
 	cd ${shipname_}-${shipversion}
 	
-	# Use the not-that-precise constants from float.h
-	extra_cppflags="-DFLOAT_H_YES_I_REALLY_WANT_LIMITS"
-	
-	# Temporarily work around a build failure by disabling u/intmax_t.
-	extra_cppflags="$extra_cppflags -D__HELENOS_DISABLE_INTMAX__"
-	
 	cp $HSCT_CONFIG_SUB .
 	run ./configure \
 		$HSCT_CONFIGURE_ARGS \
-		CPPFLAGS="$extra_cppflags" \
 		--disable-shared \
 		|| return 1
 	
