@@ -142,14 +142,14 @@ hsct_process_harbour_opts() {
 				;;
 			--*)
 				hsct_error "Unknown option $1."
-				return 1
+				return 60
 				;;
 			*)
 				if [ -z "$HSCT_HARBOUR_NAME" ]; then
 					HSCT_HARBOUR_NAME="$1"
 				else
 					hsct_error "Only one package name allowed."
-					return 1
+					return 61
 				fi
 				;;
 		esac
@@ -172,7 +172,7 @@ hsct_fetch() {
 			if $HSCT_OPTS_NO_FILE_DOWNLOADING; then
 				hsct_error "File $_filename missing, cannot continue."
 				hsct_error2 "Build without --no-fetch."
-				return 1
+				return 62
 			fi
 			
 			hsct_info2 "Fetching $_filename..."
@@ -181,7 +181,7 @@ hsct_fetch() {
 			if ! wget $HSCT_WGET_OPTS "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
 				rm -f "$HSCT_SOURCES_DIR/$_filename"
 				hsct_error "Failed to fetch $_url."
-				return 1
+				return 63
 			fi
 			trap - SIGINT SIGQUIT
 		fi
@@ -210,7 +210,7 @@ hsct_build() {
 			if $HSCT_OPTS_NO_DEPENDENCY_BUILDING; then
 				hsct_error "Dependency $tug not built, cannot continue."
 				hsct_error2 "Build $tug first or run without --no-deps."
-				return 1
+				return 64
 			fi
 			hsct_info "Need to build $tug first."
 			hsct_info2 "Running $HSCT_HSCT package $tug"
@@ -221,13 +221,13 @@ hsct_build() {
 			if [ $? -ne 0 ]; then
 				hsct_error "Failed to package dependency $tug."
 				hsct_error2 "Cannot continue building $shipname."
-				return 1
+				return 65
 			fi
 			hsct_info2 "Back from building $tug."
 		fi
 	done
 	
-	hsct_fetch || return 1
+	hsct_fetch || return $?
 	
 	for _url in $shipsources; do
 		_filename=`basename "$_url"`
@@ -248,7 +248,7 @@ hsct_build() {
 	)
 	if [ $? -ne 0 ]; then
 		hsct_error "Build failed!"
-		return 1
+		return 66
 	fi
 	touch "$HSCT_BUILD_DIR/${shipname}.built"
 	return 0
@@ -256,16 +256,16 @@ hsct_build() {
 
 # Pseudo-installation - copy from build directory to "my" directory, copy libraries
 hsct_package() {
-	mkdir -p "$HSCT_INCLUDE_DIR" || { hsct_error "Failed to create include directory."; return 1; }
-	mkdir -p "$HSCT_LIB_DIR" || { hsct_error "Failed to create library directory."; return 1; }
-	mkdir -p "$HSCT_MY_DIR" || { hsct_error "Failed to create package directory."; return 1; }
+	mkdir -p "$HSCT_INCLUDE_DIR" || { hsct_error "Failed to create include directory."; return 67; }
+	mkdir -p "$HSCT_LIB_DIR" || { hsct_error "Failed to create library directory."; return 67; }
+	mkdir -p "$HSCT_MY_DIR" || { hsct_error "Failed to create package directory."; return 67; }
 
 	if [ -e "$HSCT_BUILD_DIR/${shipname}.packaged" ]; then
 		hsct_info "No need to package $shipname."
 		return 0;
 	fi
 	
-	hsct_build || return 1
+	hsct_build || return $?
 	
 	(	
 		cd "$HSCT_BUILD_DIR/$shipname/"
@@ -276,7 +276,7 @@ hsct_package() {
 	)
 	if [ $? -ne 0 ]; then
 		hsct_error "Packaging failed!"
-		return 1
+		return 68
 	fi
 	touch "$HSCT_BUILD_DIR/${shipname}.packaged"
 	return 0
@@ -284,12 +284,12 @@ hsct_package() {
 
 # Install the package to HelenOS source tree (to uspace/overlay).
 hsct_install() {
-	hsct_package || return 1
+	hsct_package || return $?
 
 	hsct_info "Installing..."
 	if ls "$HSCT_MY_DIR"/* &>/dev/null; then
 		mkdir -p "$HSCT_OVERLAY"
-		cp -v -r -L "$HSCT_MY_DIR"/* "$HSCT_OVERLAY" || return 1
+		cp -v -r -L "$HSCT_MY_DIR"/* "$HSCT_OVERLAY" || return 69
 		hsct_info2 "Do not forget to rebuild the image."
 	else
 		hsct_info2 "Note: nothing to install."
@@ -299,7 +299,7 @@ hsct_install() {
 
 # Create tarball to allow redistribution of the build packages
 hsct_archive() {
-	hsct_package || return 1
+	hsct_package || return $?
 	
 	hsct_info "Creating the archive..."
 	mkdir -p "$HSCT_ARCHIVE_DIR"
@@ -315,13 +315,13 @@ hsct_archive() {
 				;;
 			*)
 				hsct_info "Unknown archive_format $HSCT_FORMAT."
-				exit 1
+				exit 71
 				;;
 		esac
 	)
 	if [ $? -ne 0 ]; then
 		hsct_error "Archiving failed!"
-		return 1
+		return 72
 	fi
 	
 	return 0
@@ -364,13 +364,13 @@ hsct_init() {
 
 	if [ -z "$_root_dir" ]; then
 		hsct_error "HELENOS_ROOT is not set. Either set the environment variable, or specify it on the command line.";
-		return 1
+		return 73
 	fi
 	
 	_root_dir=`( cd "$_root_dir"; pwd ) 2>/dev/null`
 	if ! [ -e "$_root_dir/HelenOS.config" ]; then
 		hsct_error "$_root_dir does not look like a valid HelenOS directory.";
-		return 1
+		return 74
 	fi
 	
 	HELENOS_ROOT="$_root_dir"
@@ -392,7 +392,7 @@ hsct_init() {
 	)
 	if [ $? -ne 0 ]; then
 		hsct_error "Failed to automatically configure HelenOS for profile '$profile'."
-		return 1
+		return 75
 	fi
 	
 	hsct_info "Creating facade toolchain."
@@ -404,7 +404,7 @@ hsct_init() {
 
 		if [ -z "$HELENOS_ARCH" ]; then
 			hsct_error "HELENOS_ARCH undefined."
-			return 1
+			return 76
 		fi
 
 		cd $HSCT_HOME/facade
@@ -415,7 +415,7 @@ hsct_init() {
 
 	if [ $? -ne 0 ]; then
 		hsct_error "Failed to create toolchain facade for profile '$profile'."
-		return 1
+		return 77
 	fi
 
 	hsct_save_config
@@ -436,7 +436,7 @@ hsct_print_vars() {
 
 	if ! [ -e "$HELENOS_CONFIG" ]; then
 		hsct_error "Configuration not found. Maybe you need to run init first?"
-		return 1
+		return 78
 	fi
 
 	. $HELENOS_CONFIG
@@ -479,7 +479,7 @@ hsct_pkg() {
 		clean|fetch)
 			;;
 		*)
-			return 1
+			return 79
 			;;
 		esac
 	fi
