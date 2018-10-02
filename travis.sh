@@ -40,26 +40,25 @@
 # [2] http://www.helenos.org/wiki/CI
 #
 
-
 H_ARCH_CONFIG_CROSS_TARGET=2
 
 h_get_arch_config_space() {
     cat <<'EOF_CONFIG_SPACE'
-amd64:amd64-unknown-elf
-arm32/beagleboardxm:arm-linux-gnueabi
-arm32/beaglebone:arm-linux-gnueabi
-arm32/gta02:arm-linux-gnueabi
-arm32/integratorcp:arm-linux-gnueabi
-arm32/raspberrypi:arm-linux-gnueabi
-ia32:i686-pc-linux-gnu
-ia64/i460GX:ia64-pc-linux-gnu
-ia64/ski:ia64-pc-linux-gnu
-mips32/malta-be:mips-linux-gnu
-mips32/malta-le:mipsel-linux-gnu
-mips32/msim:mipsel-linux-gnu
-ppc32:ppc-linux-gnu
-sparc64/niagara:sparc64-linux-gnu
-sparc64/ultra:sparc64-linux-gnu
+amd64:amd64-helenos
+arm32/beagleboardxm:arm-helenos
+arm32/beaglebone:arm-helenos
+arm32/gta02:arm-helenos
+arm32/integratorcp:arm-helenos
+arm32/raspberrypi:arm-helenos
+ia32:i686-helenos
+ia64/i460GX:ia64-helenos
+ia64/ski:ia64-helenos
+mips32/malta-be:mips-helenos
+mips32/malta-le:mipsel-helenos
+mips32/msim:mipsel-helenos
+ppc32:ppc-helenos
+sparc64/niagara:sparc64-helenos
+sparc64/ultra:sparc64-helenos
 EOF_CONFIG_SPACE
 }
 
@@ -98,11 +97,6 @@ if [ -z "$H_CROSS_TARGET" ]; then
     exit 1
 fi
 
-
-# Custom CROSS_PREFIX
-export CROSS_PREFIX=/usr/local/cross-static/
-
-
 # Default HelenOS repository
 if [ -z "$H_HELENOS_REPOSITORY" ]; then
     H_HELENOS_REPOSITORY="https://github.com/HelenOS/helenos.git"
@@ -121,17 +115,11 @@ if [ "$1" = "help" ]; then
 
 elif [ "$1" = "install" ]; then
     set -x
-    
-    # Install dependencies
-    sudo apt-get -qq update || exit 1
-    sudo apt-get install -y genisoimage || exit 1
 
     # Fetch and install cross-compiler
-    wget "http://ci.helenos.org/download/helenos-cross-$H_CROSS_TARGET.static.tar.xz" -O "/tmp/cross-$H_CROSS_TARGET.static.tar.xz" || exit 1
-    sudo mkdir -p "$CROSS_PREFIX" || exit 1
-    sudo tar -xJ -C "$CROSS_PREFIX" -f "/tmp/cross-$H_CROSS_TARGET.static.tar.xz" || exit 1
+    wget "https://helenos.s3.amazonaws.com/toolchain/$H_CROSS_TARGET.tar.xz" -O "/tmp/$H_CROSS_TARGET.tar.xz" || exit 1
+    sudo tar -xJ -C "/" -f "/tmp/$H_CROSS_TARGET.tar.xz" || exit 1
     exit 0
-
 
 elif [ "$1" = "run" ]; then
     set -x
@@ -143,24 +131,11 @@ elif [ "$1" = "run" ]; then
     git clone --depth 10 "$H_HELENOS_REPOSITORY" helenos || exit 1
     
     mkdir "build-$TRAVIS_BUILD_ID" || exit 1
-
-	cd "build-$TRAVIS_BUILD_ID" || exit 1
-	
-	git clone "$HOME/helenos" helenos || exit 1
-	
-	(
-	   cd helenos
-	   make "PROFILE=$H_ARCH" HANDS_OFF=y >build.log 2>&1
-	   RET="$?"
-	   tail -n 20 "build.log"
-	   exit $RET
-	) || exit 1
-	        
-
-	mkdir build || exit 1
-	cd build || exit 1
-	
-	"$H_HARBOURS_HOME/hsct.sh" init "$HOME/build-$TRAVIS_BUILD_ID/helenos" || exit 1
+    cd "build-$TRAVIS_BUILD_ID" || exit 1
+    git clone "$HOME/helenos" helenos || exit 1
+    mkdir build || exit 1
+    cd build || exit 1
+    "$H_HARBOURS_HOME/hsct.sh" init "$HOME/build-$TRAVIS_BUILD_ID/helenos" $H_ARCH || exit 1
 
     # We cannot flood the output as Travis has limit of maximum output size
     # (reason is to prevent endless stacktraces going forever). But also Travis

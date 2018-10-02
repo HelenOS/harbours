@@ -1,8 +1,9 @@
 language: c
+dist: trusty
 sudo: required
 env:
   global:
-    - CROSS_PREFIX=/usr/local/cross-static/
+    - CROSS_PREFIX=/usr/local/cross/
   matrix:
     - H_HARBOUR=fdlibm H_ARCH=amd64
     - H_HARBOUR=fdlibm H_ARCH=arm32/beagleboardxm
@@ -76,6 +77,8 @@ env:
     - H_HARBOUR=lua H_ARCH=sparc64/niagara
     - H_HARBOUR=lua H_ARCH=sparc64/ultra
 before_install:
+ - sudo apt-get update -qq
+ - sudo apt-get install -qq genisoimage
  - ./travis.sh install
 script:
  - ./travis.sh run
