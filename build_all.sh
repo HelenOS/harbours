@@ -2,11 +2,10 @@
 
 helenos_dir=$1
 
-profiles="amd64"
-profiles="$profiles arm32/beagleboardxm arm32/beaglebone arm32/gta02 arm32/integratorcp arm32/raspberrypi"
-profiles="$profiles ia32 ia64/i460GX ia64/ski"
-profiles="$profiles mips32/malta-be mips32/malta-le mips32/msim"
-profiles="$profiles ppc32 riscv64 sparc64/niagara sparc64/ultra"
+profiles="amd64 ia64/ski ia32 arm32/integratorcp mips32/msim ppc32 riscv64 sparc64/ultra"
+
+profiles="$profiles arm32/beagleboardxm arm32/beaglebone arm32/gta02 arm32/raspberrypi"
+profiles="$profiles ia64/i460GX mips32/malta-be mips32/malta-le sparc64/niagara"
 
 # Order matters, dependencies must come before dependents.
 harbours="binutils fdlibm libgmp libisl libmpfr libmpc zlib gcc jainja libiconv libpng lua msim pcc python2"
@@ -55,11 +54,18 @@ for p in $profiles; do
 
 	if [ $? -eq 0 ]; then
 		echo "OK"
+		cd ..
 	else
 		echo "FAILED"
 		cd ..
-		continue
+		rm -rf $pdir
 	fi
+done
+
+for p in $profiles; do
+	pdir=`echo $p | sed 's/\//_/g'`
+
+	cd $pdir || continue
 
 	for h in $harbours; do
 		printf "%-32s  " "$p:$h"
