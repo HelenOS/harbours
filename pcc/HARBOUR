@@ -83,5 +83,6 @@ package() {
 	mkdir -p "$HSCT_MY_DIR/app"
 	for app in pcc cpp ccom; do
 		run cp "PKG/app/$HSCT_CCROSS_TARGET-$app" "$HSCT_MY_DIR/app/$app" || return 1
+		run cp "PKG/app/$HSCT_CCROSS_TARGET-$app" "$HSCT_MY_DIR/app/$HSCT_CCROSS_TARGET-$app" || return 1
 	done
 }
