@@ -11,18 +11,6 @@
  echo "$as_me: error: '$target' is not (yet) supported by pcc." >&2;}
 --- pcc-1.0.0/cc/cc/cc.c	2011-03-15 20:25:36.000000000 +0100
 +++ pcc-1.0.0/cc/cc/cc.c	2013-09-11 19:46:33.156788000 +0200
-@@ -1143,6 +1149,11 @@
- 				}
- 			}
- 		}
-+#ifdef __helenos__
-+		av[j++] = "-T";
-+		av[j++] = "/inc/_link.ld";
-+#endif
-+		
- 		av[j++] = 0;
- 		eflag |= callsys(ld, av);
- 		if (nc==1 && nxo==1 && eflag==0)
 @@ -1326,6 +1337,63 @@
  	return (exitCode != 0);
  }
