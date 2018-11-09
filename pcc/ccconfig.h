@@ -37,16 +37,16 @@
 #undef CRT0FILE
 #undef CRT0FILE_PROFILE
 
-#define LIBCLIBS { "/lib/libc.a", NULL }
+#define LIBCLIBS { "/lib/libc.a", "/lib/libgcc.a", NULL }
 #define LIBCLIBS_PROFILE LIBCLIBS
 
-#define STARTFILES { NULL }
+#define STARTFILES { "/lib/crt0.o", "/lib/crt1.o", NULL }
 #define ENDFILES { NULL }
 
 #define STARTFILES_S { NULL }
 #define ENDFILES_S { NULL }
 
-#define STARTLABEL "__entry"
+#define STARTLABEL "_start"
 
 #if defined(mach_i386)
 #define CPPMDADD { "-D__i386__", NULL, }
