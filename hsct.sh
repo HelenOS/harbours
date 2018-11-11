@@ -63,7 +63,6 @@ HSCT_INCLUDE_DIR=`pwd`/include
 HSCT_LIB_DIR=`pwd`/libs
 HSCT_DIST_DIR="`pwd`/dist/"
 HSCT_ARCHIVE_DIR="`pwd`/archives/"
-HSCT_CACHE_DIR=`pwd`/helenos
 
 # Print short help.
 # Does not exit the whole script.
@@ -339,6 +338,9 @@ hsct_load_config() {
 	if [ -e "$HSCT_CONFIG" ]; then
 		. $HSCT_CONFIG
 	fi
+
+	HELENOS_EXPORT_ROOT="$HELENOS_ROOT/uspace/export"
+	HELENOS_CONFIG="$HELENOS_EXPORT_ROOT/config.rc"
 }
 
 hsct_save_config() {
@@ -374,6 +376,8 @@ hsct_init() {
 	fi
 	
 	HELENOS_ROOT="$_root_dir"
+	HELENOS_EXPORT_ROOT="$HELENOS_ROOT/uspace/export"
+	HELENOS_CONFIG="$HELENOS_EXPORT_ROOT/config.rc"
 
 	hsct_info "Initializing this build directory."
 	(
@@ -382,12 +386,12 @@ hsct_init() {
 		cd "$HELENOS_ROOT"
 		if [ -z $profile ]; then
 			hsct_info2 "Reusing existing configuration."
-			make -j`nproc` export-posix "EXPORT_DIR=$EXPORT_DIR" HANDS_OFF=y >/dev/null 2>&1
+			make -j`nproc` export-cross HANDS_OFF=y >/dev/null 2>&1
 		else
 			hsct_info2 "Cleaning previous configuration in $PWD."
 			make distclean >/dev/null 2>&1
 			hsct_info2 "Configuring for $profile."
-			make -j`nproc` export-posix "EXPORT_DIR=$EXPORT_DIR" "PROFILE=$profile" HANDS_OFF=y >/dev/null 2>&1
+			make -j`nproc` export-cross "PROFILE=$profile" HANDS_OFF=y >/dev/null 2>&1
 		fi
 	)
 	if [ $? -ne 0 ]; then
@@ -400,7 +404,7 @@ hsct_init() {
 	facade_path="$PWD/facade"
 
 	(
-		. helenos/config.rc
+		. "$HELENOS_CONFIG"
 
 		if [ -z "$HELENOS_ARCH" ]; then
 			hsct_error "HELENOS_ARCH undefined."
@@ -431,8 +435,6 @@ hsct_print_vars() {
 	# eval `path/to/hsct.sh vars` to get these vars in interactive shell.
 
 	hsct_load_config
-	HELENOS_EXPORT_ROOT="$HSCT_CACHE_DIR"
-	HELENOS_CONFIG="$HSCT_CACHE_DIR/config.rc"
 
 	if ! [ -e "$HELENOS_CONFIG" ]; then
 		hsct_error "Configuration not found. Maybe you need to run init first?"
@@ -441,7 +443,7 @@ hsct_print_vars() {
 
 	. $HELENOS_CONFIG
 
-	echo "export HELENOS_EXPORT_ROOT='$HSCT_CACHE_DIR'"
+	echo "export HELENOS_EXPORT_ROOT='$HELENOS_EXPORT_ROOT'"
 	echo "export HSCT_REAL_CC='$HELENOS_TARGET-gcc'"
 	echo "export HSCT_REAL_CXX='$HELENOS_TARGET-g++'"
 
