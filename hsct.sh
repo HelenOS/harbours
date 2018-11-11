@@ -407,7 +407,7 @@ hsct_init() {
 			return 76
 		fi
 
-		cd $HSCT_HOME/facade
+		cd $HSCT_HOME/facade/src
 		for x in *; do
 			install -m 755 "$x" "$facade_path/$HELENOS_ARCH-helenos-$x"
 		done
