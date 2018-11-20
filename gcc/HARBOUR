@@ -29,7 +29,7 @@
 shipname=gcc
 shipversion=4.6.3
 mirror_="ftp://ftp.fu-berlin.de/unix/languages/gcc"
-shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 includes.patch libiberty.patch pex-helenos.c"
+shipsources="$mirror_/releases/$shipname-$shipversion/$shipname-$shipversion.tar.bz2 includes.patch libiberty.patch pex-helenos.c gcc.specs"
 shiptugs="libgmp libmpfr libmpc libisl zlib"
 shipfunnels=4
 
@@ -138,6 +138,7 @@ package() {
 	
 	# Create default SPECS file to drive the compilation
 	run mkdir -p "$HSCT_MY_DIR/lib/gcc/$HSCT_CCROSS_TARGET/$shipversion/"
-	# FIXME: This is a temporary hack. We should be building the helenos target.
-	$HSCT_TARGET-cc -dumpspecs > "$HSCT_MY_DIR/lib/gcc/$HSCT_CCROSS_TARGET/$shipversion/specs"
+	# FIXME: This is a temporary hack, we should preferably modify the
+	# default SPECS file instead of providing the simplified one.
+	run cp ../gcc.specs "$HSCT_MY_DIR/lib/gcc/$HSCT_CCROSS_TARGET/$shipversion/specs"
 }

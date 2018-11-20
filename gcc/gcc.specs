@@ -1,0 +1,25 @@
+*cpp_unique_options:
++ \
+-nostdinc \
+-I/inc/c
+
+*libgcc:
+/lib/libgcc.a
+
+*startfile:
+/lib/crt0.o /lib/crt1.o
+
+*endfile:
+/lib/libc.a
+
+*cc1:
++ \
+-ffreestanding \
+-fno-builtin \
+-ffunction-sections \
+-std=gnu99
+
+*link:
+-nostdlib \
+-L/lib
+
