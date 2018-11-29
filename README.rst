@@ -145,6 +145,10 @@ If you need to reference a local file (a patch for example),
 just write a bare name there.
 The files are downloaded with ``wget`` so make sure the protocol used
 and the path format is supported by this tool.
+Git repositories to clone can be specified with the syntax
+``git:localdir:[revision]:url`` where ``localdir`` is the name of the
+local directory to which the repository is cloned. ``revision`` is the
+revision to check out and ``url`` is the URL of the git repository.
 
 The variable ``shiptugs`` declares packages this one depends on
 (the twisted fun is here that tugs are required for the ship to actually
