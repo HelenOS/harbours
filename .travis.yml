@@ -62,6 +62,7 @@ env:
     - H_HARBOUR=libpng H_ARCH=ia32
     - H_HARBOUR=pcc H_ARCH=ia32
     - H_HARBOUR=python2 H_ARCH=ia32
+    - H_HARBOUR=sycek H_ARCH=ia32
     - H_HARBOUR=lua H_ARCH=amd64
     - H_HARBOUR=lua H_ARCH=arm32/beagleboardxm
     - H_HARBOUR=lua H_ARCH=arm32/beaglebone

@@ -8,7 +8,7 @@ profiles="$profiles arm32/beagleboardxm arm32/beaglebone arm32/gta02 arm32/raspb
 profiles="$profiles ia64/i460GX mips32/malta-be mips32/malta-le sparc64/niagara"
 
 # Order matters, dependencies must come before dependents.
-harbours="binutils fdlibm libgmp libisl libmpfr libmpc zlib gcc gzx jainja libiconv libpng lua msim pcc python2"
+harbours="binutils fdlibm libgmp libisl libmpfr libmpc zlib gcc gzx jainja libiconv libpng lua msim pcc python2 sycek"
 
 excludes=`cat<<EOF
 ia64/i460GX:pcc
