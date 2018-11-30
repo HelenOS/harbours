@@ -163,8 +163,17 @@ hsct_process_harbour_opts() {
 hsct_fetch() {
 	mkdir -p "$HSCT_SOURCES_DIR"
 	hsct_info "Fetching sources..."
-	for _url in $shipsources; do
-		_filename=`basename "$_url"`
+	for _src in $shipsources; do
+		_scheme=`echo "$_src" | cut -d: -f 1`
+		if [ ."$_scheme" = .git ]; then
+			_filename=`echo "$_src" | cut -d: -f 2`
+			_rev=`echo "$_src" | cut -d: -f 3`
+			_url=`echo "$_src" | cut -d: -f 4-`
+		else
+			_filename=`basename "$_src"`
+			_url="$_src"
+		fi
+		echo "filename:'$_filename' url:'$_url'"
 		if [ "$_filename" = "$_url" ]; then
 			continue
 		fi
@@ -178,10 +187,30 @@ hsct_fetch() {
 			hsct_info2 "Fetching $_filename..."
 			# Remove the file even on Ctrl-C when fetching
 			trap "rm -f \"$HSCT_SOURCES_DIR/$_filename\"; echo" SIGINT SIGQUIT
-			if ! wget $HSCT_WGET_OPTS "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
-				rm -f "$HSCT_SOURCES_DIR/$_filename"
-				hsct_error "Failed to fetch $_url."
-				return 63
+			if [ ."$_scheme" = .git ]; then
+				# Clone the repository
+				if ! git clone "$_url" "$HSCT_SOURCES_DIR/$_filename"; then
+					rm -f "$HSCT_SOURCES_DIR/$_filename"
+					hsct_error "Failed to fetch $_url."
+					return 63
+				fi
+				# Check out the specified revision
+				if [ -n "$_rev" ]; then
+					prevdir="$(pwd)"
+					cd "$HSCT_SOURCES_DIR/$_filename"
+					if ! git checkout "$_rev" 2>/dev/null; then
+						rm -rf "$HSCT_SOURCES_DIR/$_filename"
+						hsct_error "Failed to check out revision $_rev."
+						return 63
+					fi
+					cd "$prevdir"
+				fi
+			else
+				if ! wget $HSCT_WGET_OPTS "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
+					rm -f "$HSCT_SOURCES_DIR/$_filename"
+					hsct_error "Failed to fetch $_url."
+					return 63
+				fi
 			fi
 			trap - SIGINT SIGQUIT
 		fi
@@ -193,7 +222,9 @@ hsct_fetch() {
 # Remove the build directory of given package.
 hsct_clean() {
 	hsct_info "Cleaning build directory..."
-	rm -rf "$HSCT_BUILD_DIR/$shipname/"*
+	rm -rf "$HSCT_BUILD_DIR/$shipname"
+	rm -f "$HSCT_BUILD_DIR/${shipname}.built"
+	rm -f "$HSCT_BUILD_DIR/${shipname}.packaged"
 }
 
 # Build the package.
@@ -229,14 +260,23 @@ hsct_build() {
 	
 	hsct_fetch || return $?
 	
-	for _url in $shipsources; do
-		_filename=`basename "$_url"`
-		if [ "$_filename" = "$_url" ]; then
-			_origin="$HSCT_HOME/$shipname/$_filename" 
-		else
+	for _src in $shipsources; do
+		_scheme=`echo "$_src" | cut -d: -f 1`
+		if [ ."$_scheme" = .git ]; then
+			_filename=`echo "$_src" | cut -d: -f 2`
 			_origin="$HSCT_SOURCES_DIR/$_filename"
+			cp -r "$_origin" "$HSCT_BUILD_DIR/$shipname/$_filename"
+		else
+			_url="$_src"
+			_filename=`basename "$_url"`
+			if [ "$_filename" = "$_url" ]; then
+				_origin="$HSCT_HOME/$shipname/$_filename"
+			else
+				_origin="$HSCT_SOURCES_DIR/$_filename"
+			fi
+
+			ln -srf "$_origin" "$HSCT_BUILD_DIR/$shipname/$_filename"
 		fi
-		ln -srf "$_origin" "$HSCT_BUILD_DIR/$shipname/$_filename"
 	done
 	
 	(

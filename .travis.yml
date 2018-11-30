@@ -52,6 +52,7 @@ env:
     - H_HARBOUR=msim H_ARCH=sparc64/ultra
     - H_HARBOUR=binutils H_ARCH=ia32
     - H_HARBOUR=gcc H_ARCH=ia32
+    - H_HARBOUR=gzx H_ARCH=ia32
     - H_HARBOUR=jainja H_ARCH=ia32
     - H_HARBOUR=libgmp H_ARCH=ia32
     - H_HARBOUR=libiconv H_ARCH=ia32
@@ -61,6 +62,7 @@ env:
     - H_HARBOUR=libpng H_ARCH=ia32
     - H_HARBOUR=pcc H_ARCH=ia32
     - H_HARBOUR=python2 H_ARCH=ia32
+    - H_HARBOUR=sycek H_ARCH=ia32
     - H_HARBOUR=lua H_ARCH=amd64
     - H_HARBOUR=lua H_ARCH=arm32/beagleboardxm
     - H_HARBOUR=lua H_ARCH=arm32/beaglebone
