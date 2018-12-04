@@ -71,7 +71,8 @@ hsct_usage() {
 	echo "Usage:"
 	echo " $1 action [package]"
 	echo "    Action can be one of following:"
-	echo "       clean     Clean built directory."
+	echo "       clean     Clean build directory to save space."
+	echo "       distclean Prepare for recompilation (clean flag files)."
 	echo "       fetch     Fetch sources (e.g. download from homepage)."
 	echo "       build     Build given package."
 	echo "       package   Save installable files to allow cleaning."
@@ -130,6 +131,7 @@ run() {
 hsct_process_harbour_opts() {
 	HSCT_OPTS_NO_DEPENDENCY_BUILDING=false
 	HSCT_OPTS_NO_FILE_DOWNLOADING=false
+	HSCT_OPTS_FORCE=false
 	HSCT_HARBOUR_NAME=""
 	
 	while [ "$#" -ne 0 ]; do
@@ -139,6 +141,9 @@ hsct_process_harbour_opts() {
 				;;
 			--no-fetch)
 				HSCT_OPTS_NO_FILE_DOWNLOADING=true
+				;;
+			--force)
+				HSCT_OPTS_FORCE=true
 				;;
 			--*)
 				hsct_error "Unknown option $1."
@@ -219,13 +224,32 @@ hsct_fetch() {
 	return 0
 }
 
-# Remove the build directory of given package.
-hsct_clean() {
-	hsct_info "Cleaning build directory..."
+# Remove the build directory of given package and enable rebuild
+# of the package.
+hsct_distclean() {
+	hsct_info "Cleaning build directory and flag files..."
 	rm -rf "$HSCT_BUILD_DIR/$shipname"
 	rm -f "$HSCT_BUILD_DIR/${shipname}.built"
 	rm -f "$HSCT_BUILD_DIR/${shipname}.packaged"
 }
+
+# Remove the build directory of given package.
+hsct_clean() {
+	if [ -e "$HSCT_BUILD_DIR/${shipname}.built" ]; then
+		if ! [ -e "$HSCT_BUILD_DIR/${shipname}.packaged" ]; then
+			# Built but not packaged? If we remove the build directory
+			# we will not be able to package.
+			if ! $HSCT_OPTS_FORCE; then
+				hsct_error "Cannot clean when built but not packaged."
+				hsct_error2 "Use distclean or --force if you know what you are doing."
+				return 51
+			fi
+		fi
+	fi
+	hsct_info "Cleaning build directory..."
+	rm -rf "$HSCT_BUILD_DIR/$shipname/"
+}
+
 
 # Build the package.
 hsct_build() {
@@ -516,7 +540,7 @@ hsct_pkg() {
 
 	if [ -z "$HELENOS_EXPORT_ROOT" ]; then
 		case "$HSCT_ACTION" in
-		clean|fetch)
+		clean|distclean|fetch)
 			;;
 		*)
 			return 79
@@ -553,6 +577,9 @@ hsct_pkg() {
 		clean)
 			hsct_clean
 			;;
+		distclean)
+			hsct_distclean
+			;;
 		fetch)
 			hsct_fetch
 			;;
@@ -580,7 +607,7 @@ hsct_pkg() {
 HSCT_ACTION="$1"
 
 case "$HSCT_ACTION" in
-	clean|fetch|build|package|install|archive)
+	clean|distclean|fetch|build|package|install|archive)
 		shift
 		if ! hsct_process_harbour_opts "$@"; then
 			leave_script_err
