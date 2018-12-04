@@ -455,7 +455,11 @@ hsct_init() {
 		fi
 	)
 	if [ $? -ne 0 ]; then
-		hsct_error "Failed to automatically configure HelenOS for profile '$profile'."
+		if [ -z "$profile" ]; then
+			hsct_error "Failed to reuse existing HelenOS configuration."
+		else
+			hsct_error "Failed to automatically configure HelenOS for profile '$profile'."
+		fi
 		return 75
 	fi
 	
