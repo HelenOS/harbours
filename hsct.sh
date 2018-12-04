@@ -170,7 +170,7 @@ hsct_fetch() {
 	hsct_info "Fetching sources..."
 	for _src in $shipsources; do
 		_scheme=`echo "$_src" | cut -d: -f 1`
-		if [ ."$_scheme" = .git ]; then
+		if [ "$_scheme" = "git" ]; then
 			_filename=`echo "$_src" | cut -d: -f 2`
 			_rev=`echo "$_src" | cut -d: -f 3`
 			_url=`echo "$_src" | cut -d: -f 4-`
@@ -192,7 +192,7 @@ hsct_fetch() {
 			hsct_info2 "Fetching $_filename..."
 			# Remove the file even on Ctrl-C when fetching
 			trap "rm -f \"$HSCT_SOURCES_DIR/$_filename\"; echo" SIGINT SIGQUIT
-			if [ ."$_scheme" = .git ]; then
+			if [ "$_scheme" = "git" ]; then
 				# Clone the repository
 				if ! git clone "$_url" "$HSCT_SOURCES_DIR/$_filename"; then
 					rm -f "$HSCT_SOURCES_DIR/$_filename"
@@ -286,7 +286,7 @@ hsct_build() {
 	
 	for _src in $shipsources; do
 		_scheme=`echo "$_src" | cut -d: -f 1`
-		if [ ."$_scheme" = .git ]; then
+		if [ "$_scheme" = "git" ]; then
 			_filename=`echo "$_src" | cut -d: -f 2`
 			_origin="$HSCT_SOURCES_DIR/$_filename"
 			cp -r "$_origin" "$HSCT_BUILD_DIR/$shipname/$_filename"
@@ -418,8 +418,8 @@ hsct_save_config() {
 hsct_init() {
 	hsct_load_config
 
-	_root_dir=$1
-	profile=$2
+	_root_dir="$1"
+	profile="$2"
 
 	if [ -z "$_root_dir" ]; then
 		# Try to get HELENOS_ROOT from the environment if not specified.
@@ -444,7 +444,7 @@ hsct_init() {
 		EXPORT_DIR=`pwd`/helenos
 		set -o errexit
 		cd "$HELENOS_ROOT"
-		if [ -z $profile ]; then
+		if [ -z "$profile" ]; then
 			hsct_info2 "Reusing existing configuration."
 			make -j`nproc` export-posix "EXPORT_DIR=$EXPORT_DIR" HANDS_OFF=y >/dev/null 2>&1
 		else
