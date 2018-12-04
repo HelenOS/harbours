@@ -446,12 +446,12 @@ hsct_init() {
 		cd "$HELENOS_ROOT"
 		if [ -z "$profile" ]; then
 			hsct_info2 "Reusing existing configuration."
-			make -j`nproc` export-posix "EXPORT_DIR=$EXPORT_DIR" HANDS_OFF=y >/dev/null 2>&1
+			make "-j$HSCT_PARALLELISM" export-posix "EXPORT_DIR=$EXPORT_DIR" HANDS_OFF=y >/dev/null 2>&1
 		else
 			hsct_info2 "Cleaning previous configuration in $PWD."
 			make distclean >/dev/null 2>&1
 			hsct_info2 "Configuring for $profile."
-			make -j`nproc` export-posix "EXPORT_DIR=$EXPORT_DIR" "PROFILE=$profile" HANDS_OFF=y >/dev/null 2>&1
+			make "-j$HSCT_PARALLELISM" export-posix "EXPORT_DIR=$EXPORT_DIR" "PROFILE=$profile" HANDS_OFF=y >/dev/null 2>&1
 		fi
 	)
 	if [ $? -ne 0 ]; then
