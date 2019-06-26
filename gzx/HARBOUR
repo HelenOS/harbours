@@ -27,7 +27,7 @@
 #
 
 shipname=gzx
-shipversion=65204bc836c7b53e313777bc64e1c594cf9289fd
+shipversion=86b5c329793a3b2f16afa5e8b1e3e8b3e3dd5c21
 shipsources="git:${shipname}:${shipversion}:https://github.com/jxsvoboda/${shipname}"
 shiptugs=""
 shipfunnels=1
@@ -42,7 +42,7 @@ build() {
 package() {
 	cd "${shipname}"
 	run mkdir -p "$HSCT_MY_DIR/${shipname}"
-	for bin in gzx gzx-g; do
+	for bin in gtap gzx gzx-g; do
 		run cp ${bin}-hos "$HSCT_MY_DIR/${shipname}/${bin}"
 	done
 	run cp font.bin "$HSCT_MY_DIR/${shipname}/font.bin"
