@@ -443,16 +443,24 @@ hsct_init() {
 	(
 		EXPORT_DIR=`pwd`/helenos
 		set -o errexit
-		cd "$HELENOS_ROOT"
+
 		if [ -z "$profile" ]; then
-			hsct_info2 "Reusing existing configuration."
-			make "-j$HSCT_PARALLELISM" export-posix "EXPORT_DIR=$EXPORT_DIR" HANDS_OFF=y >/dev/null 2>&1
+			hsct_info2 "Configuring."
+			mkdir -p helenos_build
+			cd helenos_build
+			"$HELENOS_ROOT"/configure.sh
 		else
-			hsct_info2 "Cleaning previous configuration in $PWD."
-			make distclean >/dev/null 2>&1
+			hsct_info2 "Cleaning previous configuration in $PWD/helenos_build."
+			rm -rf helenos_build
+			mkdir helenos_build
+			cd helenos_build
 			hsct_info2 "Configuring for $profile."
-			make "-j$HSCT_PARALLELISM" export-posix "EXPORT_DIR=$EXPORT_DIR" "PROFILE=$profile" HANDS_OFF=y >/dev/null 2>&1
+			"$HELENOS_ROOT"/configure.sh "$profile"
 		fi
+
+		hsct_info2 "Exporting data."
+		"$HELENOS_ROOT"/tools/export.sh "$EXPORT_DIR"
+		cd ..
 	)
 	if [ $? -ne 0 ]; then
 		if [ -z "$profile" ]; then
@@ -468,7 +476,7 @@ hsct_init() {
 	facade_path="$PWD/facade"
 
 	(
-		. helenos/config.rc
+		. helenos/config.sh
 
 		if [ -z "$HELENOS_ARCH" ]; then
 			hsct_error "HELENOS_ARCH undefined."
@@ -500,7 +508,7 @@ hsct_print_vars() {
 
 	hsct_load_config
 	HELENOS_EXPORT_ROOT="$HSCT_CACHE_DIR"
-	HELENOS_CONFIG="$HSCT_CACHE_DIR/config.rc"
+	HELENOS_CONFIG="$HSCT_CACHE_DIR/config.sh"
 
 	if ! [ -e "$HELENOS_CONFIG" ]; then
 		hsct_error "Configuration not found. Maybe you need to run init first?"
