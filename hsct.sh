@@ -211,10 +211,20 @@ hsct_fetch() {
 					cd "$prevdir"
 				fi
 			else
-				if ! wget $HSCT_WGET_OPTS "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
-					rm -f "$HSCT_SOURCES_DIR/$_filename"
-					hsct_error "Failed to fetch $_url."
-					return 63
+				if [ "$_scheme" = "http" ]; then
+					# If we request an insecure download anyway, don't check certificate after redirection.
+					# This works around a problem with fdlibm download as of July 2020.
+					if ! wget $HSCT_WGET_OPTS --no-check-certificate "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
+						rm -f "$HSCT_SOURCES_DIR/$_filename"
+						hsct_error "Failed to fetch $_url."
+						return 63
+					fi
+				else
+					if ! wget $HSCT_WGET_OPTS "$_url" -O "$HSCT_SOURCES_DIR/$_filename"; then
+						rm -f "$HSCT_SOURCES_DIR/$_filename"
+						hsct_error "Failed to fetch $_url."
+						return 63
+					fi
 				fi
 			fi
 			trap - SIGINT SIGQUIT
