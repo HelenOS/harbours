@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 Jiri Svoboda
+# Copyright (c) 2020 Jiri Svoboda
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 #
 
 shipname=gzx
-shipversion=86b5c329793a3b2f16afa5e8b1e3e8b3e3dd5c21
+shipversion=6ca69e624a8d47618e049f77910f5b088829cb24
 shipsources="git:${shipname}:${shipversion}:https://github.com/jxsvoboda/${shipname}"
 shiptugs=""
 shipfunnels=1
@@ -42,7 +42,7 @@ build() {
 package() {
 	cd "${shipname}"
 	run mkdir -p "$HSCT_MY_DIR/${shipname}"
-	for bin in gtap gzx gzx-g; do
+	for bin in gtap gzx; do
 		run cp ${bin}-hos "$HSCT_MY_DIR/${shipname}/${bin}"
 	done
 	run cp font.bin "$HSCT_MY_DIR/${shipname}/font.bin"
