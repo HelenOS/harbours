@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Jiri Svoboda
+# Copyright (c) 2023 Jiri Svoboda
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 #
 
 shipname=gzx
-shipversion=6ca69e624a8d47618e049f77910f5b088829cb24
+shipversion=e99ddfdc93e80cfde4448b072ab9d80ca8e0adda
 shipsources="git:${shipname}:${shipversion}:https://github.com/jxsvoboda/${shipname}"
 shiptugs=""
 shipfunnels=1
