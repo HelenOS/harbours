@@ -424,6 +424,22 @@ hsct_save_config() {
 	mv "${HSCT_CONFIG}.new" "${HSCT_CONFIG}"
 }
 
+# Update after changes in HelenOS itself
+hsct_update() {
+	EXPORT_DIR=`pwd`/helenos
+
+	(
+		cd helenos_build
+		hsct_info "Exporting libraries and header files."
+		env DESTDIR="$EXPORT_DIR" ninja export-dev
+	)
+
+	if [ $? -ne 0 ]; then
+		hsct_error "Failed to export development files."
+		return 75
+	fi
+}
+
 # Initialize current directory for coastline building.
 hsct_init() {
 	hsct_load_config
@@ -467,10 +483,6 @@ hsct_init() {
 			hsct_info2 "Configuring for $profile."
 			"$HELENOS_ROOT"/configure.sh "$profile"
 		fi
-
-		hsct_info2 "Exporting data."
-		"$HELENOS_ROOT"/tools/export.sh "$EXPORT_DIR"
-		cd ..
 	)
 	if [ $? -ne 0 ]; then
 		if [ -z "$profile" ]; then
@@ -480,7 +492,9 @@ hsct_init() {
 		fi
 		return 75
 	fi
-	
+
+	hsct_update
+
 	hsct_info "Creating facade toolchain."
 	mkdir -p facade
 	facade_path="$PWD/facade"
@@ -652,6 +666,10 @@ case "$HSCT_ACTION" in
 	help|--help|-h|-?)
 		hsct_usage "$0"
 		leave_script_ok
+		;;
+	update)
+		hsct_update
+		exit $?
 		;;
 	*)
 		hsct_usage "$0"
