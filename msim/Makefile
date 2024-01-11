@@ -30,9 +30,16 @@
 BINARY = msim
 
 LDLIBS = \
-	-lclui
+	-lclui \
+	-lclipboard \
+	-lconsole \
+	-linput \
+	-loutput
 
 CFLAGS = \
+	-I$(HELENOS_INCLUDE_ROOT)/libconsole/ \
+	-I$(HELENOS_INCLUDE_ROOT)/liboutput/ \
+	-I$(HELENOS_INCLUDE_ROOT)/libinput/ \
 	-Wno-error
 
 include Makefile.sources

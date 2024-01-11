@@ -65,7 +65,8 @@ build() {
 	# Now we would use the HelenOS-style Makefile to actually build
 	# the binary.
 	run make -C src -j$shipfunnels \
-		CC="$HSCT_CC"
+		CC="$HSCT_CC" \
+		HELENOS_INCLUDE_ROOT="$HELENOS_EXPORT_ROOT/include"
 }
 
 package() {
