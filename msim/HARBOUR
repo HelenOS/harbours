@@ -27,26 +27,26 @@
 #
 
 shipname=msim
-shipversion=1.3.8.1
-shipsources="http://d3s.mff.cuni.cz/~holub/sw/${shipname}/${shipname}-${shipversion}.tar.bz2 \
+shipversion=2.2.1
+shipsources="https://github.com/d-iii-s/${shipname}/archive/refs/tags/v${shipversion}.tar.gz \
 	Makefile config.h helenos.h input.c misc.c"
 shipfunnels=0
 
 build() {
-	run tar xjf "${shipname}-${shipversion}.tar.bz2"
-	
+	run tar xzf "v${shipversion}.tar.gz"
+
 	# There is a lot of patching involved and it is simpler not to run
 	# ./configure at all and do it all manually instead.
-	
+
 	# Copy the prepared config.h and some HelenOS specific implementations
 	# instead of the (expected) Linux ones.
-	run cp config.h "${shipname}-${shipversion}"
+	sed "s:%VERSION%:$shipversion:g" config.h >"${shipname}-${shipversion}/config.h"
 	run mkdir -p "${shipname}-${shipversion}/src/arch/helenos"
 	run cp helenos.h input.c misc.c "${shipname}-${shipversion}/src/arch/helenos"
 	run cp Makefile "${shipname}-${shipversion}/src/"
-	
+
 	cd "${shipname}-${shipversion}"
-	
+
 	msg "Exctracting source file names."
 	# The list of the files is in src/Makefile.in in the SOURCES variable.
 	# From the list we remove unsupported things (such as GDB) and add
@@ -57,11 +57,15 @@ build() {
 		/bin/echo -e '\t@echo SOURCES = $(SOURCES)'; cat Makefile.in \
 	) | make -f - | grep 'SOURCES' \
 	| sed \
-		-e 's:io/input.c:arch/helenos/input.c arch/helenos/misc.c:' \
+		-e 's:input.c:arch/helenos/input.c arch/helenos/misc.c:' \
 		-e 's:debug/gdb.c::' \
 		-e 's:arch/posix/stdin.c::' \
 	>src/Makefile.sources
-	
+
+	# Hack: replace pfn_t in MSIM with msim_pfn_t to prevent collision
+	# with HelenOS type of the same name
+	find -name '*.[ch]' -exec sed 's#pfn_t#msim_pfn_t#g' -i {} \;
+
 	# Now we would use the HelenOS-style Makefile to actually build
 	# the binary.
 	run make -C src -j$shipfunnels \
@@ -71,7 +75,7 @@ build() {
 
 package() {
 	cd "${shipname}-${shipversion}"
-	
+
 	run mkdir -p "$HSCT_MY_DIR/app/"
 	run cp "src/${shipname}" "$HSCT_MY_DIR/app/"
 }

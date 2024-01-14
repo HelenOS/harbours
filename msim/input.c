@@ -41,7 +41,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-extern void mprintf(const char *);
+#include "../../fault.h"
 
 static tinput_t *input_prompt;
 
@@ -58,6 +58,12 @@ void input_init(void)
 	helenos_dprinter_init();
 }
 
+int input_is_terminal(void)
+{
+    return true;
+}
+
+
 void input_inter(void)
 {
 }
@@ -70,6 +76,11 @@ void input_back( void)
 {
 }
 
+void input_end(void)
+{
+}
+
+
 char *helenos_input_get_next_command(void)
 {
 	tinput_set_prompt(input_prompt, "[msim] ");
@@ -79,7 +90,7 @@ char *helenos_input_get_next_command(void)
 
 	if (rc == ENOENT) {
 		rc = asprintf(&commline, "quit");
-		mprintf("Quit\n");
+		alert("Quit\n");
 		if (rc != EOK) {
 			exit(1);
 		}
@@ -93,7 +104,7 @@ char *helenos_input_get_next_command(void)
 bool stdin_poll(char *key)
 {
 	cons_event_t ev;
-	suseconds_t timeout = 0;
+	usec_t timeout = 0;
 	errno = EOK;
 	console_flush(input_prompt->console);
 	bool has_input = console_get_event_timeout(input_prompt->console, &ev, &timeout);

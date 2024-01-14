@@ -31,13 +31,11 @@
  */
 /** @file HelenOS specific functions for MSIM simulator.
  */
-#include "../../io/input.h"
-#include "../../io/output.h"
+#include "../../input.h"
 #include "../../device/dprinter.h"
 #include "../../debug/gdb.h"
 #include "../../cmd.h"
 #include "../../fault.h"
-#include "../../device/machine.h"
 #include "helenos.h"
 #include <malloc.h>
 #include <ctype.h>
@@ -55,19 +53,19 @@
 
 void interactive_control(void)
 {
-	tobreak = false;
+	machine_break = false;
 
-	if (reenter) {
-		mprintf("\n");
-		reenter = false;
+	if (machine_newline) {
+		printf("\n");
+		machine_newline = false;
 	}
 
 	stepping = 0;
 
-	while (interactive) {
+	while (machine_interactive) {
 		char *commline = helenos_input_get_next_command();
 		if (commline == NULL) {
-			mprintf("Quit\n");
+			alert("Quit\n");
 			input_back();
 			exit(1);
 		}
@@ -97,8 +95,8 @@ void gdb_handle_event(gdb_event_t event)
 }
 
 
-static void (*original_printer_write)(cpu_t *, device_s *, ptr_t, uint32_t);
-static void helenos_printer_write(cpu_t *cpu, device_s *dev, ptr_t addr, uint32_t val)
+static void (*original_printer_write)(unsigned int procno, device_t *dev, ptr36_t addr, uint32_t val);
+static void helenos_printer_write(unsigned int procno, device_t *dev, ptr36_t addr, uint32_t val)
 {
 #ifdef IGNORE_ANSI_ESCAPE_SEQUENCES
 	static bool inside_ansi_escape = false;
@@ -137,13 +135,13 @@ static void helenos_printer_write(cpu_t *cpu, device_s *dev, ptr_t addr, uint32_
 	just_ended_ansi_escape = false;
 #endif
 
-	(*original_printer_write)(cpu, dev, addr, val);
+	(*original_printer_write)(procno, dev, addr, val);
 }
 
 void helenos_dprinter_init(void)
 {
-	original_printer_write = dprinter.write;
-	dprinter.write = helenos_printer_write;
+	original_printer_write = dprinter.write32;
+	dprinter.write32 = helenos_printer_write;
 }
 
 
