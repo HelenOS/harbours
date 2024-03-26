@@ -27,7 +27,7 @@
 #
 
 shipname=gzx
-shipversion=e99ddfdc93e80cfde4448b072ab9d80ca8e0adda
+shipversion=7746a098745d3c2a1097bdbf0d2d40c01a33468f
 shipsources="git:${shipname}:${shipversion}:https://github.com/jxsvoboda/${shipname}"
 shiptugs=""
 shipfunnels=1
