@@ -379,7 +379,7 @@ hsct_archive() {
 	mkdir -p "$HSCT_ARCHIVE_DIR"
 	(
 		set -o errexit
-		cd "$HSCT_DIST_DIR/$shipname"
+		cd "$HSCT_MY_DIR"
 		case "$HSCT_FORMAT" in
 			tar.gz)
 				tar czf "$HSCT_ARCHIVE_DIR/$shipname.tar.gz" .
